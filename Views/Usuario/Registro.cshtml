@@ -1,0 +1,39 @@
+﻿@model AppWeb.ViewModels.UsuarioVM;
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registro</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+</head>
+<body>
+    <div class="row mt-5 justify-content-center">
+        <div class="col-sm-4">
+            <div class="card">
+                <div class="card-header">
+                    Registrarse
+                </div>
+                <div class="card-body">
+                    <form asp-controller="Usuario" asp-action="Registro" method="post" autocomplete="off">
+                        <input class="form-control mb-3" type="text" placeholder="Nombre Usuario" asp-for="nombreUsuario" />
+                        <input class="form-control mb-3" type="text" placeholder="Telefono" asp-for="telefono" />
+                        <input class="form-control mb-3" type="email" placeholder="Correo" asp-for="correo" />
+                        <input class="form-control mb-3" type="password" placeholder="Contraseña" asp-for="password" />
+                        <input class="form-control mb-3" type="password" placeholder="Repite Contraseña" asp-for="reppassword" />
+                        <select class="form-select mb-3" asp-for="IDROL" asp-items="@(new SelectList(ViewBag.Roles, "idRol", "NameRol"))">
+                            <option value="">Selecciona un Rol</option>
+                        </select>
+                        <div class="d-grid gap-2 mb-3">
+                            <button class="btn btn-primary" type="submit">Registrarse</button>
+                        </div>
+                    </form>
+                    
+                    ¿Ya tienes una cuenta? <a asp-controller="Usuario" asp-action="Login">Iniciar Sesión</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

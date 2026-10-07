@@ -13,6 +13,7 @@ namespace AppWeb.Controllers
         [HttpGet]
         public IActionResult Registro()
         {
+            ViewBag.Roles = _context.Roles.ToList();
             return View();
         }
     }

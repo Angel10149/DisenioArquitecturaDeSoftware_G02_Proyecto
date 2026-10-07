@@ -11,6 +11,8 @@ namespace AppWeb.ViewModels
 
         public string password { get; set; }
 
+        public string reppassword { get; set; }
+
         public string correo { get; set; }
 
         public string telefono { get; set; }
