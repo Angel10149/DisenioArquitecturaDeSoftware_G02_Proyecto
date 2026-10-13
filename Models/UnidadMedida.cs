@@ -6,7 +6,7 @@ namespace AppWeb.Models
     public class UnidadMedida
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int id_unidad_medida { get; set; }
+        public int idUnidadMedida { get; set; }
         [ Required, StringLength (50)]
         public string nombre { get; set; }
         [Required, StringLength(10)]
