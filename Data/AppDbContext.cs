@@ -13,6 +13,10 @@ namespace AppWeb.Data
         public DbSet<Producto> Productos { get; set; }
         public DbSet<RequerimientoCompra> RequerimientosCompra { get; set; }
         public DbSet<Cotizacion> Cotizaciones { get; set; }
+        public DbSet<DetalleIngreso> DetallesIngreso { get; set; }
+        public DbSet<Pago> Pagos { get; set; }
+        public DbSet<DetalleOrdenCompra> DetallesOrdenCompra { get; set; }
+        public DbSet<DetalleCotizacion> DetallesCotizacion { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -49,6 +53,46 @@ namespace AppWeb.Data
                 .HasOne(c => c.Usuario)
                 .WithMany()
                 .HasForeignKey(c => c.IDUSUARIO);
+
+            modelBuilder.Entity<DetalleIngreso>()
+              .HasOne(d => d.IngresoMercaderia)
+              .WithMany()
+              .HasForeignKey(d => d.IDINGRESO);
+
+            modelBuilder.Entity<DetalleIngreso>()
+              .HasOne(d => d.Producto)
+              .WithMany()
+              .HasForeignKey(d => d.IDPRODUCTO);
+
+            modelBuilder.Entity<Pago>()
+              .HasOne(p => p.Venta)
+              .WithMany()
+              .HasForeignKey(p => p.IDVENTA);
+
+            modelBuilder.Entity<Pago>()
+              .HasOne(p => p.Usuario)
+              .WithMany()
+              .HasForeignKey(p => p.IDUSUARIO);
+
+            modelBuilder.Entity<DetalleOrdenCompra>()
+              .HasOne(d => d.OrdenCompra)
+              .WithMany()
+              .HasForeignKey(d => d.IDORDENCOMPRA);
+
+            modelBuilder.Entity<DetalleOrdenCompra>()
+              .HasOne(d => d.Producto)
+              .WithMany()
+              .HasForeignKey(d => d.IDPRODUCTO);
+
+            modelBuilder.Entity<DetalleCotizacion>()
+              .HasOne(d => d.Cotizacion)
+              .WithMany()
+              .HasForeignKey(d => d.IDCOTIZACION);
+
+            modelBuilder.Entity<DetalleCotizacion>()
+              .HasOne(d => d.Producto)
+              .WithMany()
+              .HasForeignKey(d => d.IDPRODUCTO);
             //Valores predeterminados
             modelBuilder.Entity<Rol>().HasData(
                 new Rol { idRol = 1, nameRol = "Administrador", descripcion = "Encargado de la gestión del sistema" },
