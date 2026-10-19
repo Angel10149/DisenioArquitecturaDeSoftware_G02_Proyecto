@@ -7,7 +7,7 @@ namespace AppWeb.Models
     public class IngresoMercaderia
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int idIngreso { get; set; }
+        public int idIngresoMercaderia { get; set; }
         [Required]
         public DateTime fechaIngreso { get; set; }
         [Required, StringLength(50)]
@@ -15,8 +15,15 @@ namespace AppWeb.Models
         [StringLength(255)]
         public string observaciones { get; set; }
 
-        //public int idOrdenCompra { get; set; }
-        //public int idProveedor { get; set; }
-        //public int idAlmacen { get; set; }
+        //relacion de m : 1 con OrdenCompra
+        public int idOrdenCompra { get; set; }
+        public OrdenCompra ordenCompra { get; set; }
+
+        //relacion de m : 1 con Proveedor
+        public int idProveedor { get; set; }
+        public Proveedor proveedor { get; set; }
+
+        //Relaciones 1 : M con DetalleIngreso
+        public ICollection<DetalleIngreso> DetalleIngresos { get; set; }
     }
 }

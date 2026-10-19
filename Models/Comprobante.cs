@@ -20,6 +20,7 @@ namespace AppWeb.Models
         [Required]
         public bool estado { get; set; }
       
-        //public int idPago {  get; set; }
+        public int idPago {  get; set; }
+        public Pago pago { get; set; }
     }
 }

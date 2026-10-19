@@ -15,8 +15,22 @@ namespace AppWeb.Models
         [Required]
         public decimal total { get; set; }
 
-        //public int idCliente { get; set; }
-        //public int idUsuario { get; set; }
-        //public int idCotizacion { get; set; }
+        //Relacion de M : 1 con Cliente
+        public int idCliente { get; set; }
+        public Cliente cliente { get; set; }
+
+        //Relacion de M : 1 con Usuario
+        public int idUsuario { get; set; }
+        public Usuario usuario { get; set; }
+
+        //Relacion de M : 1 con Cotizacion
+        public int idCotizacion { get; set; }
+        public Cotizacion cotizacion { get; set; }
+
+        //Relaciones 1 : M con DetalleVenta
+        public ICollection<DetalleVenta> DetalleVentas { get; set; }
+
+        //Relaciones 1 : M con Pago
+        public ICollection<Pago> Pagos { get; set; }
     }
 }

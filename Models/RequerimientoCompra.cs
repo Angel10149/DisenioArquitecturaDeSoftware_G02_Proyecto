@@ -12,21 +12,25 @@ namespace AppWeb.Models
         [Required]
         public int cantidadRequerida { get; set; }
         [Required]
-        public DateTime fechaRequerida { get; set; }
+        public DateOnly fechaRequerida { get; set; }
         [Required, StringLength(20)]
         public string prioridad { get; set; }
-        [Required, StringLength(20)]
+        [Required, StringLength(30)]
         public string estado { get; set; }
-        [StringLength(300)]
+        [StringLength(255)]
         public string motivo { get; set; }
+        [Required]
         public DateTime fechaCreacion { get; set; }
 
         //Relacion de M : 1 con Producto
-        public int IDPRODUCTO { get; set; }
-        public Producto Producto { get; set; }
+        public int idProducto { get; set; }
+        public Producto producto { get; set; }
 
         //Relacion de M : 1 con Usuario
-        public int IDUSUARIO { get; set; }
-        public Usuario Usuario { get; set; }
+        public int idUsuario { get; set; }
+        public Usuario usuario { get; set; }
+
+        //Relaciones 1 : M con OrdenCompra
+        public ICollection<OrdenCompra> OrdenesCompra { get; set; }
     }
 }

@@ -21,5 +21,20 @@ namespace AppWeb.Models
         //Relacion de M : 1 con Rol
         public int IDROL { get; set; }
         public Rol Rol { get; set; }
+
+        //Relaciones 1 : M con Cotizacion
+        public ICollection<Cotizacion> Cotizacions { get; set; }
+
+        //Relaciones 1 : M con OrdenCompra
+        public ICollection<OrdenCompra> OrdenesCompra { get; set; }
+
+        //Relaciones 1 : M con Pago
+        public ICollection<Pago> Pagos { get; set; }
+
+        //Relaciones 1 : M con RequerimientoCompra
+        public ICollection<RequerimientoCompra> RequerimientoCompras { get; set; }
+
+        //Relaciones 1 : M con Venta
+        public ICollection<Venta> Ventas { get; set; }
     }
 }

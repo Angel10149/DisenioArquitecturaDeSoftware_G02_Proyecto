@@ -15,11 +15,11 @@ namespace AppWeb.Models
         public decimal subtotal { get; set; }
 
         //Relacion de M : 1 con OrdenCompra
-        public int IDORDENCOMPRA { get; set; }
-        public OrdenCompra OrdenCompra { get; set; }
+        public int idOrdenCompra { get; set; }
+        public OrdenCompra ordenCompra { get; set; }
 
         //Relacion de M : 1 con Producto
-        public int IDPRODUCTO { get; set; }
-        public Producto Producto { get; set; }
+        public int idProducto { get; set; }
+        public Producto producto { get; set; }
     }
 }

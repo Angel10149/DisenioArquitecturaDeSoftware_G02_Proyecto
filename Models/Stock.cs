@@ -13,7 +13,8 @@ namespace AppWeb.Models
         [Required]
         public DateTime fecha_actualizacion { get; set; }
 
-        //public int idProducto { get; set; }
-        //public int idAlmacen { get; set; }
+        //Relacion de M : 1 con Producto
+        public int idProducto { get; set; }
+        public Producto producto { get; set; }
     }
 }

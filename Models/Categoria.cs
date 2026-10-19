@@ -14,5 +14,9 @@ namespace AppWeb.Models
         public String descripcion { get; set; }
         [Required]
         public bool estado {  get; set; }
+
+
+        //Relaciones 1 : M con Producto
+        public ICollection<Producto> Productos { get; set; }
     }
 }

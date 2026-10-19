@@ -17,11 +17,11 @@ namespace AppWeb.Models
         public decimal subtotal { get; set; }
 
         //Relacion de M : 1 con Cotizacion
-        public int IDCOTIZACION { get; set; }
-        public Cotizacion Cotizacion { get; set; }
+        public int idCotizacion { get; set; }
+        public Cotizacion cotizacion { get; set; }
 
         //Relacion de M : 1 con Producto
-        public int IDPRODUCTO { get; set; }
-        public Producto Producto { get; set; }
+        public int idProducto { get; set; }
+        public Producto producto { get; set; }
     }
 }

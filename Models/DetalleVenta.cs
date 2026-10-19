@@ -19,9 +19,13 @@ namespace AppWeb.Models
         [Required]
         public decimal subtotal { get; set; }
 
+        //relacion de m : 1 con Venta
+        public int idventa { get; set; }
+        public Venta venta { get; set; }
 
-        //public int idVenta { get; set; }
-        //public int idProducto { get; set; }
+        //relacion de m : 1 con Producto
+        public int idproducto { get; set; }
+        public Producto producto { get; set; }
 
     }
 }

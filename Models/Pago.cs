@@ -9,19 +9,23 @@ namespace AppWeb.Models
         public int idPago { get; set; }
         [Required]
         public DateTime fechaPago { get; set; }
-        [Required, StringLength(30)]
+        [Required, StringLength(50)]
         public string metodoPago { get; set; }
         [Required]
         public decimal montoRecibido { get; set; }
-        [Required, StringLength(20)]
+        [Required, StringLength(30)]
         public string estado { get; set; }
 
         //Relacion de M : 1 con Venta
-        public int IDVENTA { get; set; }
-        public Venta Venta { get; set; }
+        public int idVenta { get; set; }
+        public Venta venta { get; set; }
 
         //Relacion de M : 1 con Usuario
-        public int IDUSUARIO { get; set; }
-        public Usuario Usuario { get; set; }
+        public int idUsuario { get; set; }
+        public Usuario usuario { get; set; }
+
+        //Relaciones 1 : M con Comprobante
+        public ICollection<Comprobante> Comprobantes { get; set; }
+
     }
 }

@@ -16,9 +16,22 @@ namespace AppWeb.Models
         [Required]
         public decimal total { get; set; }
 
+        //relacion de m : 1 con OrdenCompra
+        public int idProveedor { get; set; }
+        public Proveedor proveedor { get; set; }
 
-        //public int idProveedor { get; set; }
-        //public int id_usuario { get; set; }
-        //public int idRequerimiento { get; set; }
+        //relacion de m : 1 con OrdenCompra
+        public int idUsuario { get; set; }
+        public Usuario usuario { get; set; }
+
+        //relacion de m : 1 con OrdenCompra
+        public int idRequerimiento { get; set; }
+        public RequerimientoCompra requerimiento { get; set; }
+
+        //Relaciones 1 : M con DetalleOrdenCompra
+        public ICollection<DetalleOrdenCompra> DetalleOrdenCompras { get; set; }
+
+        //Relaciones 1 : M con IngresoMercaderia
+        public ICollection<IngresoMercaderia> IngresosMercaderia { get; set; }
     }
 }

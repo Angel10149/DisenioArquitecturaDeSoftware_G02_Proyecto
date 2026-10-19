@@ -24,5 +24,12 @@ namespace AppWeb.Models
         [Required]
         public bool estado { get; set; }
 
+
+        //Relaciones 1 : M con Cotizacion
+        public ICollection<Cotizacion> Cotizacions { get; set; }
+
+        //Relaciones 1 : M con Venta
+        public ICollection<Venta> Ventas { get; set; }
+
     }
 }

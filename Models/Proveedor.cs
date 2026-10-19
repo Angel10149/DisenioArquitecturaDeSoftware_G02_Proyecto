@@ -21,5 +21,12 @@ namespace AppWeb.Models
         public string email { get; set; }
         [Required]
         public bool estado { get; set; }
+
+        //Relaciones 1 : M con IngresoMercaderia
+        public ICollection<IngresoMercaderia> IngresosMercaderia { get; set; }
+
+
+        //Relaciones 1 : M con OrdenCompra
+        public ICollection<OrdenCompra> OrdenesCompra { get; set; }
     }
 }
