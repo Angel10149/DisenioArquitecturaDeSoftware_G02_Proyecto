@@ -12,11 +12,11 @@ namespace AppWeb.Models
         public int idDetalleVenta { get; set; }
         [Required]
         public int cantidad { get; set; }
-        [Required]
+        [Required, Column(TypeName = "decimal(18, 2)]")]
         public decimal precioUnitario { get; set; }
-        [Required]
+        [Required, Column(TypeName = "decimal(18, 2)]")]
         public decimal descuento { get; set; }
-        [Required]
+        [Required, Column(TypeName = "decimal(18, 2)]")]
         public decimal subtotal { get; set; }
 
         //relacion de m : 1 con Venta

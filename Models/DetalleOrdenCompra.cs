@@ -9,9 +9,9 @@ namespace AppWeb.Models
         public int idDetalleOrden { get; set; }
         [Required]
         public int cantidad { get; set; }
-        [Required]
+        [Required, Column(TypeName = "decimal(18, 2)]")]
         public decimal precioUnitario { get; set; }
-        [Required]
+        [Required, Column(TypeName = "decimal(18, 2)]")]
         public decimal subtotal { get; set; }
 
         //Relacion de M : 1 con OrdenCompra

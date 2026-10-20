@@ -17,9 +17,9 @@ namespace AppWeb.Models
         public int stockActual { get; set; }
         [Required]
         public int stockMinimo { get; set; }
-        [Required]
+        [Required, Column(TypeName = "decimal(18, 2)")]
         public decimal precioCosto { get; set; }
-        [Required]
+        [Required, Column(TypeName = "decimal(18, 2)")]
         public decimal precioVenta { get; set; }
         [Required]
         public bool estado { get; set; }

@@ -13,7 +13,7 @@ namespace AppWeb.Models
         public string estado { get; set; }
         [StringLength(255)]
         public string observaciones { get; set; }
-        [Required]
+        [Required, Column(TypeName = "decimal(18, 2)]")]
         public decimal total { get; set; }
 
         //Relacion de M : 1 con Cliente

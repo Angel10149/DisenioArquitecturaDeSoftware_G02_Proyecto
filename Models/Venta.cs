@@ -12,7 +12,7 @@ namespace AppWeb.Models
         public DateTime fechaVenta { get; set; }
         [Required]
         public string estado { get; set; }
-        [Required]
+        [Required, Column(TypeName = "decimal(18, 2)")]
         public decimal total { get; set; }
 
         //Relacion de M : 1 con Cliente

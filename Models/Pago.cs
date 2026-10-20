@@ -11,7 +11,7 @@ namespace AppWeb.Models
         public DateTime fechaPago { get; set; }
         [Required, StringLength(50)]
         public string metodoPago { get; set; }
-        [Required]
+        [Required, Column(TypeName = "decimal(18, 2)")]
         public decimal montoRecibido { get; set; }
         [Required, StringLength(30)]
         public string estado { get; set; }

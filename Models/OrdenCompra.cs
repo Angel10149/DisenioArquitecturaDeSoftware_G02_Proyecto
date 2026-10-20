@@ -13,7 +13,7 @@ namespace AppWeb.Models
         public DateTime fechaCompra { get; set; }
         [Required]
         public String estado { get; set; }
-        [Required]
+        [Required, Column(TypeName = "decimal(18, 2)")]
         public decimal total { get; set; }
 
         //relacion de m : 1 con OrdenCompra

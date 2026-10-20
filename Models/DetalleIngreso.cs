@@ -11,9 +11,9 @@ namespace AppWeb.Models
         public int cantidadRecibida { get; set; }
         [Required]
         public int cantidadRechazada { get; set; }
-        [Required]
+        [Required, Column(TypeName = "decimal(18, 2)]")]
         public decimal costoUnitario { get; set; }
-        [Required]
+        [Required, Column(TypeName = "decimal(18, 2)]")]
         public decimal subtotal { get; set; }
 
 

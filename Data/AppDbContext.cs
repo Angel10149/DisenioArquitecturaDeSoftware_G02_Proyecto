@@ -77,7 +77,8 @@ namespace AppWeb.Data
             modelBuilder.Entity<DetalleIngreso>()
                 .HasOne(d => d.producto)
                 .WithMany(p => p.DetalleIngresos)
-                .HasForeignKey(d => d.idProducto);
+                .HasForeignKey(d => d.idProducto)
+                .OnDelete(DeleteBehavior.Restrict);//esto ayuda a que no se pueda eliminar un ingreso de mercadería si tiene detalle asociado
 
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<DetalleOrdenCompra>()
@@ -89,7 +90,8 @@ namespace AppWeb.Data
             modelBuilder.Entity<DetalleOrdenCompra>()
                 .HasOne(d => d.producto)
                 .WithMany(p => p.DetalleOrdenCompras)
-                .HasForeignKey(d => d.idProducto);
+                .HasForeignKey(d => d.idProducto)
+                .OnDelete(DeleteBehavior.Restrict);//esto ayuda a que no se pueda eliminar una orden de compra si tiene detalle asociado
 
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<DetalleVenta>()
@@ -113,7 +115,8 @@ namespace AppWeb.Data
             modelBuilder.Entity<IngresoMercaderia>()
                 .HasOne(i => i.proveedor)
                 .WithMany(p => p.IngresosMercaderia)
-                .HasForeignKey(i => i.idProveedor);
+                .HasForeignKey(i => i.idProveedor)
+                .OnDelete(DeleteBehavior.Restrict);//esto ayuda a que no se pueda eliminar un ingreso de mercadería si tiene detalle asociado
 
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<OrdenCompra>()
@@ -125,7 +128,8 @@ namespace AppWeb.Data
             modelBuilder.Entity<OrdenCompra>()
                 .HasOne(o => o.usuario)
                 .WithMany(u => u.OrdenesCompra)
-                .HasForeignKey(o => o.idUsuario);
+                .HasForeignKey(o => o.idUsuario)
+                .OnDelete(DeleteBehavior.Restrict);//esto ayuda a que no se pueda eliminar una orden de compra si tiene detalle asociado
 
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<OrdenCompra>()
@@ -137,7 +141,8 @@ namespace AppWeb.Data
             modelBuilder.Entity<Pago>()
                 .HasOne(p => p.venta)
                 .WithMany(v => v.Pagos)
-                .HasForeignKey(p => p.idVenta);
+                .HasForeignKey(p => p.idVenta)
+                .OnDelete(DeleteBehavior.Restrict);//esto ayuda a que no se pueda eliminar una venta si tiene pagos asociados
 
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<Pago>()
@@ -191,7 +196,8 @@ namespace AppWeb.Data
             modelBuilder.Entity<Venta>()
                 .HasOne(v => v.cotizacion)
                 .WithMany(c => c.Ventas)
-                .HasForeignKey(v => v.idCotizacion);
+                .HasForeignKey(v => v.idCotizacion)
+                .OnDelete(DeleteBehavior.Restrict);//esto ayuda a que no se pueda eliminar una cotización si tiene ventas asociadas
 
             //Valores predeterminados
             modelBuilder.Entity<Rol>().HasData(
