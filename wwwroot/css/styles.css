@@ -1,0 +1,10 @@
+@import "base.css";
+@import "layout.css";
+@import "modules/accesibilidad.css";
+@import "modules/dashboard.css";
+@import "modules/configuracion.css";
+@import "modules/ventas.css";
+@import "modules/inventario.css";
+@import "modules/proveedores.css";
+@import "modules/reportes.css";
+@import "modules/usuarios.css";

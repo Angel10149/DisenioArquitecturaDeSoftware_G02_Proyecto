@@ -1,8 +1,9 @@
-﻿@model AppWeb.ViewModels.LoginVM;
+@model AppWeb.ViewModels.LoginVM;
 @{
     Layout = null;
 }
-<!DOCTYPE html>
+
+@* <!DOCTYPE html>
 <html>
 <head>
     <title>Login</title>
@@ -34,5 +35,202 @@
             </div>
         </div>
     </div>
+</body>
+</html> *@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GRUPO MKG · Dashboard</title>
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/styles.css" />
+</head>
+<body id="page-login">
+
+    <div id="loginSection">
+        <div class="login-left">
+            <img src="https://i.postimg.cc/FRcSYwJ6/Logo-MKG.webp" alt="Logo" class="logo-img" />
+            <div class="system-title">Sistema Integral de Ventas e Inventario</div>
+            <div class="company-name">GRUPO MKG IMPORTACIONES S.A.C.</div>
+
+            <div class="feature-item">
+                <i class="bi bi-house-fill"></i>
+                <div class="feature-text">
+                    <span class="feature-title">Seguro</span>
+                    <span class="feature-desc">Protegemos tu información</span>
+                </div>
+            </div>
+            <div class="feature-item">
+                <i class="bi bi-send-fill"></i>
+                <div class="feature-text">
+                    <span class="feature-title">Confiable</span>
+                    <span class="feature-desc">Datos precisos en tiempo real</span>
+                </div>
+            </div>
+            <div class="feature-item">
+                <i class="bi bi-clock-fill"></i>
+                <div class="feature-text">
+                    <span class="feature-title">Eficiente</span>
+                    <span class="feature-desc">Optimiza tu tiempo y tus procesos</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="login-right">
+            <div class="login-header">
+                <i class="bi bi-person-fill user-icon"></i>
+                <h2 class="card-title">Iniciar sesión</h2>
+            </div>
+            <div class="subtitle">Ingrese sus credenciales para acceder al sistema</div>
+
+            <form id="loginForm" asp-controller="Usuario" asp-action="Login" method="post" autocomplete="off">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+                <div class="input-group">
+                    <label asp-for="correo">Correo</label>
+                    <div class="input-wrapper">
+                        <i class="bi bi-person-fill field-icon"></i>
+                        <input type="text" asp-for="correo" placeholder="Ingrese su correo" required />
+                    </div>
+                    <span asp-validation-for="correo" class="text-danger"></span>
+                </div>
+                <div class="input-group">
+                    <label asp-for="password">Contraseña</label>
+                    <div class="input-wrapper">
+                        <i class="bi bi-lock-fill field-icon"></i>
+                        <input type="password" asp-for="password" placeholder="Ingrese su contraseña" required />
+                        <button type="button" class="toggle-password" id="togglePassword" aria-label="Mostrar u ocultar contraseña">
+                            <i class="bi bi-eye-fill" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="password" class="text-danger"></span>
+                </div>
+
+                <div class="options-row">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe" /> Recordarme
+                    </label>
+                    <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+                </div>
+
+                <button type="submit" class="btn-login">
+                    <i class="bi bi-arrow-right"></i> Ingresar
+                </button>
+
+                @if (ViewData["Mensaje"] != null)
+                {
+                    <div class="alert alert-danger mt-3" role="alert">
+                        @ViewData["Mensaje"]
+                    </div>
+                }
+
+                <div class="login-footer-text">
+                    <i class="bi bi-c-circle"></i> 2026 GRUPO MKG Importaciones S.A.C.
+                </div>
+                <div id="feedbackMessage" class="message">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <span id="messageText"></span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!--BOTÓN Y PANEL DE ACCESIBILIDAD-->
+    <button class="accessibility-toggle" id="accessibilityToggle" aria-label="Panel de Accesibilidad">
+        <i class="bi bi-universal-access-circle"></i>
+        <span class="badge-count" id="accessibilityCounter">0</span>
+    </button>
+
+    <div class="accessibility-panel" id="accessibilityPanel">
+        <h3>
+            <i class="bi bi-universal-access-circle"></i> Accesibilidad
+            <button class="close-panel" id="closePanel">✕</button>
+        </h3>
+
+        <!-- Tamaño de texto -->
+        <div class="acc-group">
+            <label>Tamaño de texto</label>
+            <div class="acc-options">
+                <button data-size="small">Pequeño (9px)</button>
+                <button class="active" data-size="normal">Normal (12px)</button>
+                <button data-size="large">Grande (18px)</button>
+            </div>
+            <div class="acc-description">Ajusta el tamaño de la fuente para mejorar la legibilidad.</div>
+        </div>
+
+        <!-- Espaciado entre líneas -->
+        <div class="acc-group">
+            <label>Espaciado entre líneas</label>
+            <div class="acc-options">
+                <button data-line="compact">Compacto</button>
+                <button class="active" data-line="normal">Normal</button>
+                <button data-line="wide">Amplio</button>
+            </div>
+            <div class="acc-description">Aumenta el espacio entre líneas para facilitar la lectura.</div>
+        </div>
+
+        <!-- Alto contraste -->
+        <div class="acc-group">
+            <div class="acc-toggle">
+                <input type="checkbox" id="highContrast" />
+                <span class="toggle-label">Alto contraste</span>
+            </div>
+            <div class="acc-description">Modo de alto contraste para personas con baja visión.</div>
+        </div>
+
+        <!-- Modo daltonismo -->
+        <div class="acc-group">
+            <div class="acc-toggle">
+                <input type="checkbox" id="daltonism" />
+                <span class="toggle-label">Modo daltonismo</span>
+            </div>
+            <div class="acc-description">Optimizado para personas con dificultad para distinguir colores.</div>
+        </div>
+
+        <!-- Fuente legible (OpenDyslexic) -->
+        <div class="acc-group">
+            <div class="acc-toggle">
+                <input type="checkbox" id="dyslexicFont" />
+                <span class="toggle-label">Fuente legible (OpenDyslexic)</span>
+            </div>
+            <div class="acc-description">Fuente diseñada para personas con dislexia.</div>
+        </div>
+
+        <!-- Subrayar enlaces -->
+        <div class="acc-group">
+            <div class="acc-toggle">
+                <input type="checkbox" id="underlineLinks" />
+                <span class="toggle-label">Subrayar enlaces</span>
+            </div>
+            <div class="acc-description">Subraya todos los enlaces y elementos interactivos.</div>
+        </div>
+
+        <!-- Lector de texto -->
+        <div class="acc-group">
+            <div class="acc-toggle">
+                <input type="checkbox" id="textReader" />
+                <span class="toggle-label">Lector de texto (text-to-speech)</span>
+            </div>
+            <div class="acc-description">Lee automáticamente al pasar el cursor sobre cualquier texto.</div>
+        </div>
+
+        <button class="reset-accessibility" id="resetAccessibility">Restablecer configuración</button>
+    </div>
+
+
+    <!-- SCRIPTS -->
+    <script src="~/js/data.js"></script>
+    <script src="~/js/dom.js"></script>
+    <script src="~/js/modules/auth.js"></script>
+    <script src="~/js/modules/dashboard.js"></script>
+    <script src="~/js/modules/inventario.js"></script>
+    <script src="~/js/modules/ventas.js"></script>
+    <script src="~/js/modules/accesibilidad.js"></script>
+    <script src="~/js/main.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+
 </body>
 </html>

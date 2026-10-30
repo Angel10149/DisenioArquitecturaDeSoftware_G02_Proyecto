@@ -1,0 +1,201 @@
+        #viewConfiguracion .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        #viewConfiguracion .config-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            transition: all 0.4s ease;
+            animation: slideUp 0.6s ease-out;
+        }
+        #viewConfiguracion .config-section:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+        }
+        #viewConfiguracion .config-section h3 {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #1F2A56;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #F5F5F5;
+        }
+        #viewConfiguracion .config-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid #F5F5F5;
+            transition: all 0.3s ease;
+        }
+        #viewConfiguracion .config-item:hover {
+            transform: translateX(4px);
+        }
+        #viewConfiguracion .config-item:last-child {
+            border-bottom: none;
+        }
+        #viewConfiguracion .config-item .label {
+            font-weight: 500;
+            color: #1F2A56;
+            font-size: 0.9rem;
+        }
+        #viewConfiguracion .config-item input,
+        #viewConfiguracion .config-item select {
+            padding: 0.3rem 0.8rem;
+            border: 2px solid #F5F5F5;
+            border-radius: 30px;
+            background: #F5F5F5;
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.85rem;
+            color: #1F2A56;
+            outline: none;
+            transition: all 0.3s ease;
+            width: 160px;
+        }
+        #viewConfiguracion .config-item input:focus,
+        #viewConfiguracion .config-item select:focus {
+            border-color: #304D8A;
+            background: #FFFFFF;
+            box-shadow: 0 0 0 4px rgba(48, 77, 138, 0.06);
+            transform: scale(1.02);
+        }
+        #viewConfiguracion .config-item input[type="password"] {
+            width: 160px;
+        }
+        #viewConfiguracion .config-item .value-text {
+            color: #1F2A56;
+            font-size: 0.9rem;
+        }
+        #viewConfiguracion .btn-imprimir-prueba {
+            background: #304D8A;
+            color: #FFFFFF;
+            border: none;
+            padding: 0.7rem 2rem;
+            border-radius: 40px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            box-shadow: 0 4px 15px rgba(48, 77, 138, 0.2);
+        }
+        #viewConfiguracion .btn-imprimir-prueba:hover {
+            background: #1F2A56;
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 30px rgba(26, 42, 86, 0.3);
+        }
+        #viewConfiguracion .btn-imprimir-prueba:active {
+            transform: scale(0.95);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 2rem 2rem 1.5rem;
+            max-width: 480px;
+            width: 100%;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
+            border: 1px solid #F5F5F5;
+            animation: slideUp 0.4s ease-out;
+            transition: transform 0.3s ease;
+        }
+        .modal-box:hover {
+            transform: scale(1.01);
+        }
+        .modal-box h3 {
+            font-weight: 600;
+            color: #1F2A56;
+            margin-bottom: 1.2rem;
+            font-size: 1.2rem;
+        }
+        .modal-box label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #1F2A56;
+            display: block;
+            margin-top: 0.6rem;
+            margin-bottom: 0.2rem;
+        }
+        .modal-box input,
+        .modal-box select {
+            width: 100%;
+            padding: 0.5rem 0.8rem;
+            border: 2px solid #F5F5F5;
+            border-radius: 40px;
+            background: #F5F5F5;
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.9rem;
+            color: #1F2A56;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .modal-box input:focus,
+        .modal-box select:focus {
+            border-color: #304D8A;
+            background: #FFFFFF;
+            box-shadow: 0 0 0 4px rgba(48, 77, 138, 0.06);
+            transform: scale(1.01);
+        }
+        .modal-actions {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 1.5rem;
+            justify-content: flex-end;
+        }
+        .modal-actions button {
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            font-size: 0.9rem;
+        }
+        .modal-actions .btn-cancel {
+            background: #F5F5F5;
+            color: #1F2A56;
+        }
+        .modal-actions .btn-cancel:hover {
+            background: #e0e0e0;
+            transform: scale(1.02);
+        }
+        .modal-actions .btn-save {
+            background: #304D8A;
+            color: #FFFFFF;
+            box-shadow: 0 4px 15px rgba(48, 77, 138, 0.2);
+        }
+        .modal-actions .btn-save:hover {
+            background: #1F2A56;
+            transform: scale(1.02);
+            box-shadow: 0 8px 30px rgba(26, 42, 86, 0.3);
+        }
+        .modal-actions button:active {
+            transform: scale(0.95);
+        }
+

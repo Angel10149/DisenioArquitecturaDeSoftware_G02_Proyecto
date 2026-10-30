@@ -1,0 +1,492 @@
+        /* ===== ACCESIBILIDAD: TAMAÑO DE TEXTO (afecta a toda la página) ===== */
+        body.text-small {
+            font-size: 0.75rem !important;
+            /* 9px */
+        }
+        body.text-small * {
+            font-size: 0.75rem !important;
+        }
+        body.text-small h1,
+        body.text-small h2,
+        body.text-small h3,
+        body.text-small h4,
+        body.text-small .card-title,
+        body.text-small .system-title,
+        body.text-small .view-header h2,
+        body.text-small .metric-card .value,
+        body.text-small .inv-card .value {
+            font-size: 1.2rem !important;
+        }
+        body.text-small .login-right .card-title {
+            font-size: 1.3rem !important;
+        }
+
+        body.text-normal {
+            font-size: 1rem !important;
+            /* 12px */
+        }
+        body.text-normal * {
+            font-size: 1rem !important;
+        }
+        body.text-normal h1,
+        body.text-normal h2,
+        body.text-normal h3,
+        body.text-normal h4,
+        body.text-normal .card-title,
+        body.text-normal .system-title,
+        body.text-normal .view-header h2,
+        body.text-normal .metric-card .value,
+        body.text-normal .inv-card .value {
+            font-size: 1.6rem !important;
+        }
+        body.text-normal .login-right .card-title {
+            font-size: 1.6rem !important;
+        }
+
+        body.text-large {
+            font-size: 1.5rem !important;
+            /* 18px */
+        }
+        body.text-large * {
+            font-size: 1.5rem !important;
+        }
+        body.text-large h1,
+        body.text-large h2,
+        body.text-large h3,
+        body.text-large h4,
+        body.text-large .card-title,
+        body.text-large .system-title,
+        body.text-large .view-header h2,
+        body.text-large .metric-card .value,
+        body.text-large .inv-card .value {
+            font-size: 2.2rem !important;
+        }
+        body.text-large .login-right .card-title {
+            font-size: 2.2rem !important;
+        }
+        body.text-large .login-left .feature-item .feature-desc,
+        body.text-large .login-right .subtitle {
+            font-size: 1.2rem !important;
+        }
+        body.text-large .login-right .input-group label,
+        body.text-large .login-right .options-row .remember-me,
+        body.text-large .login-right .options-row .forgot-password,
+        body.text-large .login-right .login-footer-text {
+            font-size: 1.2rem !important;
+        }
+        body.text-large .login-right .input-wrapper input {
+            font-size: 1.2rem !important;
+            padding: 1rem 1rem 1rem 3.5rem !important;
+        }
+        body.text-large .login-right .input-wrapper .field-icon {
+            font-size: 1.4rem !important;
+        }
+        body.text-large .login-right .btn-login {
+            font-size: 1.3rem !important;
+            padding: 1.2rem !important;
+        }
+
+        /* ===== ACCESIBILIDAD: FUENTE LEGIBLE (OpenDyslexic) ===== */
+        body.font-dyslexic,
+        body.font-dyslexic *,
+        html.font-dyslexic,
+        html.font-dyslexic * {
+            font-family: 'OpenDyslexic', 'Arial', 'Verdana', 'Segoe UI', sans-serif !important;
+            letter-spacing: 0.02em !important;
+            word-spacing: 0.08em !important;
+            line-height: 1.7 !important;
+            font-weight: 500 !important;
+        }
+
+        /* ===== ACCESIBILIDAD: ALTO CONTRASTE ===== */
+        body.high-contrast {
+            background: #000000 !important;
+            color: #FFFFFF !important;
+        }
+        body.high-contrast .login-left,
+        body.high-contrast .login-right,
+        body.high-contrast .sidebar,
+        body.high-contrast .metric-card,
+        body.high-contrast .chart-box,
+        body.high-contrast .stock-box,
+        body.high-contrast .pie-box,
+        body.high-contrast .top-box,
+        body.high-contrast .table-wrapper,
+        body.high-contrast .inv-card,
+        body.high-contrast .quick-btn,
+        body.high-contrast .metric-box,
+        body.high-contrast .proveedor-card,
+        body.high-contrast .reporte-card,
+        body.high-contrast .usuario-card,
+        body.high-contrast .config-section,
+        body.high-contrast .ventas-form,
+        body.high-contrast .ventas-detalle,
+        body.high-contrast .inv-filters,
+        body.high-contrast .inv-movimientos,
+        body.high-contrast .notif-dropdown,
+        body.high-contrast .profile-dropdown,
+        body.high-contrast .search-results {
+            background: #1a1a1a !important;
+            color: #FFFFFF !important;
+            border-color: #444444 !important;
+        }
+        body.high-contrast .login-left .system-title,
+        body.high-contrast .login-right .card-title,
+        body.high-contrast .view-header h2,
+        body.high-contrast .chart-box h3,
+        body.high-contrast .stock-box h3,
+        body.high-contrast .pie-box h3,
+        body.high-contrast .top-box h3,
+        body.high-contrast .quick-access-section h3,
+        body.high-contrast .inv-movimientos h4,
+        body.high-contrast .config-section h3,
+        body.high-contrast .welcome-row h2,
+        body.high-contrast .sidebar nav a,
+        body.high-contrast .metric-card .info .value,
+        body.high-contrast .inv-card .value {
+            color: #FFFFFF !important;
+        }
+        body.high-contrast .login-left .feature-item .feature-desc,
+        body.high-contrast .login-right .subtitle,
+        body.high-contrast .breadcrumb,
+        body.high-contrast .metric-card .info .label,
+        body.high-contrast .inv-card .label,
+        body.high-contrast .metric-box .label {
+            color: #CCCCCC !important;
+        }
+        body.high-contrast .data-table th {
+            background: #333333 !important;
+            color: #FFFFFF !important;
+        }
+        body.high-contrast .data-table td {
+            color: #FFFFFF !important;
+            border-color: #444444 !important;
+        }
+        body.high-contrast .data-table tr:hover td {
+            background: #2a2a2a !important;
+        }
+        body.high-contrast input,
+        body.high-contrast select,
+        body.high-contrast .search-wrapper-global input {
+            background: #333333 !important;
+            color: #FFFFFF !important;
+            border-color: #555555 !important;
+        }
+        body.high-contrast input:focus,
+        body.high-contrast select:focus,
+        body.high-contrast .search-wrapper-global input:focus {
+            border-color: #FFFFFF !important;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2) !important;
+        }
+        body.high-contrast .btn-login,
+        body.high-contrast .btn-action,
+        body.high-contrast .btn-action-venta,
+        body.high-contrast .btn-cobrar,
+        body.high-contrast .btn-imprimir-prueba {
+            background: #FFFFFF !important;
+            color: #000000 !important;
+        }
+        body.high-contrast .btn-login:hover,
+        body.high-contrast .btn-action:hover,
+        body.high-contrast .btn-action-venta:hover,
+        body.high-contrast .btn-cobrar:hover,
+        body.high-contrast .btn-imprimir-prueba:hover {
+            background: #CCCCCC !important;
+        }
+        body.high-contrast .card-ventas {
+            background: #003366 !important;
+        }
+        body.high-contrast .card-inventario {
+            background: #004d00 !important;
+        }
+        body.high-contrast .card-caja {
+            background: #664d00 !important;
+            color: #FFFFFF !important;
+        }
+        body.high-contrast .card-alertas {
+            background: #660000 !important;
+        }
+
+        /* ===== ACCESIBILIDAD: DALTONISMO ===== */
+        body.daltonism .card-ventas {
+            background: #304D8A !important;
+        }
+        body.daltonism .card-inventario {
+            background: #1a5276 !important;
+        }
+        body.daltonism .card-alertas {
+            background: #6C3483 !important;
+        }
+        body.daltonism .card-caja {
+            background: #D4AC0D !important;
+            color: #1F2A56 !important;
+        }
+        body.daltonism .donut-chart {
+            background: conic-gradient(
+                #304D8A 0deg 120deg,
+                #1a5276 120deg 195deg,
+                #D4AC0D 195deg 255deg,
+                #6C3483 255deg 300deg,
+                #4A78C2 300deg 360deg
+            ) !important;
+        }
+        body.daltonism .pie-legend .color-box[style*="background:#28A745"] {
+            background: #1a5276 !important;
+        }
+        body.daltonism .pie-legend .color-box[style*="background:#DC3545"] {
+            background: #6C3483 !important;
+        }
+        body.daltonism .pie-legend .color-box[style*="background:#FFC107"] {
+            background: #D4AC0D !important;
+        }
+
+        /* ===== ACCESIBILIDAD: ESPACIADO ENTRE LÍNEAS ===== */
+        body.line-spacing-compact * {
+            line-height: 1.2 !important;
+        }
+        body.line-spacing-normal * {
+            line-height: 1.6 !important;
+        }
+        body.line-spacing-wide * {
+            line-height: 2.2 !important;
+        }
+
+        /* ===== ACCESIBILIDAD: SUBRAYAR ENLACES ===== */
+        body.underline-links a:not(.quick-btn):not(.sidebar nav a),
+        body.underline-links .sidebar nav a {
+            text-decoration: underline !important;
+            text-decoration-color: #304D8A !important;
+            text-decoration-thickness: 2px !important;
+        }
+        body.underline-links .quick-btn {
+            border-bottom: 3px solid #304D8A !important;
+        }
+        body.underline-links .btn-login,
+        body.underline-links .btn-action,
+        body.underline-links .btn-action-venta,
+        body.underline-links .btn-cobrar,
+        body.underline-links .btn-imprimir-prueba {
+            text-decoration: underline !important;
+            text-decoration-color: #FFFFFF !important;
+            text-decoration-thickness: 2px !important;
+        }
+
+        /* ===== BOTÓN DE ACCESIBILIDAD ===== */
+        .accessibility-toggle {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 999;
+            background: #304D8A;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.8rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(48, 77, 138, 0.35);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .accessibility-toggle:hover {
+            transform: scale(1.1) rotate(-10deg);
+            box-shadow: 0 8px 35px rgba(48, 77, 138, 0.5);
+        }
+        .accessibility-toggle .badge-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #DC3545;
+            color: #FFFFFF;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 20px;
+            min-width: 20px;
+            text-align: center;
+        }
+        .accessibility-toggle.active {
+            background: #1F2A56;
+        }
+
+        /* ===== PANEL DE ACCESIBILIDAD ===== */
+        .accessibility-panel {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            z-index: 998;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            width: 340px;
+            max-height: 70vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: none;
+            animation: slideUp 0.4s ease-out;
+        }
+        .accessibility-panel.active {
+            display: block;
+        }
+        .accessibility-panel h3 {
+            font-weight: 600;
+            color: #1F2A56;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .accessibility-panel h3 i {
+            color: #304D8A;
+        }
+        .accessibility-panel .close-panel {
+            margin-left: auto;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: #304D8A;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .accessibility-panel .close-panel:hover {
+            transform: rotate(90deg);
+        }
+
+        .accessibility-panel .acc-group {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #F5F5F5;
+        }
+        .accessibility-panel .acc-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .accessibility-panel .acc-group label {
+            display: block;
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: #1F2A56;
+            margin-bottom: 0.4rem;
+        }
+        .accessibility-panel .acc-group .acc-options {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .accessibility-panel .acc-group .acc-options button {
+            padding: 0.3rem 0.8rem;
+            border: 2px solid #F5F5F5;
+            border-radius: 30px;
+            background: #F5F5F5;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #1F2A56;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Roboto', sans-serif;
+        }
+        .accessibility-panel .acc-group .acc-options button:hover {
+            border-color: #304D8A;
+            background: #e8eef5;
+        }
+        .accessibility-panel .acc-group .acc-options button.active {
+            border-color: #304D8A;
+            background: #304D8A;
+            color: #FFFFFF;
+        }
+        .accessibility-panel .acc-group .acc-options button .check {
+            display: none;
+        }
+        .accessibility-panel .acc-group .acc-options button.active .check {
+            display: inline;
+        }
+
+        .accessibility-panel .acc-group .acc-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            cursor: pointer;
+            padding: 0.3rem 0;
+            transition: all 0.3s ease;
+        }
+        .accessibility-panel .acc-group .acc-toggle:hover {
+            transform: translateX(4px);
+        }
+        .accessibility-panel .acc-group .acc-toggle input[type="checkbox"] {
+            width: 44px;
+            height: 24px;
+            appearance: none;
+            -webkit-appearance: none;
+            background: #F5F5F5;
+            border-radius: 12px;
+            border: 2px solid #ddd;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .accessibility-panel .acc-group .acc-toggle input[type="checkbox"]::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: #FFFFFF;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .accessibility-panel .acc-group .acc-toggle input[type="checkbox"]:checked {
+            background: #304D8A;
+            border-color: #304D8A;
+        }
+        .accessibility-panel .acc-group .acc-toggle input[type="checkbox"]:checked::before {
+            transform: translateX(20px);
+        }
+        .accessibility-panel .acc-group .acc-toggle .toggle-label {
+            font-size: 0.85rem;
+            color: #1F2A56;
+        }
+
+        .accessibility-panel .acc-group .acc-description {
+            font-size: 0.7rem;
+            color: #304D8A;
+            opacity: 0.6;
+            margin-top: 0.2rem;
+        }
+
+        .accessibility-panel .reset-accessibility {
+            width: 100%;
+            padding: 0.6rem;
+            border: none;
+            border-radius: 40px;
+            background: #DC3545;
+            color: #FFFFFF;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+        .accessibility-panel .reset-accessibility:hover {
+            background: #a71d2a;
+            transform: scale(1.02);
+        }
+
+        /* ===== LECTOR DE TEXTO ===== */
+        .text-reader-active {
+            outline: 3px solid #304D8A;
+            outline-offset: 2px;
+            transition: outline 0.3s ease;
+        }
+

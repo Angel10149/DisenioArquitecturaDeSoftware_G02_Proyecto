@@ -1,0 +1,99 @@
+        /* Reportes */
+        #viewReportes .metrics-row {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        #viewReportes .metric-box {
+            border-left: 4px solid #304D8A;
+        }
+
+        #viewReportes .metric-box .label {
+            color: #304D8A;
+        }
+
+        #viewReportes .metric-box .value {
+            color: #1F2A56;
+        }
+
+        #viewReportes .table-wrapper {
+            border-top: 3px solid #304D8A;
+        }
+
+        #viewReportes .data-table th {
+            background: #304D8A;
+            color: #FFFFFF;
+        }
+
+        #viewReportes .data-table td {
+            color: #1F2A56;
+        }
+
+        #viewReportes .data-table tr:hover td {
+            background: #F5F5F5;
+        }
+
+        #viewReportes .reporte-estado {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-weight: 600;
+        }
+
+        #viewReportes .reporte-estado::before {
+            content: '';
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        #viewReportes .reporte-estado.completado {
+            color: #28A745;
+        }
+
+        #viewReportes .reporte-estado.progreso {
+            color: #FFC107;
+        }
+
+        @media (max-width: 500px) {
+            #viewReportes .metrics-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        #viewReportes .reportes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        #viewReportes .reporte-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 1.2rem 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            transition: all 0.4s ease;
+        }
+        #viewReportes .reporte-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+        }
+        #viewReportes .reporte-card .nombre {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #1F2A56;
+        }
+        #viewReportes .reporte-card .info {
+            font-size: 0.85rem;
+            color: #304D8A;
+            opacity: 0.8;
+        }
+        #viewReportes .reporte-card .info i {
+            width: 1.4rem;
+            color: #304D8A;
+        }

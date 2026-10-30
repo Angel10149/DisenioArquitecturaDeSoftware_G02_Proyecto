@@ -1,0 +1,48 @@
+        /* Usuarios */
+        #viewUsuarios .usuarios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        #viewUsuarios .usuario-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 1.2rem 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            transition: all 0.4s ease;
+        }
+        #viewUsuarios .usuario-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+        }
+        #viewUsuarios .usuario-card .nombre {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #1F2A56;
+        }
+        #viewUsuarios .usuario-card .info {
+            font-size: 0.85rem;
+            color: #304D8A;
+            opacity: 0.8;
+        }
+        #viewUsuarios .usuario-card .info i {
+            width: 1.4rem;
+            color: #304D8A;
+        }
+        #viewUsuarios .usuario-card .estado {
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+        #viewUsuarios .usuario-card .estado.activo {
+            color: #28A745;
+        }
+        #viewUsuarios .usuario-card .estado.inactivo {
+            color: #DC3545;
+        }
+
