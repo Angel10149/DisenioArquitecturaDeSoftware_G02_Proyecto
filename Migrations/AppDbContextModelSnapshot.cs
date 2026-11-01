@@ -17,7 +17,7 @@ namespace AppWeb.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -702,8 +702,8 @@ namespace AppWeb.Migrations
 
                     b.Property<string>("correo")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("nombreUsuario")
                         .IsRequired()
@@ -712,8 +712,8 @@ namespace AppWeb.Migrations
 
                     b.Property<string>("password")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("telefono")
                         .IsRequired()
@@ -724,7 +724,7 @@ namespace AppWeb.Migrations
 
                     b.HasIndex("IDROL");
 
-                    b.ToTable("Usuario");
+                    b.ToTable("Usuarios");
                 });
 
             modelBuilder.Entity("AppWeb.Models.Venta", b =>
@@ -737,7 +737,8 @@ namespace AppWeb.Migrations
 
                     b.Property<string>("estado")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("fechaVenta")
                         .HasColumnType("datetime2");
@@ -770,7 +771,7 @@ namespace AppWeb.Migrations
                     b.HasOne("AppWeb.Models.Pago", "pago")
                         .WithMany("Comprobantes")
                         .HasForeignKey("idPago")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("pago");
@@ -781,13 +782,13 @@ namespace AppWeb.Migrations
                     b.HasOne("AppWeb.Models.Cliente", "cliente")
                         .WithMany("Cotizacions")
                         .HasForeignKey("idCliente")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("AppWeb.Models.Usuario", "usuario")
                         .WithMany("Cotizacions")
                         .HasForeignKey("idUsuario")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("cliente");
@@ -806,7 +807,7 @@ namespace AppWeb.Migrations
                     b.HasOne("AppWeb.Models.Producto", "producto")
                         .WithMany("DetalleCotizacions")
                         .HasForeignKey("idProducto")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("cotizacion");
@@ -857,7 +858,7 @@ namespace AppWeb.Migrations
                     b.HasOne("AppWeb.Models.Producto", "producto")
                         .WithMany("DetalleVentas")
                         .HasForeignKey("idproducto")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("AppWeb.Models.Venta", "venta")
@@ -876,7 +877,7 @@ namespace AppWeb.Migrations
                     b.HasOne("AppWeb.Models.OrdenCompra", "ordenCompra")
                         .WithMany("IngresosMercaderia")
                         .HasForeignKey("idOrdenCompra")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("AppWeb.Models.Proveedor", "proveedor")
@@ -895,13 +896,13 @@ namespace AppWeb.Migrations
                     b.HasOne("AppWeb.Models.Proveedor", "proveedor")
                         .WithMany("OrdenesCompra")
                         .HasForeignKey("idProveedor")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("AppWeb.Models.RequerimientoCompra", "requerimiento")
                         .WithMany("OrdenesCompra")
                         .HasForeignKey("idRequerimiento")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("AppWeb.Models.Usuario", "usuario")
@@ -922,7 +923,7 @@ namespace AppWeb.Migrations
                     b.HasOne("AppWeb.Models.Usuario", "usuario")
                         .WithMany("Pagos")
                         .HasForeignKey("idUsuario")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("AppWeb.Models.Venta", "venta")
@@ -941,13 +942,13 @@ namespace AppWeb.Migrations
                     b.HasOne("AppWeb.Models.Categoria", "categoria")
                         .WithMany("Productos")
                         .HasForeignKey("idCategoria")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("AppWeb.Models.UnidadMedida", "unidadMedida")
                         .WithMany("Productos")
                         .HasForeignKey("idUnidadMedida")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("categoria");
@@ -960,13 +961,13 @@ namespace AppWeb.Migrations
                     b.HasOne("AppWeb.Models.Producto", "producto")
                         .WithMany("RequerimientoCompras")
                         .HasForeignKey("idProducto")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("AppWeb.Models.Usuario", "usuario")
                         .WithMany("RequerimientoCompras")
                         .HasForeignKey("idUsuario")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("producto");
@@ -990,7 +991,7 @@ namespace AppWeb.Migrations
                     b.HasOne("AppWeb.Models.Rol", "Rol")
                         .WithMany("Usuarios")
                         .HasForeignKey("IDROL")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Rol");
@@ -1001,7 +1002,7 @@ namespace AppWeb.Migrations
                     b.HasOne("AppWeb.Models.Cliente", "cliente")
                         .WithMany("Ventas")
                         .HasForeignKey("idCliente")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("AppWeb.Models.Cotizacion", "cotizacion")
@@ -1013,7 +1014,7 @@ namespace AppWeb.Migrations
                     b.HasOne("AppWeb.Models.Usuario", "usuario")
                         .WithMany("Ventas")
                         .HasForeignKey("idUsuario")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("cliente");
