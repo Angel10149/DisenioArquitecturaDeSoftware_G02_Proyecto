@@ -85,7 +85,7 @@
             </div>
             <div class="subtitle">Ingrese sus credenciales para acceder al sistema</div>
 
-            <form id="loginForm" asp-controller="Usuario" asp-action="Login" method="post" autocomplete="off">
+            <form id="loginForm" asp-controller="Usuario" asp-action="Login" asp-route-returnUrl="@Context.Request.Query["returnUrl"]" method="post" autocomplete="off">
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
 
                 <div class="input-group">
