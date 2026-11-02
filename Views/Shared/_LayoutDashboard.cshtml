@@ -1,0 +1,259 @@
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GRUPO MKG · @(ViewData["Title"] ?? "Dashboard")</title>
+
+    <!-- Iconos FontAwesome y Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=OpenDyslexic&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
+
+    <!-- Estilos del sistema -->
+    <link rel="stylesheet" href="~/css/styles.css" asp-append-version="true" />
+</head>
+<body id="page-dashboard">
+
+    <!-- Formulario oculto para Logout seguro con token CSRF -->
+    <form id="logoutForm" asp-controller="Usuario" asp-action="Logout" method="post" style="display:none;"></form>
+
+    <div id="dashboardSection" style="display: block;">
+        <div class="dashboard-container">
+            <!-- SIDEBAR -->
+            <aside class="sidebar" id="sidebar">
+                <img src="https://i.postimg.cc/FRcSYwJ6/Logo-MKG.webp" alt="Logo" class="logo-side" />
+                <nav>
+
+                    <a class="@(currentController == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">
+                        <i class="fas fa-home"></i><span>Inicio</span>
+                    </a>
+                    <a class="@(currentController == "Venta" ? "active" : "")" href="#">
+                        <i class="fas fa-shopping-cart"></i><span>Ventas</span>
+                    </a>
+                    <a class="@(currentController == "Producto" || currentController == "Inventario" ? "active" : "")" href="#">
+                        <i class="fas fa-boxes"></i><span>Inventario</span>
+                    </a>
+                    <a class="@(currentController == "Caja" ? "active" : "")" href="#">
+                        <i class="fas fa-cash-register"></i><span>Caja</span>
+                    </a>
+                    <a class="@(currentController == "Cliente" ? "active" : "")" href="#">
+                        <i class="fas fa-users"></i><span>Clientes</span>
+                    </a>
+                    <a class="@(currentController == "Proveedor" ? "active" : "")" href="#">
+                        <i class="fas fa-truck"></i><span>Proveedores</span>
+                    </a>
+                    <a class="@(currentController == "Reporte" ? "active" : "")" href="#">
+                        <i class="fas fa-file-alt"></i><span>Reportes</span>
+                    </a>
+                    <a class="@(currentController == "Usuario" ? "active" : "")" asp-controller="Usuario" asp-action="Index">
+                        <i class="fas fa-user-cog"></i><span>Usuarios</span>
+                    </a>
+                    <a class="@(currentController == "Configuracion" ? "active" : "")" href="#">
+                        <i class="fas fa-cog"></i><span>Configuración</span>
+                    </a>
+
+                    <div class="logout-btn">
+                        <a id="btnCerrarSesion" href="javascript:void(0);" onclick="document.getElementById('logoutForm').submit();">
+                            <i class="fas fa-sign-out-alt"></i><span>Cerrar sesión</span>
+                        </a>
+                    </div>
+                </nav>
+            </aside>
+
+            <!-- MAIN CONTENT -->
+            <main class="main-content">
+                <!-- TOP BAR -->
+                <div class="top-bar">
+                    <div class="menu-icon" id="menuToggle">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+
+                    <div class="search-wrapper-global">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="globalSearch" placeholder="Buscar productos, clientes, ventas..." autocomplete="off" />
+                        <div class="search-results" id="searchResults"></div>
+                    </div>
+
+                    <div class="top-right">
+                        <!-- Notificaciones -->
+                        <div class="notification-wrapper">
+                            <button class="notification-bell" id="notifBtn" aria-label="Notificaciones">
+                                <i class="fas fa-bell"></i>
+                                <span class="badge">3</span>
+                            </button>
+                            <div class="notif-dropdown" id="notifDropdown">
+                                <div class="notif-header">📬 Notificaciones</div>
+                                <div class="notif-item">
+                                    <i class="fas fa-shopping-cart" style="color:#304D8A;"></i>
+                                    <div class="notif-text">Nueva venta registrada por S/ 280.00</div>
+                                    <span class="notif-time">hace 5 min</span>
+                                </div>
+                                <div class="notif-item">
+                                    <i class="fas fa-exclamation-triangle" style="color:#DC3545;"></i>
+                                    <div class="notif-text">Stock bajo: Pastilla de freno (5 UNI)</div>
+                                    <span class="notif-time">hace 15 min</span>
+                                </div>
+                                <div class="notif-item">
+                                    <i class="fas fa-arrow-down" style="color:#28A745;"></i>
+                                    <div class="notif-text">Ingreso de mercadería: Filtro de aire (+50)</div>
+                                    <span class="notif-time">hace 1 hora</span>
+                                </div>
+                                <div class="notif-footer">
+                                    <a href="#" id="verTodasNotif">Ver todas las notificaciones</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Perfil Usuario -->
+                        <div class="profile-wrapper">
+                            <button class="admin-profile" id="profileBtn">
+                                <i class="fas fa-user"></i>
+                                @(User.Identity?.Name ?? User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Administrador")
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="profile-dropdown" id="profileDropdown">
+                                <button type="button" class="profile-item" id="perfilBtn">
+                                    <i class="fas fa-user-circle"></i> Mi Perfil
+                                </button>
+                                <button type="button" class="profile-item" id="configBtn">
+                                    <i class="fas fa-cog"></i> Configuración
+                                </button>
+                                <div class="profile-divider"></div>
+                                <button type="button" class="profile-item danger" id="logoutBtn" onclick="document.getElementById('logoutForm').submit();">
+                                    <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTENIDO PRINCIPAL DE CADA VISTA -->
+                @RenderBody()
+
+            </main>
+        </div>
+    </div>
+
+    <!-- PANEL DE ACCESIBILIDAD REUTILIZABLE -->
+    <partial name="_PanelAccesibilidad" />
+
+    <!-- SCRIPTS DE INTERACCIÓN DE INTERFAZ -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Dropdown de perfil
+            const profileBtn = document.getElementById("profileBtn");
+            const profileDropdown = document.getElementById("profileDropdown");
+            if (profileBtn && profileDropdown) {
+                profileBtn.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    profileDropdown.classList.toggle("active");
+                    if (notifDropdown) notifDropdown.classList.remove("active");
+                });
+            }
+
+            // Dropdown de notificaciones
+            const notifBtn = document.getElementById("notifBtn");
+            const notifDropdown = document.getElementById("notifDropdown");
+            if (notifBtn && notifDropdown) {
+                notifBtn.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    notifDropdown.classList.toggle("active");
+                    if (profileDropdown) profileDropdown.classList.remove("active");
+                });
+            }
+
+            // Toggle de Sidebar
+            const menuToggle = document.getElementById("menuToggle");
+            const sidebar = document.getElementById("sidebar");
+            if (menuToggle && sidebar) {
+                menuToggle.addEventListener("click", function () {
+                    sidebar.classList.toggle("active");
+                    menuToggle.classList.toggle("active");
+                });
+            }
+
+            // Panel de Accesibilidad
+            const accessibilityToggle = document.getElementById("accessibilityToggle");
+            const accessibilityPanel = document.getElementById("accessibilityPanel");
+            const closePanel = document.getElementById("closePanel");
+
+            if (accessibilityToggle && accessibilityPanel) {
+                accessibilityToggle.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    accessibilityPanel.classList.toggle("active");
+                    accessibilityToggle.classList.toggle("active");
+                });
+            }
+
+            if (closePanel && accessibilityPanel) {
+                closePanel.addEventListener("click", function () {
+                    accessibilityPanel.classList.remove("active");
+                    if (accessibilityToggle) accessibilityToggle.classList.remove("active");
+                });
+            }
+
+            // Cerrar dropdowns si se hace clic afuera
+            document.addEventListener("click", function (e) {
+                if (profileDropdown && !profileDropdown.contains(e.target) && e.target !== profileBtn) {
+                    profileDropdown.classList.remove("active");
+                }
+                if (notifDropdown && !notifDropdown.contains(e.target) && e.target !== notifBtn) {
+                    notifDropdown.classList.remove("active");
+                }
+                if (accessibilityPanel && !accessibilityPanel.contains(e.target) && e.target !== accessibilityToggle && !accessibilityToggle.contains(e.target)) {
+                    accessibilityPanel.classList.remove("active");
+                    if (accessibilityToggle) accessibilityToggle.classList.remove("active");
+                }
+            });
+
+            // Controles de accesibilidad básica
+            const highContrast = document.getElementById("highContrast");
+            if (highContrast) {
+                highContrast.addEventListener("change", function () {
+                    document.body.classList.toggle("high-contrast", this.checked);
+                });
+            }
+
+            const daltonism = document.getElementById("daltonism");
+            if (daltonism) {
+                daltonism.addEventListener("change", function () {
+                    document.body.classList.toggle("daltonism", this.checked);
+                });
+            }
+
+            const dyslexicFont = document.getElementById("dyslexicFont");
+            if (dyslexicFont) {
+                dyslexicFont.addEventListener("change", function () {
+                    document.body.classList.toggle("dyslexic-font", this.checked);
+                });
+            }
+
+            const underlineLinks = document.getElementById("underlineLinks");
+            if (underlineLinks) {
+                underlineLinks.addEventListener("change", function () {
+                    document.body.classList.toggle("underline-links", this.checked);
+                });
+            }
+
+            const resetBtn = document.getElementById("resetAccessibility");
+            if (resetBtn) {
+                resetBtn.addEventListener("click", function () {
+                    document.body.classList.remove("high-contrast", "daltonism", "dyslexic-font", "underline-links");
+                    if (highContrast) highContrast.checked = false;
+                    if (daltonism) daltonism.checked = false;
+                    if (dyslexicFont) dyslexicFont.checked = false;
+                    if (underlineLinks) underlineLinks.checked = false;
+                });
+            }
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+

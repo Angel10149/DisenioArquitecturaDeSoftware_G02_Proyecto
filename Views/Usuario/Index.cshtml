@@ -1,0 +1,59 @@
+﻿@model IEnumerable<AppWeb.Models.Usuario>
+@{
+    ViewData["Title"] = "Usuarios";
+    Layout = "_LayoutDashboard";
+}
+
+<div id="viewUsuarios" class="view-container active">
+    <div class="view-header">
+        <h2>Usuarios</h2>
+        <div class="breadcrumb">Inicio &gt; <span>Usuarios</span></div>
+    </div>
+
+    <!-- TARJETAS DE MÉTRICAS (calculadas con los datos reales) -->
+    <div class="metrics-row">
+        <div class="metric-box">
+            <span class="label">Total Usuarios</span>
+            <span class="value">@Model.Count()</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Administradores</span>
+            <span class="value">@Model.Count(u => u.Rol?.nameRol == "Administrador")</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Vendedores</span>
+            <span class="value">@Model.Count(u => u.Rol?.nameRol == "Vendedor")</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Cajeros</span>
+            <span class="value">@Model.Count(u => u.Rol?.nameRol == "Cajero")</span>
+        </div>
+    </div>
+
+    <!-- TABLA DE USUARIOS (iterando sobre la base de datos) -->
+    <div class="table-wrapper">
+        <table class="data-table" id="usuariosTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th>Teléfono</th>
+                </tr>
+            </thead>
+            <tbody id="usuariosTableBody">
+                @foreach (var usuario in Model)
+                {
+                    <tr>
+                        <td>@usuario.id</td>
+                        <td>@usuario.nombreUsuario</td>
+                        <td>@usuario.correo</td>
+                        <td>@(usuario.Rol?.nameRol ?? "Sin Rol")</td>
+                        <td>@usuario.telefono</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

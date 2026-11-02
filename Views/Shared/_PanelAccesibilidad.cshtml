@@ -1,0 +1,82 @@
+<!-- ===== BOTÓN Y PANEL DE ACCESIBILIDAD ===== -->
+<button class="accessibility-toggle" id="accessibilityToggle" aria-label="Panel de Accesibilidad">
+    <i class="fas fa-universal-access"></i>
+    <span class="badge-count" id="accessibilityCounter">0</span>
+</button>
+
+<div class="accessibility-panel" id="accessibilityPanel">
+    <h3>
+        <i class="fas fa-universal-access"></i> Accesibilidad
+        <button class="close-panel" id="closePanel">✕</button>
+    </h3>
+
+    <!-- Tamaño de texto -->
+    <div class="acc-group">
+        <label>Tamaño de texto</label>
+        <div class="acc-options">
+            <button type="button" data-size="small">Pequeño (9px)</button>
+            <button type="button" class="active" data-size="normal">Normal (12px)</button>
+            <button type="button" data-size="large">Grande (18px)</button>
+        </div>
+        <div class="acc-description">Ajusta el tamaño de la fuente para mejorar la legibilidad.</div>
+    </div>
+
+    <!-- Espaciado entre líneas -->
+    <div class="acc-group">
+        <label>Espaciado entre líneas</label>
+        <div class="acc-options">
+            <button type="button" data-line="compact">Compacto</button>
+            <button type="button" class="active" data-line="normal">Normal</button>
+            <button type="button" data-line="wide">Amplio</button>
+        </div>
+        <div class="acc-description">Aumenta el espacio entre líneas para facilitar la lectura.</div>
+    </div>
+
+    <!-- Alto contraste -->
+    <div class="acc-group">
+        <div class="acc-toggle">
+            <input type="checkbox" id="highContrast" />
+            <span class="toggle-label">Alto contraste</span>
+        </div>
+        <div class="acc-description">Modo de alto contraste para personas con baja visión.</div>
+    </div>
+
+    <!-- Modo daltonismo -->
+    <div class="acc-group">
+        <div class="acc-toggle">
+            <input type="checkbox" id="daltonism" />
+            <span class="toggle-label">Modo daltonismo</span>
+        </div>
+        <div class="acc-description">Optimizado para personas con dificultad para distinguir colores.</div>
+    </div>
+
+    <!-- Fuente legible (OpenDyslexic) -->
+    <div class="acc-group">
+        <div class="acc-toggle">
+            <input type="checkbox" id="dyslexicFont" />
+            <span class="toggle-label">Fuente legible (OpenDyslexic)</span>
+        </div>
+        <div class="acc-description">Fuente diseñada para personas con dislexia.</div>
+    </div>
+
+    <!-- Subrayar enlaces -->
+    <div class="acc-group">
+        <div class="acc-toggle">
+            <input type="checkbox" id="underlineLinks" />
+            <span class="toggle-label">Subrayar enlaces</span>
+        </div>
+        <div class="acc-description">Subraya todos los enlaces y elementos interactivos.</div>
+    </div>
+
+    <!-- Lector de texto -->
+    <div class="acc-group">
+        <div class="acc-toggle">
+            <input type="checkbox" id="textReader" />
+            <span class="toggle-label">Lector de texto (text-to-speech)</span>
+        </div>
+        <div class="acc-description">Lee automáticamente al pasar el cursor sobre cualquier texto.</div>
+    </div>
+
+    <button type="button" class="reset-accessibility" id="resetAccessibility">Restablecer configuración</button>
+</div>
+

@@ -1,8 +1,114 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "_LayoutDashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div id="viewDashboard" class="view-container active">
+    <div class="welcome-row">
+        <h2>Bienvenido, @(User.Identity?.Name ?? "Administrador")</h2>
+        <p>Resumen general del sistema</p>
+    </div>
+
+    <!-- TARJETAS DE MÉTRICAS -->
+    <div class="cards-row">
+        <div class="metric-card card-ventas">
+            <div class="info">
+                <span class="label">Ventas de hoy</span>
+                <span class="value">S/ 1,250.00</span>
+            </div>
+            <i class="fas fa-shopping-cart icon"></i>
+        </div>
+        <div class="metric-card card-inventario">
+            <div class="info">
+                <span class="label">Inventario</span>
+                <span class="value">256 productos</span>
+            </div>
+            <i class="fas fa-cube icon"></i>
+        </div>
+        <div class="metric-card card-caja">
+            <div class="info">
+                <span class="label">Caja hoy</span>
+                <span class="value">S/ 890.00</span>
+                <span class="sub">3 movimientos</span>
+            </div>
+            <i class="fas fa-box icon"></i>
+        </div>
+        <div class="metric-card card-alertas">
+            <div class="info">
+                <span class="label">Alertas</span>
+                <span class="value">8 stock bajo</span>
+            </div>
+            <i class="fas fa-bell icon"></i>
+        </div>
+    </div>
+
+    <!-- FILA DE GRÁFICOS Y STOCK BAJO -->
+    <div class="row-two-col">
+        <div class="chart-box">
+            <h3>Ventas (últimos 7 días)</h3>
+            <div class="chart-wrapper">
+                <div class="chart-y-axis">
+                    <span>S/ 1,500</span>
+                    <span>S/ 1,000</span>
+                    <span>S/ 500</span>
+                    <span>S/ 0</span>
+                </div>
+                <div class="chart-bars" id="chartBars"></div>
+            </div>
+        </div>
+        <div class="stock-box">
+            <h3>Productos con stock bajo</h3>
+            <div class="stock-list">
+                <div class="stock-item"><i class="fas fa-bell"></i><span class="name">Pastilla de freno</span><span class="qty">5 UNI</span></div>
+                <div class="stock-item"><i class="fas fa-bell"></i><span class="name">Filtro de aire</span><span class="qty">3 UNI</span></div>
+                <div class="stock-item"><i class="fas fa-bell"></i><span class="name">Bujía</span><span class="qty">2 UNI</span></div>
+                <div class="stock-item"><i class="fas fa-bell"></i><span class="name">Aceite 10w30</span><span class="qty">4 UNI</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACCESOS RÁPIDOS -->
+    <div class="quick-access-section">
+        <h3>Accesos rápidos</h3>
+        <div class="quick-access">
+            <a href="#" class="quick-btn qb-ventas" data-view="ventas"><i class="fas fa-shopping-cart"></i><span class="label">Ventas</span></a>
+            <a href="#" class="quick-btn qb-inventario" data-view="inventory"><i class="fas fa-cube"></i><span class="label">Inventario</span></a>
+            <a href="#" class="quick-btn qb-caja" data-view="caja"><i class="fas fa-cash-register"></i><span class="label">Caja</span></a>
+            <a href="#" class="quick-btn qb-clientes" data-view="clientes"><i class="fas fa-users"></i><span class="label">Clientes</span></a>
+            <a href="#" class="quick-btn qb-proveedores" data-view="proveedores"><i class="fas fa-truck"></i><span class="label">Proveedores</span></a>
+            <a href="#" class="quick-btn qb-reportes" data-view="reportes"><i class="fas fa-file-alt"></i><span class="label">Reportes</span></a>
+            <a asp-controller="Usuario" asp-action="Index" class="quick-btn qb-usuarios" data-view="usuarios"><i class="fas fa-user-cog"></i><span class="label">Usuarios</span></a>
+            <a href="#" class="quick-btn qb-configuracion" data-view="configuracion"><i class="fas fa-cog"></i><span class="label">Configuración</span></a>
+        </div>
+    </div>
+
+    <!-- FILA INFERIOR: VENTAS POR CATEGORÍA Y TOP PRODUCTOS -->
+    <div class="row-bottom">
+        <div class="pie-box">
+            <h3>Ventas por categoría (Este mes)</h3>
+            <div class="pie-container">
+                <div class="donut-wrapper">
+                    <div class="donut-chart"></div>
+                    <div class="donut-hole"></div>
+                </div>
+                <div class="pie-legend">
+                    <div class="legend-item"><span class="color-box" style="background:#304D8A;"></span> Frenos <span class="value">S/ 2,450.00</span></div>
+                    <div class="legend-item"><span class="color-box" style="background:#28A745;"></span> Filtros <span class="value">S/ 1,890.00</span></div>
+                    <div class="legend-item"><span class="color-box" style="background:#FFC107;"></span> Lubricantes <span class="value">S/ 1,250.00</span></div>
+                    <div class="legend-item"><span class="color-box" style="background:#DC3545;"></span> Encendido <span class="value">S/ 980.00</span></div>
+                    <div class="legend-item"><span class="color-box" style="background:#4A78C2;"></span> Otros <span class="value">S/ 730.00</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="top-box">
+            <h3>Top productos más vendidos</h3>
+            <div class="top-list">
+                <div class="top-item"><span class="rank">1</span><span class="name">Pastilla de freno</span></div>
+                <div class="top-item"><span class="rank">2</span><span class="name">Filtro de aire</span></div>
+                <div class="top-item"><span class="rank">3</span><span class="name">Aceite 10w30</span></div>
+                <div class="top-item"><span class="rank">4</span><span class="name">Bujía</span></div>
+                <div class="top-item"><span class="rank">5</span><span class="name">Filtro de aceite</span></div>
+            </div>
+        </div>
+    </div>
 </div>
