@@ -1,0 +1,118 @@
+﻿@model IEnumerable<AppWeb.Models.Proveedor>
+@{
+    ViewData["Title"] = "Proveedores";
+    Layout = "_LayoutDashboard";
+    var ultimaOrden = Model
+        .SelectMany(p => p.OrdenesCompra ?? Enumerable.Empty<AppWeb.Models.OrdenCompra>())
+        .OrderByDescending(o => o.fechaCompra)
+        .FirstOrDefault();
+    var ultimaCompraTexto = ultimaOrden != null ? ultimaOrden.fechaCompra.ToString("yyyy-MM-dd") : "Sin compras";
+}
+
+<div id="viewProveedores" class="view-container active">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2>Proveedores</h2>
+            <div class="breadcrumb">Inicio &gt; <span>Proveedores</span></div>
+        </div>
+        <a asp-controller="Proveedor" asp-action="Crear"
+           style="background:#304D8A; color:#fff; padding:10px 18px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+            <i class="fas fa-plus"></i> Nuevo Proveedor
+        </a>
+    </div>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #d4edda; color: #155724;">
+            @TempData["Mensaje"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #f8d7da; color: #721c24;">
+            @TempData["Error"]
+        </div>
+    }
+
+    <!-- TARJETAS DE MÉTRICAS -->
+    <div class="metrics-row">
+        <div class="metric-box">
+            <span class="label">Total Proveedores</span>
+            <span class="value">@Model.Count()</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Proveedores Activos</span>
+            <span class="value">@Model.Count(p => p.estado)</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Última Compra</span>
+            <span class="value">@ultimaCompraTexto</span>
+        </div>
+    </div>
+
+    <!-- BUSCADOR -->
+    <form asp-controller="Proveedor" asp-action="Index" method="get" style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+        <input type="text" name="buscar" value="@ViewBag.Buscar" placeholder="Buscar por RUC, razón social, contacto o correo..."
+               style="flex:1; min-width:240px; padding:9px 12px; border:1px solid #ced4da; border-radius:6px;" />
+        <button type="submit" style="padding:9px 16px; border:none; border-radius:6px; background:#304D8A; color:#fff; cursor:pointer;">
+            <i class="fas fa-search"></i> Buscar
+        </button>
+        @if (!string.IsNullOrWhiteSpace(ViewBag.Buscar as string))
+        {
+            <a asp-controller="Proveedor" asp-action="Index"
+               style="padding:9px 16px; border-radius:6px; background:#e2e6ea; color:#333; text-decoration:none; display:inline-flex; align-items:center;">
+                Limpiar
+            </a>
+        }
+    </form>
+
+    <!-- TARJETAS DE PROVEEDORES (estilo del prototipo) -->
+    @if (!Model.Any())
+    {
+        <div class="table-wrapper" style="text-align:center; padding:24px; color:#6c757d;">
+            No se encontraron proveedores registrados.
+        </div>
+    }
+    else
+    {
+        <div class="proveedores-grid" id="proveedoresGrid">
+            @foreach (var proveedor in Model)
+            {
+                <div class="proveedor-card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                        <span class="nombre">
+                            <i class="fas fa-truck" style="color:#304D8A;"></i> @proveedor.razonSocial
+                        </span>
+                        @if (proveedor.estado)
+                        {
+                            <span style="color:#28A745; font-weight:600; font-size:0.85rem;">Activo</span>
+                        }
+                        else
+                        {
+                            <span style="color:#FFC107; font-weight:600; font-size:0.85rem;">Inactivo</span>
+                        }
+                    </div>
+                    <span class="info"><i class="fas fa-id-card"></i> RUC: @proveedor.ruc</span>
+                    <span class="info"><i class="fas fa-user"></i> @proveedor.contacto</span>
+                    <span class="info"><i class="fas fa-phone"></i> @proveedor.telefono</span>
+                    <span class="info"><i class="fas fa-envelope"></i> @proveedor.email</span>
+                    <span class="info"><i class="fas fa-map-marker-alt"></i> @proveedor.direccion</span>
+
+                    <div style="margin-top:12px; padding-top:10px; border-top:1px solid #eee; display:flex; gap:8px; justify-content:flex-end;">
+                        <a asp-controller="Proveedor" asp-action="Editar" asp-route-id="@proveedor.idProveedor"
+                           style="padding:5px 12px; border-radius:4px; text-decoration:none; font-size:0.85rem; color:#fff; background:#304D8A;">
+                            Editar
+                        </a>
+                        <form asp-controller="Proveedor" asp-action="CambiarEstado" asp-route-id="@proveedor.idProveedor" method="post" style="display:inline;">
+                            <button type="submit"
+                                    style="padding:5px 12px; border:none; border-radius:4px; cursor:pointer; font-size:0.85rem; color:#fff; background:@(proveedor.estado ? "#DC3545" : "#28A745");"
+                                    onclick="return confirm('@(proveedor.estado ? "¿Desactivar este proveedor?" : "¿Activar este proveedor?")');">
+                                @(proveedor.estado ? "Desactivar" : "Activar")
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
