@@ -20,13 +20,13 @@ namespace AppWeb.Models
         [Required, StringLength(100)]
         public string email { get; set; }
         [Required]
-        public bool estado { get; set; }
+        public bool estado { get; set; } = true;
 
         //Relaciones 1 : M con IngresoMercaderia
-        public ICollection<IngresoMercaderia> IngresosMercaderia { get; set; }
+        public ICollection<IngresoMercaderia> IngresosMercaderia { get; set; } = new List<IngresoMercaderia>();
 
 
         //Relaciones 1 : M con OrdenCompra
-        public ICollection<OrdenCompra> OrdenesCompra { get; set; }
+        public ICollection<OrdenCompra> OrdenesCompra { get; set; } = new List<OrdenCompra>();
     }
 }
