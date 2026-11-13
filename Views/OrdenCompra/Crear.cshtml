@@ -1,0 +1,194 @@
+﻿@{
+    ViewData["Title"] = "Nueva Orden de Compra";
+    Layout = "_LayoutDashboard";
+    var proveedores = ViewBag.Proveedores as IEnumerable<AppWeb.Models.Proveedor> ?? Enumerable.Empty<AppWeb.Models.Proveedor>();
+    var requerimientos = ViewBag.Requerimientos as IEnumerable<AppWeb.Models.RequerimientoCompra> ?? Enumerable.Empty<AppWeb.Models.RequerimientoCompra>();
+    var productos = ViewBag.Productos as IEnumerable<AppWeb.Models.Producto> ?? Enumerable.Empty<AppWeb.Models.Producto>();
+    var reqSel = ViewBag.RequerimientoSeleccionado as AppWeb.Models.RequerimientoCompra;
+    int? idReqSel = ViewBag.IdRequerimientoSeleccionado as int?;
+}
+
+<div id="viewCrearOrden" class="view-container active">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2>Nueva Orden de Compra</h2>
+            <div class="breadcrumb">
+                <a asp-controller="Home" asp-action="Index" style="color:inherit; text-decoration:none;">Inicio</a> &gt;
+                <a asp-controller="OrdenCompra" asp-action="Index" style="color:inherit; text-decoration:none;">Órdenes de Compra</a> &gt;
+                <span>Nueva Orden</span>
+            </div>
+        </div>
+        <a asp-controller="OrdenCompra" asp-action="Index"
+           style="background:#6c757d; color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="table-wrapper" style="padding: 24px;">
+        @if (ViewData["Error"] != null)
+        {
+            <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #f8d7da; color: #721c24;">
+                @ViewData["Error"]
+            </div>
+        }
+
+        <form asp-controller="OrdenCompra" asp-action="Crear" method="post" autocomplete="off">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:20px;">
+                <div>
+                    <label style="display:block; font-weight:500; margin-bottom:6px;">Proveedor</label>
+                    <select name="idProveedor" required
+                            style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box; background:#fff;">
+                        <option value="">Seleccione un proveedor...</option>
+                        @foreach (var prov in proveedores)
+                        {
+                            <option value="@prov.idProveedor">@prov.razonSocial (RUC: @prov.ruc)</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block; font-weight:500; margin-bottom:6px;">Requerimiento Aprobado</label>
+                    <select name="idRequerimiento" required
+                            style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box; background:#fff;">
+                        <option value="">Seleccione un requerimiento aprobado...</option>
+                        @foreach (var req in requerimientos)
+                        {
+                            <option value="@req.idRequerimiento" selected="@(idReqSel == req.idRequerimiento)">
+                                #@req.idRequerimiento - @(req.producto?.nombre ?? "Producto") (Cant: @req.cantidadRequerida)
+                            </option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="margin:0; font-size:1.05rem;">Detalle de Productos</h3>
+                <button type="button" id="btnAgregarFila"
+                        style="background:#28A745; color:#fff; border:none; padding:7px 14px; border-radius:6px; cursor:pointer; font-weight:500;">
+                    <i class="fas fa-plus"></i> Agregar Producto
+                </button>
+            </div>
+
+            <table class="data-table" id="detalleOrdenTable" style="margin-bottom:16px;">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th style="width:130px;">Cantidad</th>
+                        <th style="width:160px;">Precio Unit. (S/)</th>
+                        <th style="width:150px;">Subtotal</th>
+                        <th style="width:80px;">Quitar</th>
+                    </tr>
+                </thead>
+                <tbody id="detalleBody">
+                    <tr>
+                        <td>
+                            <select name="idProductos" class="select-producto" required
+                                    style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:6px; background:#fff;">
+                                <option value="" data-costo="0">Seleccione...</option>
+                                @foreach (var p in productos)
+                                {
+                                    <option value="@p.idProducto" data-costo="@p.precioCosto.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                            selected="@(reqSel != null && reqSel.idProducto == p.idProducto)">
+                                        @p.nombre (@p.codigoBarras)
+                                    </option>
+                                }
+                            </select>
+                        </td>
+                        <td>
+                            <input type="number" name="cantidades" class="input-cantidad" min="1"
+                                   value="@(reqSel != null ? reqSel.cantidadRequerida : 1)" required
+                                   style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                        </td>
+                        <td>
+                            <input type="number" name="preciosUnitarios" class="input-precio" step="0.01" min="0"
+                                   value="@(reqSel?.producto != null ? reqSel.producto.precioCosto.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) : "0.00")" required
+                                   style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                        </td>
+                        <td class="celda-subtotal" style="font-weight:600;">S/ 0.00</td>
+                        <td>
+                            <button type="button" class="btn-quitar"
+                                    style="background:#DC3545; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="display:flex; justify-content:flex-end; align-items:center; gap:16px; margin-bottom:20px; font-size:1.15rem;">
+                <span>Total Orden:</span>
+                <strong id="totalOrdenTexto" style="color:#304D8A;">S/ 0.00</strong>
+            </div>
+
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <a asp-controller="OrdenCompra" asp-action="Index"
+                   style="padding:10px 18px; border-radius:6px; text-decoration:none; background:#e2e6ea; color:#333; font-weight:500;">
+                    Cancelar
+                </a>
+                <button type="submit"
+                        style="padding:10px 20px; border:none; border-radius:6px; background:#304D8A; color:#fff; font-weight:500; cursor:pointer;">
+                    <i class="fas fa-save"></i> Generar Orden de Compra
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const tbody = document.getElementById('detalleBody');
+            const totalTexto = document.getElementById('totalOrdenTexto');
+            const btnAgregar = document.getElementById('btnAgregarFila');
+            const plantillaFila = tbody.querySelector('tr').cloneNode(true);
+
+            function recalcular() {
+                let total = 0;
+                tbody.querySelectorAll('tr').forEach(tr => {
+                    const cant = parseFloat(tr.querySelector('.input-cantidad').value) || 0;
+                    const precio = parseFloat(tr.querySelector('.input-precio').value) || 0;
+                    const sub = cant * precio;
+                    tr.querySelector('.celda-subtotal').textContent = 'S/ ' + sub.toFixed(2);
+                    total += sub;
+                });
+                totalTexto.textContent = 'S/ ' + total.toFixed(2);
+            }
+
+            function enlazarEventos(tr) {
+                const select = tr.querySelector('.select-producto');
+                const cant = tr.querySelector('.input-cantidad');
+                const precio = tr.querySelector('.input-precio');
+                const btnQuitar = tr.querySelector('.btn-quitar');
+
+                select.addEventListener('change', function () {
+                    const opt = this.options[this.selectedIndex];
+                    const costo = parseFloat(opt.getAttribute('data-costo')) || 0;
+                    precio.value = costo.toFixed(2);
+                    recalcular();
+                });
+
+                cant.addEventListener('input', recalcular);
+                precio.addEventListener('input', recalcular);
+
+                btnQuitar.addEventListener('click', function () {
+                    if (tbody.querySelectorAll('tr').length > 1) {
+                        tr.remove();
+                        recalcular();
+                    }
+                });
+            }
+
+            enlazarEventos(tbody.querySelector('tr'));
+            recalcular();
+
+            btnAgregar.addEventListener('click', function () {
+                const nueva = plantillaFila.cloneNode(true);
+                nueva.querySelector('.select-producto').value = '';
+                nueva.querySelector('.input-cantidad').value = '1';
+                nueva.querySelector('.input-precio').value = '0.00';
+                tbody.appendChild(nueva);
+                enlazarEventos(nueva);
+                recalcular();
+            });
+        })();
+    </script>
+}

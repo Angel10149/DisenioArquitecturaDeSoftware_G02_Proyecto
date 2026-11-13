@@ -1,0 +1,173 @@
+﻿@model IEnumerable<AppWeb.Models.OrdenCompra>
+@{
+    ViewData["Title"] = "Órdenes de Compra";
+    Layout = "_LayoutDashboard";
+    string? estadoSel = ViewBag.Estado as string;
+}
+
+<div id="viewOrdenesCompra" class="view-container active">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2>Órdenes de Compra</h2>
+            <div class="breadcrumb">
+                <a asp-controller="Home" asp-action="Index" style="color:inherit; text-decoration:none;">Inicio</a> &gt;
+                <span>Órdenes de Compra</span>
+            </div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <a asp-controller="RequerimientoCompra" asp-action="Index"
+               style="background:#e2e6ea; color:#333; padding:9px 14px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:6px;">
+                <i class="fas fa-clipboard-list"></i> Requerimientos
+            </a>
+            <a asp-controller="OrdenCompra" asp-action="Crear"
+               style="background:#304D8A; color:#fff; padding:9px 18px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+                <i class="fas fa-plus"></i> Nueva Orden de Compra
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #d4edda; color: #155724;">
+            @TempData["Mensaje"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #f8d7da; color: #721c24;">
+            @TempData["Error"]
+        </div>
+    }
+
+    <!-- TARJETAS DE MÉTRICAS -->
+    <div class="metrics-row">
+        <div class="metric-box">
+            <span class="label">Total Órdenes</span>
+            <span class="value">@Model.Count()</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Pendientes / Emitidas</span>
+            <span class="value">@Model.Count(o => o.estado == "Pendiente" || o.estado == "Emitida")</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Recibidas</span>
+            <span class="value">@Model.Count(o => o.estado == "Recibida")</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Monto Total</span>
+            <span class="value">S/ @Model.Where(o => o.estado != "Anulada").Sum(o => o.total).ToString("N2")</span>
+        </div>
+    </div>
+
+    <!-- FILTROS Y BUSCADOR -->
+    <form asp-controller="OrdenCompra" asp-action="Index" method="get" style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+        <select name="estado" onchange="this.form.submit()"
+                style="padding:9px 12px; border:1px solid #ced4da; border-radius:6px; background:#fff;">
+            <option value="">Todos los Estados</option>
+            <option value="Pendiente" selected="@(estadoSel == "Pendiente")">Pendiente</option>
+            <option value="Emitida" selected="@(estadoSel == "Emitida")">Emitida</option>
+            <option value="Recibida" selected="@(estadoSel == "Recibida")">Recibida</option>
+            <option value="Anulada" selected="@(estadoSel == "Anulada")">Anulada</option>
+        </select>
+
+        <input type="text" name="buscar" value="@ViewBag.Buscar" placeholder="Buscar por proveedor, responsable o # orden..."
+               style="flex:1; min-width:240px; padding:9px 12px; border:1px solid #ced4da; border-radius:6px;" />
+
+        <button type="submit" style="padding:9px 16px; border:none; border-radius:6px; background:#304D8A; color:#fff; cursor:pointer;">
+            <i class="fas fa-search"></i> Buscar
+        </button>
+
+        @if (!string.IsNullOrWhiteSpace(ViewBag.Buscar as string) || !string.IsNullOrWhiteSpace(estadoSel))
+        {
+            <a asp-controller="OrdenCompra" asp-action="Index"
+               style="padding:9px 16px; border-radius:6px; background:#e2e6ea; color:#333; text-decoration:none; display:inline-flex; align-items:center;">
+                Limpiar
+            </a>
+        }
+    </form>
+
+    <!-- TABLA DE ÓRDENES -->
+    <div class="table-wrapper">
+        <table class="data-table" id="ordenesTable">
+            <thead>
+                <tr>
+                    <th>Orden</th>
+                    <th>Fecha</th>
+                    <th>Proveedor</th>
+                    <th>Requerimiento</th>
+                    <th>Ítems</th>
+                    <th>Total</th>
+                    <th>Responsable</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="9" style="text-align:center; padding:20px; color:#6c757d;">
+                            No se encontraron órdenes de compra.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var orden in Model)
+                    {
+                        var colorEstado = orden.estado switch
+                        {
+                            "Recibida" => "#28A745",
+                            "Emitida" => "#304D8A",
+                            "Anulada" => "#DC3545",
+                            _ => "#FFC107"
+                        };
+                        <tr>
+                            <td><strong>#@orden.idOrdenCompra</strong></td>
+                            <td>@orden.fechaCompra.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@(orden.proveedor?.razonSocial ?? "-")</td>
+                            <td>
+                                #@orden.idRequerimiento
+                                @if (orden.requerimiento?.producto != null)
+                                {
+                                    <span style="font-size:0.82rem; color:#6c757d;">(@orden.requerimiento.producto.nombre)</span>
+                                }
+                            </td>
+                            <td>@(orden.DetalleOrdenCompras?.Count ?? 0)</td>
+                            <td><strong>S/ @orden.total.ToString("N2")</strong></td>
+                            <td>@(orden.usuario?.nombreUsuario ?? "-")</td>
+                            <td><span style="color:@colorEstado; font-weight:600;">@orden.estado</span></td>
+                            <td style="white-space:nowrap;">
+                                <a asp-controller="OrdenCompra" asp-action="Detalle" asp-route-id="@orden.idOrdenCompra"
+                                   style="padding:4px 10px; border-radius:4px; text-decoration:none; font-size:0.85rem; color:#fff; background:#304D8A; margin-right:4px; display:inline-block;">
+                                    Detalle
+                                </a>
+                                @if (orden.estado == "Pendiente")
+                                {
+                                    <form asp-controller="OrdenCompra" asp-action="CambiarEstado" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@orden.idOrdenCompra" />
+                                        <input type="hidden" name="nuevoEstado" value="Emitida" />
+                                        <button type="submit"
+                                                style="padding:4px 10px; border:none; border-radius:4px; cursor:pointer; font-size:0.85rem; color:#fff; background:#28A745; margin-right:4px;"
+                                                onclick="return confirm('¿Emitir esta orden de compra al proveedor?');">
+                                            Emitir
+                                        </button>
+                                    </form>
+                                    <form asp-controller="OrdenCompra" asp-action="CambiarEstado" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@orden.idOrdenCompra" />
+                                        <input type="hidden" name="nuevoEstado" value="Anulada" />
+                                        <button type="submit"
+                                                style="padding:4px 10px; border:none; border-radius:4px; cursor:pointer; font-size:0.85rem; color:#fff; background:#DC3545;"
+                                                onclick="return confirm('¿Anular esta orden de compra?');">
+                                            Anular
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

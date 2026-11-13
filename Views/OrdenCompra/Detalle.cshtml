@@ -1,0 +1,74 @@
+﻿@model AppWeb.Models.OrdenCompra
+@{
+    ViewData["Title"] = $"Orden de Compra #{Model.idOrdenCompra}";
+    Layout = "_LayoutDashboard";
+}
+
+<div id="viewDetalleOrden" class="view-container active">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2>Orden de Compra #@Model.idOrdenCompra</h2>
+            <div class="breadcrumb">
+                <a asp-controller="Home" asp-action="Index" style="color:inherit; text-decoration:none;">Inicio</a> &gt;
+                <a asp-controller="OrdenCompra" asp-action="Index" style="color:inherit; text-decoration:none;">Órdenes de Compra</a> &gt;
+                <span>Detalle #@Model.idOrdenCompra</span>
+            </div>
+        </div>
+        <a asp-controller="OrdenCompra" asp-action="Index"
+           style="background:#6c757d; color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <!-- DATOS GENERALES -->
+    <div class="metrics-row">
+        <div class="metric-box">
+            <span class="label">Proveedor</span>
+            <span class="value" style="font-size:1.05rem;">@(Model.proveedor?.razonSocial ?? "-")</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Fecha de Compra</span>
+            <span class="value" style="font-size:1.05rem;">@Model.fechaCompra.ToString("yyyy-MM-dd HH:mm")</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Estado</span>
+            <span class="value" style="font-size:1.05rem;">@Model.estado</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Total</span>
+            <span class="value">S/ @Model.total.ToString("N2")</span>
+        </div>
+    </div>
+
+    <div class="table-wrapper" style="padding: 20px; margin-bottom: 20px;">
+        <p style="margin:0 0 8px 0;"><strong>Responsable:</strong> @(Model.usuario?.nombreUsuario ?? "-")</p>
+        <p style="margin:0;"><strong>Requerimiento Asociado:</strong> #@Model.idRequerimiento (@(Model.requerimiento?.producto?.nombre ?? "-"))</p>
+    </div>
+
+    <!-- DETALLE DE PRODUCTOS -->
+    <div class="table-wrapper" style="margin-bottom: 20px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Código</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var det in Model.DetalleOrdenCompras)
+                {
+                    <tr>
+                        <td><strong>@(det.producto?.nombre ?? "-")</strong></td>
+                        <td><code>@(det.producto?.codigoBarras ?? "-")</code></td>
+                        <td>@det.cantidad</td>
+                        <td>S/ @det.precioUnitario.ToString("N2")</td>
+                        <td><strong>S/ @det.subtotal.ToString("N2")</strong></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
