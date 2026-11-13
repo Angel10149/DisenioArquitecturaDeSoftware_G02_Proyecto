@@ -1,0 +1,253 @@
+﻿@using System.Globalization
+@{
+    ViewData["Title"] = "Nueva Venta";
+    Layout = "_LayoutDashboard";
+    var clientes = ViewBag.Clientes as IEnumerable<AppWeb.Models.Cliente> ?? Enumerable.Empty<AppWeb.Models.Cliente>();
+    var productos = ViewBag.Productos as IEnumerable<AppWeb.Models.Producto> ?? Enumerable.Empty<AppWeb.Models.Producto>();
+    var cotizaciones = ViewBag.CotizacionesAprobadas as IEnumerable<AppWeb.Models.Cotizacion> ?? Enumerable.Empty<AppWeb.Models.Cotizacion>();
+    var cotSel = ViewBag.CotizacionSeleccionada as AppWeb.Models.Cotizacion;
+    int? idCotSel = ViewBag.IdCotizacionSeleccionada as int?;
+}
+
+<div id="viewCrearVenta" class="view-container active">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2>Nueva Venta</h2>
+            <div class="breadcrumb">
+                <a asp-controller="Home" asp-action="Index" style="color:inherit; text-decoration:none;">Inicio</a> &gt;
+                <a asp-controller="Venta" asp-action="Index" style="color:inherit; text-decoration:none;">Ventas</a> &gt;
+                <span>Nueva Venta</span>
+            </div>
+        </div>
+        <a asp-controller="Venta" asp-action="Index"
+           style="background:#6c757d; color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="table-wrapper" style="padding: 24px;">
+        @if (ViewData["Error"] != null)
+        {
+            <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #f8d7da; color: #721c24;">
+                @ViewData["Error"]
+            </div>
+        }
+
+        <!-- CARGAR DESDE COTIZACIÓN APROBADA (OPCIONAL) -->
+        <div style="margin-bottom: 20px; padding:14px 16px; border-radius:6px; background:#f8f9fa; border:1px solid #dee2e6;">
+            <label style="display:block; font-weight:500; margin-bottom:6px;">Cargar desde Cotización Aprobada (opcional)</label>
+            <select id="selectCotizacion"
+                    onchange="if(this.value){ window.location.href='@Url.Action("Crear", "Venta")?idCotizacion=' + this.value; } else { window.location.href='@Url.Action("Crear", "Venta")'; }"
+                    style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box; background:#fff;">
+                <option value="">-- Venta directa (sin cotización) --</option>
+                @foreach (var cot in cotizaciones)
+                {
+                    var cliNombre = !string.IsNullOrWhiteSpace(cot.cliente?.razonSocial) ? cot.cliente.razonSocial : (cot.cliente?.nombres ?? "-");
+                    <option value="@cot.idCotizacion" selected="@(idCotSel == cot.idCotizacion)">
+                        Cotización #@cot.idCotizacion - @cliNombre (S/ @cot.total.ToString("N2"))
+                    </option>
+                }
+            </select>
+        </div>
+
+        <form asp-controller="Venta" asp-action="Crear" method="post" autocomplete="off">
+            <input type="hidden" name="idCotizacion" value="@(cotSel?.idCotizacion)" />
+
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:500; margin-bottom:6px;">Cliente</label>
+                <select name="idCliente" required
+                        style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box; background:#fff;">
+                    <option value="">Seleccione un cliente...</option>
+                    @foreach (var cli in clientes)
+                    {
+                        var etiqueta = !string.IsNullOrWhiteSpace(cli.razonSocial) ? cli.razonSocial : cli.nombres;
+                        <option value="@cli.idCliente" selected="@(cotSel != null && cotSel.idCliente == cli.idCliente)">
+                            @etiqueta (@cli.tipoDocumento: @cli.numeroDocumento)
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="margin:0; font-size:1.05rem;">Detalle de Productos</h3>
+                <button type="button" id="btnAgregarFila"
+                        style="background:#28A745; color:#fff; border:none; padding:7px 14px; border-radius:6px; cursor:pointer; font-weight:500;">
+                    <i class="fas fa-plus"></i> Agregar Producto
+                </button>
+            </div>
+
+            <table class="data-table" id="detalleVentaTable" style="margin-bottom:16px;">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th style="width:110px;">Cantidad</th>
+                        <th style="width:140px;">Precio Unit. (S/)</th>
+                        <th style="width:130px;">Descuento (S/)</th>
+                        <th style="width:140px;">Subtotal</th>
+                        <th style="width:70px;">Quitar</th>
+                    </tr>
+                </thead>
+                <tbody id="detalleBody">
+                    @if (cotSel != null && cotSel.DetalleCotizacions != null && cotSel.DetalleCotizacions.Any())
+                    {
+                        @foreach (var det in cotSel.DetalleCotizacions)
+                        {
+                            <tr>
+                                <td>
+                                    <select name="idProductos" class="select-producto" required
+                                            style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:6px; background:#fff;">
+                                        <option value="" data-precio="0">Seleccione...</option>
+                                        @foreach (var p in productos)
+                                        {
+                                            <option value="@p.idProducto" data-precio="@p.precioVenta.ToString(CultureInfo.InvariantCulture)"
+                                                    selected="@(det.idProducto == p.idProducto)">
+                                                @p.nombre (@p.codigoBarras) - Stock: @p.stockActual
+                                            </option>
+                                        }
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" name="cantidades" class="input-cantidad" min="1" value="@det.cantidad" required
+                                           style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                                </td>
+                                <td>
+                                    <input type="number" name="preciosUnitarios" class="input-precio" step="0.01" min="0"
+                                           value="@det.precioUnitario.ToString("0.00", CultureInfo.InvariantCulture)" required
+                                           style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                                </td>
+                                <td>
+                                    <input type="number" name="descuentos" class="input-descuento" step="0.01" min="0"
+                                           value="@det.descuento.ToString("0.00", CultureInfo.InvariantCulture)" required
+                                           style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                                </td>
+                                <td class="celda-subtotal" style="font-weight:600;">S/ 0.00</td>
+                                <td>
+                                    <button type="button" class="btn-quitar"
+                                            style="background:#DC3545; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td>
+                                <select name="idProductos" class="select-producto" required
+                                        style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:6px; background:#fff;">
+                                    <option value="" data-precio="0">Seleccione...</option>
+                                    @foreach (var p in productos)
+                                    {
+                                        <option value="@p.idProducto" data-precio="@p.precioVenta.ToString(CultureInfo.InvariantCulture)">
+                                            @p.nombre (@p.codigoBarras) - Stock: @p.stockActual
+                                        </option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <input type="number" name="cantidades" class="input-cantidad" min="1" value="1" required
+                                       style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                            </td>
+                            <td>
+                                <input type="number" name="preciosUnitarios" class="input-precio" step="0.01" min="0" value="0.00" required
+                                       style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                            </td>
+                            <td>
+                                <input type="number" name="descuentos" class="input-descuento" step="0.01" min="0" value="0.00" required
+                                       style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                            </td>
+                            <td class="celda-subtotal" style="font-weight:600;">S/ 0.00</td>
+                            <td>
+                                <button type="button" class="btn-quitar"
+                                        style="background:#DC3545; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div style="display:flex; justify-content:flex-end; align-items:center; gap:16px; margin-bottom:20px; font-size:1.15rem;">
+                <span>Total Venta:</span>
+                <strong id="totalVentaTexto" style="color:#304D8A;">S/ 0.00</strong>
+            </div>
+
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <a asp-controller="Venta" asp-action="Index"
+                   style="padding:10px 18px; border-radius:6px; text-decoration:none; background:#e2e6ea; color:#333; font-weight:500;">
+                    Cancelar
+                </a>
+                <button type="submit"
+                        style="padding:10px 20px; border:none; border-radius:6px; background:#304D8A; color:#fff; font-weight:500; cursor:pointer;">
+                    <i class="fas fa-save"></i> Registrar Venta
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const tbody = document.getElementById('detalleBody');
+            const totalTexto = document.getElementById('totalVentaTexto');
+            const btnAgregar = document.getElementById('btnAgregarFila');
+            const plantillaFila = tbody.querySelector('tr').cloneNode(true);
+
+            function recalcular() {
+                let total = 0;
+                tbody.querySelectorAll('tr').forEach(tr => {
+                    const cant = parseFloat(tr.querySelector('.input-cantidad').value) || 0;
+                    const precio = parseFloat(tr.querySelector('.input-precio').value) || 0;
+                    const desc = parseFloat(tr.querySelector('.input-descuento').value) || 0;
+                    const sub = Math.max(0, (cant * precio) - desc);
+                    tr.querySelector('.celda-subtotal').textContent = 'S/ ' + sub.toFixed(2);
+                    total += sub;
+                });
+                totalTexto.textContent = 'S/ ' + total.toFixed(2);
+            }
+
+            function enlazarEventos(tr) {
+                const select = tr.querySelector('.select-producto');
+                const cant = tr.querySelector('.input-cantidad');
+                const precio = tr.querySelector('.input-precio');
+                const desc = tr.querySelector('.input-descuento');
+                const btnQuitar = tr.querySelector('.btn-quitar');
+
+                select.addEventListener('change', function () {
+                    const opt = this.options[this.selectedIndex];
+                    const p = parseFloat(opt.getAttribute('data-precio')) || 0;
+                    precio.value = p.toFixed(2);
+                    recalcular();
+                });
+
+                cant.addEventListener('input', recalcular);
+                precio.addEventListener('input', recalcular);
+                desc.addEventListener('input', recalcular);
+
+                btnQuitar.addEventListener('click', function () {
+                    if (tbody.querySelectorAll('tr').length > 1) {
+                        tr.remove();
+                        recalcular();
+                    }
+                });
+            }
+
+            tbody.querySelectorAll('tr').forEach(tr => enlazarEventos(tr));
+            recalcular();
+
+            btnAgregar.addEventListener('click', function () {
+                const nueva = plantillaFila.cloneNode(true);
+                nueva.querySelector('.select-producto').value = '';
+                nueva.querySelector('.input-cantidad').value = '1';
+                nueva.querySelector('.input-precio').value = '0.00';
+                nueva.querySelector('.input-descuento').value = '0.00';
+                tbody.appendChild(nueva);
+                enlazarEventos(nueva);
+                recalcular();
+            });
+        })();
+    </script>
+}

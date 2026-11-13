@@ -1,0 +1,112 @@
+﻿@model AppWeb.Models.Venta
+@{
+    ViewData["Title"] = $"Venta #{Model.idVenta}";
+    Layout = "_LayoutDashboard";
+    var nombreCliente = !string.IsNullOrWhiteSpace(Model.cliente?.razonSocial)
+        ? Model.cliente.razonSocial
+        : (Model.cliente?.nombres ?? "-");
+}
+
+<div id="viewDetalleVenta" class="view-container active">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2>Venta #@Model.idVenta</h2>
+            <div class="breadcrumb">
+                <a asp-controller="Home" asp-action="Index" style="color:inherit; text-decoration:none;">Inicio</a> &gt;
+                <a asp-controller="Venta" asp-action="Index" style="color:inherit; text-decoration:none;">Ventas</a> &gt;
+                <span>Detalle #@Model.idVenta</span>
+            </div>
+        </div>
+        <a asp-controller="Venta" asp-action="Index"
+           style="background:#6c757d; color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <!-- DATOS GENERALES -->
+    <div class="metrics-row">
+        <div class="metric-box">
+            <span class="label">Cliente</span>
+            <span class="value" style="font-size:1.05rem;">@nombreCliente</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Fecha de Venta</span>
+            <span class="value" style="font-size:1.05rem;">@Model.fechaVenta.ToString("yyyy-MM-dd HH:mm")</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Estado</span>
+            <span class="value" style="font-size:1.05rem;">@Model.estado</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Total</span>
+            <span class="value">S/ @Model.total.ToString("N2")</span>
+        </div>
+    </div>
+
+    <div class="table-wrapper" style="padding: 20px; margin-bottom: 20px;">
+        <p style="margin:0 0 8px 0;"><strong>Vendedor:</strong> @(Model.usuario?.nombreUsuario ?? "-")</p>
+        <p style="margin:0;"><strong>Origen:</strong> @(Model.idCotizacion.HasValue ? $"Cotización #{Model.idCotizacion}" : "Venta directa")</p>
+    </div>
+
+    <!-- DETALLE DE PRODUCTOS -->
+    <div class="table-wrapper" style="margin-bottom: 20px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Código</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Descuento</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var det in Model.DetalleVentas ?? Enumerable.Empty<AppWeb.Models.DetalleVenta>())
+                {
+                    <tr>
+                        <td><strong>@(det.producto?.nombre ?? "-")</strong></td>
+                        <td><code>@(det.producto?.codigoBarras ?? "-")</code></td>
+                        <td>@det.cantidad</td>
+                        <td>S/ @det.precioUnitario.ToString("N2")</td>
+                        <td>S/ @det.descuento.ToString("N2")</td>
+                        <td><strong>S/ @det.subtotal.ToString("N2")</strong></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.Pagos != null && Model.Pagos.Any())
+    {
+        <div class="table-wrapper" style="padding: 20px;">
+            <h3 style="margin:0 0 12px 0; font-size:1.05rem;">Pagos y Comprobantes</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Pago</th>
+                        <th>Fecha</th>
+                        <th>Método</th>
+                        <th>Monto</th>
+                        <th>Estado</th>
+                        <th>Comprobante</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var pago in Model.Pagos)
+                    {
+                        var comp = pago.Comprobantes?.FirstOrDefault();
+                        <tr>
+                            <td>#@pago.idPago</td>
+                            <td>@pago.fechaPago.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@pago.metodoPago</td>
+                            <td><strong>S/ @pago.montoRecibido.ToString("N2")</strong></td>
+                            <td>@pago.estado</td>
+                            <td>@(comp != null ? $"{comp.tipoComprobante} {comp.serie}-{comp.numero}" : "-")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
