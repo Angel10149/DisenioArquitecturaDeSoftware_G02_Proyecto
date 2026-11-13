@@ -1,0 +1,82 @@
+﻿@model AppWeb.Models.Usuario
+@{
+    ViewData["Title"] = "Editar Usuario";
+    Layout = "_LayoutDashboard";
+    var roles = ViewBag.Roles as IEnumerable<AppWeb.Models.Rol> ?? Enumerable.Empty<AppWeb.Models.Rol>();
+}
+
+<div id="viewEditarUsuario" class="view-container active">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2>Editar Usuario</h2>
+            <div class="breadcrumb">
+                <a asp-controller="Home" asp-action="Index" style="color:inherit; text-decoration:none;">Inicio</a> &gt;
+                <a asp-controller="Usuario" asp-action="Index" style="color:inherit; text-decoration:none;">Usuarios</a> &gt;
+                <span>Editar #@Model.id</span>
+            </div>
+        </div>
+        <a asp-controller="Usuario" asp-action="Index"
+           style="background:#6c757d; color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="table-wrapper" style="padding: 24px; max-width: 700px;">
+        @if (ViewData["Error"] != null)
+        {
+            <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #f8d7da; color: #721c24;">
+                @ViewData["Error"]
+            </div>
+        }
+
+        <form asp-controller="Usuario" asp-action="Editar" asp-route-id="@Model.id" method="post" autocomplete="off">
+            <div style="margin-bottom:16px;">
+                <label style="display:block; font-weight:500; margin-bottom:6px;">Nombre de Usuario</label>
+                <input type="text" name="nombreUsuario" value="@Model.nombreUsuario" maxlength="50" required
+                       style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+                <div>
+                    <label style="display:block; font-weight:500; margin-bottom:6px;">Correo Electrónico</label>
+                    <input type="email" name="correo" value="@Model.correo" maxlength="100" required
+                           style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                </div>
+                <div>
+                    <label style="display:block; font-weight:500; margin-bottom:6px;">Teléfono</label>
+                    <input type="text" name="telefono" value="@Model.telefono" maxlength="15" required
+                           style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                </div>
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <label style="display:block; font-weight:500; margin-bottom:6px;">Rol</label>
+                <select name="IDROL" required
+                        style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box; background:#fff;">
+                    @foreach (var rol in roles)
+                    {
+                        <option value="@rol.idRol" selected="@(rol.idRol == Model.IDROL)">@rol.nameRol</option>
+                    }
+                </select>
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:500; margin-bottom:6px;">Nueva Contraseña (opcional)</label>
+                <input type="password" name="nuevaPassword" maxlength="100"
+                       placeholder="Dejar en blanco para mantener la contraseña actual"
+                       style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+            </div>
+
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <a asp-controller="Usuario" asp-action="Index"
+                   style="padding:10px 18px; border-radius:6px; text-decoration:none; background:#e2e6ea; color:#333; font-weight:500;">
+                    Cancelar
+                </a>
+                <button type="submit"
+                        style="padding:10px 20px; border:none; border-radius:6px; background:#304D8A; color:#fff; font-weight:500; cursor:pointer;">
+                    <i class="fas fa-save"></i> Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -258,5 +258,227 @@ namespace AppWeb.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+        private async Task CargarRolesEdicionAsync(int idRolActual)
+        {
+            var roles = await _context.Roles
+                .Where(r => r.estado || r.idRol == idRolActual)
+                .ToListAsync();
+            ViewBag.Roles = roles;
+        }
+
+        private async Task RefrescarSesionAsync(Usuario usuario)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, usuario.id.ToString()),
+                new Claim(ClaimTypes.Name, usuario.nombreUsuario),
+                new Claim(ClaimTypes.Email, usuario.correo),
+                new Claim(ClaimTypes.Role, usuario.Rol?.nameRol ?? string.Empty)
+            };
+
+            var identidad = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identidad);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+
+            HttpContext.Session.SetString("IdUsuario", usuario.id.ToString());
+            HttpContext.Session.SetString("NombreUsuario", usuario.nombreUsuario);
+            HttpContext.Session.SetString("CorreoUsuario", usuario.correo);
+            HttpContext.Session.SetString("RolUsuario", usuario.Rol?.nameRol ?? string.Empty);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> Editar(int id)
+        {
+            var usuario = await _context.Usuarios
+                .Include(u => u.Rol)
+                .FirstOrDefaultAsync(u => u.id == id);
+
+            if (usuario == null)
+            {
+                TempData["Error"] = "Usuario no encontrado.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            await CargarRolesEdicionAsync(usuario.IDROL);
+            return View(usuario);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> Editar(
+            int id,
+            string nombreUsuario,
+            string correo,
+            string telefono,
+            int IDROL,
+            string? nuevaPassword)
+        {
+            var usuario = await _context.Usuarios
+                .Include(u => u.Rol)
+                .FirstOrDefaultAsync(u => u.id == id);
+
+            if (usuario == null)
+            {
+                TempData["Error"] = "Usuario no encontrado.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            await CargarRolesEdicionAsync(usuario.IDROL);
+
+            if (string.IsNullOrWhiteSpace(nombreUsuario) || string.IsNullOrWhiteSpace(correo) || string.IsNullOrWhiteSpace(telefono))
+            {
+                ViewData["Error"] = "Nombre, correo y teléfono son obligatorios.";
+                return View(usuario);
+            }
+
+            string correoLimpio = correo.Trim();
+            if (await _context.Usuarios.AnyAsync(u => u.correo == correoLimpio && u.id != id))
+            {
+                ViewData["Error"] = "Ya existe otro usuario registrado con ese correo.";
+                return View(usuario);
+            }
+
+            var rolDestino = await _context.Roles.FirstOrDefaultAsync(r => r.idRol == IDROL);
+            if (rolDestino == null)
+            {
+                ViewData["Error"] = "El rol seleccionado no es válido.";
+                return View(usuario);
+            }
+
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (usuario.id.ToString() == currentUserId && rolDestino.nameRol != RolAdministrador)
+            {
+                ViewData["Error"] = "No puede cambiar su propio rol de Administrador.";
+                return View(usuario);
+            }
+
+            usuario.nombreUsuario = nombreUsuario.Trim();
+            usuario.correo = correoLimpio;
+            usuario.telefono = telefono.Trim();
+            usuario.IDROL = IDROL;
+            usuario.Rol = rolDestino;
+
+            if (!string.IsNullOrWhiteSpace(nuevaPassword))
+            {
+                usuario.password = _passwordHasher.HashPassword(usuario, nuevaPassword);
+            }
+
+            await _context.SaveChangesAsync();
+
+            if (usuario.id.ToString() == currentUserId)
+            {
+                await RefrescarSesionAsync(usuario);
+            }
+
+            TempData["Mensaje"] = $"Usuario '{usuario.nombreUsuario}' actualizado correctamente.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Perfil()
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(currentUserId, out int idUsuario))
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            var usuario = await _context.Usuarios
+                .Include(u => u.Rol)
+                .FirstOrDefaultAsync(u => u.id == idUsuario);
+
+            if (usuario == null)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            return View(usuario);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> Perfil(
+            string nombreUsuario,
+            string? passwordActual,
+            string? nuevaPassword,
+            string? confirmarPassword)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(currentUserId, out int idUsuario))
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            var usuario = await _context.Usuarios
+                .Include(u => u.Rol)
+                .FirstOrDefaultAsync(u => u.id == idUsuario);
+
+            if (usuario == null)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            if (string.IsNullOrWhiteSpace(nombreUsuario))
+            {
+                ViewData["Error"] = "El nombre de usuario es obligatorio.";
+                return View(usuario);
+            }
+
+            bool quiereCambiarPassword =
+                !string.IsNullOrWhiteSpace(passwordActual) ||
+                !string.IsNullOrWhiteSpace(nuevaPassword) ||
+                !string.IsNullOrWhiteSpace(confirmarPassword);
+
+            if (quiereCambiarPassword)
+            {
+                if (string.IsNullOrWhiteSpace(passwordActual) || string.IsNullOrWhiteSpace(nuevaPassword))
+                {
+                    ViewData["Error"] = "Debe ingresar su contraseña actual y la nueva contraseña.";
+                    return View(usuario);
+                }
+
+                if (nuevaPassword != confirmarPassword)
+                {
+                    ViewData["Error"] = "La nueva contraseña y su confirmación no coinciden.";
+                    return View(usuario);
+                }
+
+                bool actualValida = false;
+                try
+                {
+                    var res = _passwordHasher.VerifyHashedPassword(usuario, usuario.password, passwordActual);
+                    actualValida = res == PasswordVerificationResult.Success || res == PasswordVerificationResult.SuccessRehashNeeded;
+                }
+                catch (FormatException)
+                {
+                    // Contraseña heredada en texto plano
+                }
+
+                if (!actualValida && usuario.password == passwordActual)
+                {
+                    actualValida = true;
+                }
+
+                if (!actualValida)
+                {
+                    ViewData["Error"] = "La contraseña actual es incorrecta.";
+                    return View(usuario);
+                }
+
+                usuario.password = _passwordHasher.HashPassword(usuario, nuevaPassword);
+            }
+
+            usuario.nombreUsuario = nombreUsuario.Trim();
+            await _context.SaveChangesAsync();
+            await RefrescarSesionAsync(usuario);
+
+            TempData["Mensaje"] = "Perfil actualizado correctamente.";
+            return RedirectToAction(nameof(Perfil));
+        }
     }
 }

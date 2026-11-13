@@ -88,7 +88,11 @@
                                 <span style="color:#FFC107; font-weight:600;">Inactivo</span>
                             }
                         </td>
-                        <td>
+                        <td style="white-space:nowrap;">
+                            <a asp-controller="Usuario" asp-action="Editar" asp-route-id="@usuario.id"
+                               style="padding:4px 10px; border-radius:4px; text-decoration:none; font-size:0.85rem; color:#fff; background:#304D8A; margin-right:4px; display:inline-block;">
+                                Editar
+                            </a>
                             @if (usuario.id.ToString() == currentUserId)
                             {
                                 <span style="color:#6c757d; font-size:0.85rem;">Sesión actual</span>
