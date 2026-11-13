@@ -746,7 +746,7 @@ namespace AppWeb.Migrations
                     b.Property<int>("idCliente")
                         .HasColumnType("int");
 
-                    b.Property<int>("idCotizacion")
+                    b.Property<int?>("idCotizacion")
                         .HasColumnType("int");
 
                     b.Property<int>("idUsuario")
@@ -1008,8 +1008,7 @@ namespace AppWeb.Migrations
                     b.HasOne("AppWeb.Models.Cotizacion", "cotizacion")
                         .WithMany("Ventas")
                         .HasForeignKey("idCotizacion")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("AppWeb.Models.Usuario", "usuario")
                         .WithMany("Ventas")

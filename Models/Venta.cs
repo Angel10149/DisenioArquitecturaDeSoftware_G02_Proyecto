@@ -34,10 +34,9 @@ namespace AppWeb.Models
         public int idUsuario { get; set; }
         public Usuario? usuario { get; set; }
 
-        // Relacion de M : 1 con Cotizacion
-        [Required(ErrorMessage = "La cotización es obligatoria")]
-        [Range(1, int.MaxValue, ErrorMessage = "Debe asociar una cotización válida")]
-        public int idCotizacion { get; set; }
+        // Relacion de M : 1 con Cotizacion (Opcional según RF-12: venta con o sin cotización)
+        [Display(Name = "Cotización")]
+        public int? idCotizacion { get; set; }
         public Cotizacion? cotizacion { get; set; }
 
         // Relaciones 1 : M con DetalleVenta

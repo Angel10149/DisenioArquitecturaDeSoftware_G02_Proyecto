@@ -101,6 +101,7 @@ namespace AppWeb.Data
                 .HasOne(v => v.cotizacion)
                 .WithMany(c => c.Ventas)
                 .HasForeignKey(v => v.idCotizacion)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<DetalleVenta>()
