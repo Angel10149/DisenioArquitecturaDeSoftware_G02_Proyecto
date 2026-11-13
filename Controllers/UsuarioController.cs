@@ -33,9 +33,25 @@ namespace AppWeb.Controllers
             ViewBag.Roles = await roles.ToListAsync();
         }
 
+        // Solo el Administrador puede registrar nuevos usuarios una vez que ya existe uno.
+        // Si no existe ningún administrador activo, se permite el registro inicial sin sesión.
+        private async Task<IActionResult?> ValidarAccesoRegistroAsync()
+        {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                return User.IsInRole(RolAdministrador) ? null : RedirectToAction(nameof(AccesoDenegado));
+            }
+
+            bool existeAdmin = await _context.Usuarios.AnyAsync(u => u.estado && u.Rol!.nameRol == RolAdministrador);
+            return existeAdmin ? RedirectToAction(nameof(Login)) : null;
+        }
+
         [HttpGet]
         public async Task<IActionResult> Registro()
         {
+            var accesoDenegado = await ValidarAccesoRegistroAsync();
+            if (accesoDenegado != null) return accesoDenegado;
+
             await CargarRolesAsync();
             return View();
         }
@@ -43,6 +59,9 @@ namespace AppWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Registro(UsuarioVM usuarioVM)
         {
+            var accesoDenegado = await ValidarAccesoRegistroAsync();
+            if (accesoDenegado != null) return accesoDenegado;
+
             await CargarRolesAsync();
             if (!ModelState.IsValid)
             {
@@ -82,6 +101,11 @@ namespace AppWeb.Controllers
             {
                 ViewData["Mensaje"] = "El usuario no pudo ser registrado";
                 return View(usuarioVM);
+            }
+            if (User.Identity?.IsAuthenticated == true && User.IsInRole(RolAdministrador))
+            {
+                TempData["Mensaje"] = $"Usuario '{usuario.nombreUsuario}' registrado correctamente.";
+                return RedirectToAction(nameof(Index));
             }
             return RedirectToAction("Login", "Usuario");
         }

@@ -1,45 +1,132 @@
-@model AppWeb.ViewModels.UsuarioVM;
+@model AppWeb.ViewModels.UsuarioVM
 @{
-    Layout = null;
+    bool esDashboard = User.Identity?.IsAuthenticated == true && User.IsInRole("Administrador");
+    Layout = esDashboard ? "_LayoutDashboard" : null;
+    ViewData["Title"] = "Nuevo Usuario";
 }
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Registro</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-</head>
-<body>
-    <div class="row mt-5 justify-content-center">
-        <div class="col-sm-4">
-            <div class="card">
-                <div class="card-header">
-                    Registrarse
+
+@if (esDashboard)
+{
+    <div id="viewRegistroUsuario" class="view-container active">
+        <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+                <h2>Nuevo Usuario</h2>
+                <div class="breadcrumb">
+                    <a asp-controller="Home" asp-action="Index" style="color:inherit; text-decoration:none;">Inicio</a> &gt;
+                    <a asp-controller="Usuario" asp-action="Index" style="color:inherit; text-decoration:none;">Usuarios</a> &gt;
+                    <span>Nuevo Usuario</span>
                 </div>
-                <div class="card-body">
-                    <form asp-controller="Usuario" asp-action="Registro" method="post" autocomplete="off">
-                        <input class="form-control mb-3" type="text" placeholder="Nombre Usuario" asp-for="nombreUsuario" />
-                        <input class="form-control mb-3" type="text" placeholder="Telefono" asp-for="telefono" />
-                        <input class="form-control mb-3" type="email" placeholder="Correo" asp-for="correo" />
-                        <input class="form-control mb-3" type="password" placeholder="Contraseña" asp-for="password" />
-                        <input class="form-control mb-3" type="password" placeholder="Repite Contraseña" asp-for="reppassword" />
-                        <select class="form-select mb-3" asp-for="IDROL" asp-items="@(new SelectList(ViewBag.Roles, "idRol", "nameRol"))">
-                            <option value="">Selecciona un Rol</option>
-                        </select>
-                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
-                        <div class="d-grid gap-2 mb-3">
-                            <button class="btn btn-primary" type="submit">Registrarse</button>
-                        </div>
-                    </form>
-                    @if (ViewData["Mensaje"] != null)
-                    {
-                        <div class="alert alert-danger" role="alert">
-                            @ViewData["Mensaje"]
-                        </div>
-                    }
-                    ¿Ya tienes una cuenta? <a asp-controller="Usuario" asp-action="Login">Iniciar Sesión</a>
+            </div>
+            <a asp-controller="Usuario" asp-action="Index"
+               style="background:#6c757d; color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+
+        <div class="table-wrapper" style="max-width: 650px; padding: 24px;">
+            @if (ViewData["Mensaje"] != null)
+            {
+                <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #f8d7da; color: #721c24;">
+                    @ViewData["Mensaje"]
+                </div>
+            }
+
+            <form asp-controller="Usuario" asp-action="Registro" method="post" autocomplete="off">
+                <div asp-validation-summary="All" style="color:#DC3545; margin-bottom:15px;"></div>
+
+                <div style="margin-bottom: 14px;">
+                    <label asp-for="nombreUsuario" style="display:block; font-weight:500; margin-bottom:6px;">Nombre de Usuario</label>
+                    <input type="text" asp-for="nombreUsuario" placeholder="Ej. juan.perez"
+                           style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                </div>
+
+                <div style="margin-bottom: 14px;">
+                    <label asp-for="telefono" style="display:block; font-weight:500; margin-bottom:6px;">Teléfono</label>
+                    <input type="text" asp-for="telefono" placeholder="Ej. 987654321"
+                           style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                </div>
+
+                <div style="margin-bottom: 14px;">
+                    <label asp-for="correo" style="display:block; font-weight:500; margin-bottom:6px;">Correo Electrónico</label>
+                    <input type="email" asp-for="correo" placeholder="usuario@mkg.com"
+                           style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                </div>
+
+                <div style="margin-bottom: 14px;">
+                    <label asp-for="IDROL" style="display:block; font-weight:500; margin-bottom:6px;">Rol</label>
+                    <select asp-for="IDROL" asp-items="@(new SelectList(ViewBag.Roles, "idRol", "nameRol"))"
+                            style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box; background:#fff;">
+                        <option value="">Selecciona un Rol</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 14px;">
+                    <label asp-for="password" style="display:block; font-weight:500; margin-bottom:6px;">Contraseña</label>
+                    <input type="password" asp-for="password" placeholder="Ingrese contraseña"
+                           style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label asp-for="reppassword" style="display:block; font-weight:500; margin-bottom:6px;">Repetir Contraseña</label>
+                    <input type="password" asp-for="reppassword" placeholder="Repita la contraseña"
+                           style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                </div>
+
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <a asp-controller="Usuario" asp-action="Index"
+                       style="padding:10px 18px; border-radius:6px; text-decoration:none; background:#e2e6ea; color:#333; font-weight:500;">
+                        Cancelar
+                    </a>
+                    <button type="submit"
+                            style="padding:10px 20px; border:none; border-radius:6px; background:#304D8A; color:#fff; font-weight:500; cursor:pointer;">
+                        <i class="fas fa-save"></i> Registrar Usuario
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+else
+{
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Registro</title>
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    </head>
+    <body>
+        <div class="row mt-5 justify-content-center">
+            <div class="col-sm-4">
+                <div class="card">
+                    <div class="card-header">
+                        Registrarse
+                    </div>
+                    <div class="card-body">
+                        <form asp-controller="Usuario" asp-action="Registro" method="post" autocomplete="off">
+                            <input class="form-control mb-3" type="text" placeholder="Nombre Usuario" asp-for="nombreUsuario" />
+                            <input class="form-control mb-3" type="text" placeholder="Telefono" asp-for="telefono" />
+                            <input class="form-control mb-3" type="email" placeholder="Correo" asp-for="correo" />
+                            <input class="form-control mb-3" type="password" placeholder="Contraseña" asp-for="password" />
+                            <input class="form-control mb-3" type="password" placeholder="Repite Contraseña" asp-for="reppassword" />
+                            <select class="form-select mb-3" asp-for="IDROL" asp-items="@(new SelectList(ViewBag.Roles, "idRol", "nameRol"))">
+                                <option value="">Selecciona un Rol</option>
+                            </select>
+                            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                            <div class="d-grid gap-2 mb-3">
+                                <button class="btn btn-primary" type="submit">Registrarse</button>
+                            </div>
+                        </form>
+                        @if (ViewData["Mensaje"] != null)
+                        {
+                            <div class="alert alert-danger" role="alert">
+                                @ViewData["Mensaje"]
+                            </div>
+                        }
+                        ¿Ya tienes una cuenta? <a asp-controller="Usuario" asp-action="Login">Iniciar Sesión</a>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</body>
-</html>
+    </body>
+    </html>
+}
