@@ -1,0 +1,103 @@
+﻿@model AppWeb.Models.Producto
+@{
+    ViewData["Title"] = "Editar Producto";
+    Layout = "_LayoutDashboard";
+    var categorias = ViewBag.Categorias as IEnumerable<AppWeb.Models.Categoria> ?? Enumerable.Empty<AppWeb.Models.Categoria>();
+    var unidades = ViewBag.UnidadesMedida as IEnumerable<AppWeb.Models.UnidadMedida> ?? Enumerable.Empty<AppWeb.Models.UnidadMedida>();
+}
+
+<div id="viewEditarProducto" class="view-container active">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2>Editar Producto</h2>
+            <div class="breadcrumb">
+                <a asp-controller="Home" asp-action="Index" style="color:inherit; text-decoration:none;">Inicio</a> &gt;
+                <a asp-controller="Producto" asp-action="Index" style="color:inherit; text-decoration:none;">Inventario</a> &gt;
+                <span>Editar Producto</span>
+            </div>
+        </div>
+        <a asp-controller="Producto" asp-action="Index"
+           style="background:#6c757d; color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="table-wrapper" style="max-width: 750px; padding: 24px;">
+        <form asp-controller="Producto" asp-action="Editar" method="post" autocomplete="off">
+            <input type="hidden" asp-for="idProducto" />
+            <input type="hidden" asp-for="estado" />
+            <div asp-validation-summary="All" style="color:#DC3545; margin-bottom:15px;"></div>
+
+            <div style="display:grid; grid-template-columns: 1fr 2fr; gap:14px; margin-bottom:14px;">
+                <div>
+                    <label asp-for="codigoBarras" style="display:block; font-weight:500; margin-bottom:6px;">Código / SKU</label>
+                    <input type="text" asp-for="codigoBarras"
+                           style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                </div>
+                <div>
+                    <label asp-for="nombre" style="display:block; font-weight:500; margin-bottom:6px;">Nombre del Producto</label>
+                    <input type="text" asp-for="nombre"
+                           style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                </div>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <label asp-for="descripcion" style="display:block; font-weight:500; margin-bottom:6px;">Descripción (Opcional)</label>
+                <textarea asp-for="descripcion" rows="2"
+                          style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box; font-family:inherit;"></textarea>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:14px;">
+                <div>
+                    <label asp-for="idCategoria" style="display:block; font-weight:500; margin-bottom:6px;">Categoría</label>
+                    <select asp-for="idCategoria" asp-items="@(new SelectList(categorias, "idCategoria", "nombre"))"
+                            style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box; background:#fff;">
+                        <option value="0">Seleccione una categoría...</option>
+                    </select>
+                </div>
+                <div>
+                    <label asp-for="idUnidadMedida" style="display:block; font-weight:500; margin-bottom:6px;">Unidad de Medida</label>
+                    <select asp-for="idUnidadMedida" asp-items="@(new SelectList(unidades, "idUnidadMedida", "nombre"))"
+                            style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box; background:#fff;">
+                        <option value="0">Seleccione una unidad...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:14px; margin-bottom:20px;">
+                <div>
+                    <label asp-for="stockActual" style="display:block; font-weight:500; margin-bottom:6px;">Stock Actual</label>
+                    <input type="number" asp-for="stockActual" min="0"
+                           style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                </div>
+                <div>
+                    <label asp-for="stockMinimo" style="display:block; font-weight:500; margin-bottom:6px;">Stock Mínimo</label>
+                    <input type="number" asp-for="stockMinimo" min="0"
+                           style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                </div>
+                <div>
+                    <label asp-for="precioCosto" style="display:block; font-weight:500; margin-bottom:6px;">Precio Costo (S/)</label>
+                    <input type="number" asp-for="precioCosto" step="0.01" min="0"
+                           style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                </div>
+                <div>
+                    <label asp-for="precioVenta" style="display:block; font-weight:500; margin-bottom:6px;">Precio Venta (S/)</label>
+                    <input type="number" asp-for="precioVenta" step="0.01" min="0"
+                           style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <a asp-controller="Producto" asp-action="Index"
+                   style="padding:10px 18px; border-radius:6px; text-decoration:none; background:#e2e6ea; color:#333; font-weight:500;">
+                    Cancelar
+                </a>
+                <button type="submit"
+                        style="padding:10px 20px; border:none; border-radius:6px; background:#304D8A; color:#fff; font-weight:500; cursor:pointer;">
+                    <i class="fas fa-save"></i> Actualizar Producto
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+

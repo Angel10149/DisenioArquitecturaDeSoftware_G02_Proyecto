@@ -1,0 +1,171 @@
+﻿@model IEnumerable<AppWeb.Models.Producto>
+@{
+    ViewData["Title"] = "Inventario";
+    Layout = "_LayoutDashboard";
+    var categorias = ViewBag.Categorias as IEnumerable<AppWeb.Models.Categoria> ?? Enumerable.Empty<AppWeb.Models.Categoria>();
+    int? idCatSel = ViewBag.IdCategoria as int?;
+    var valorStock = Model.Where(p => p.estado).Sum(p => p.stockActual * p.precioVenta);
+    var stockBajo = Model.Count(p => p.estado && p.stockActual <= p.stockMinimo);
+}
+
+<div id="viewInventory" class="view-container active">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2>Inventario</h2>
+            <div class="breadcrumb">Inicio &gt; <span>Inventario</span></div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <a asp-controller="Categoria" asp-action="Index"
+               style="background:#e2e6ea; color:#333; padding:9px 14px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:6px;">
+                <i class="fas fa-tags"></i> Categorías
+            </a>
+            <a asp-controller="UnidadMedida" asp-action="Index"
+               style="background:#e2e6ea; color:#333; padding:9px 14px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:6px;">
+                <i class="fas fa-balance-scale"></i> Unidades
+            </a>
+            <a asp-controller="Producto" asp-action="Crear"
+               style="background:#304D8A; color:#fff; padding:9px 18px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+                <i class="fas fa-plus"></i> Nuevo Producto
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #d4edda; color: #155724;">
+            @TempData["Mensaje"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #f8d7da; color: #721c24;">
+            @TempData["Error"]
+        </div>
+    }
+
+    <!-- TARJETAS DE RESUMEN -->
+    <div class="inv-cards" id="invSummaryCards">
+        <div class="inv-card azul">
+            <span class="label">Total SKU/Productos</span>
+            <span class="value">@Model.Count()</span>
+        </div>
+        <div class="inv-card verde">
+            <span class="label">Stock Total Estimado</span>
+            <span class="value">S/ @valorStock.ToString("N2")</span>
+        </div>
+        <div class="inv-card rojo">
+            <span class="label">Stock Bajo (Crítico)</span>
+            <span class="value">@stockBajo</span>
+        </div>
+        <div class="inv-card amarillo">
+            <span class="label">Productos Activos</span>
+            <span class="value">@Model.Count(p => p.estado)</span>
+        </div>
+    </div>
+
+    <!-- FILTROS Y BUSCADOR -->
+    <form asp-controller="Producto" asp-action="Index" method="get" class="inv-filters" style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+        <select name="idCategoria" onchange="this.form.submit()"
+                style="padding:9px 12px; border:1px solid #ced4da; border-radius:6px; background:#fff;">
+            <option value="">Todas las Categorías</option>
+            @foreach (var cat in categorias)
+            {
+                <option value="@cat.idCategoria" selected="@(idCatSel == cat.idCategoria)">@cat.nombre</option>
+            }
+        </select>
+
+        <input type="text" name="buscar" value="@ViewBag.Buscar" placeholder="Buscar por nombre, código o categoría..."
+               style="flex:1; min-width:220px; padding:9px 12px; border:1px solid #ced4da; border-radius:6px;" />
+
+        <button type="submit" style="padding:9px 16px; border:none; border-radius:6px; background:#304D8A; color:#fff; cursor:pointer;">
+            <i class="fas fa-search"></i> Buscar
+        </button>
+
+        @if (!string.IsNullOrWhiteSpace(ViewBag.Buscar as string) || (idCatSel.HasValue && idCatSel.Value > 0))
+        {
+            <a asp-controller="Producto" asp-action="Index"
+               style="padding:9px 16px; border-radius:6px; background:#e2e6ea; color:#333; text-decoration:none; display:inline-flex; align-items:center;">
+                Limpiar
+            </a>
+        }
+    </form>
+
+    <!-- TABLA DE PRODUCTOS -->
+    <div class="table-wrapper">
+        <table class="data-table" id="productTable">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Unidad</th>
+                    <th>Stock</th>
+                    <th>Stock Mín</th>
+                    <th>P. Costo</th>
+                    <th>P. Venta</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="productTableBody">
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="10" style="text-align:center; padding:20px; color:#6c757d;">
+                            No se encontraron productos registrados.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var prod in Model)
+                    {
+                        bool esBajo = prod.stockActual <= prod.stockMinimo;
+                        <tr>
+                            <td><code>@prod.codigoBarras</code></td>
+                            <td>
+                                <strong>@prod.nombre</strong>
+                                @if (!string.IsNullOrWhiteSpace(prod.descripcion))
+                                {
+                                    <div style="font-size:0.82rem; color:#6c757d;">@prod.descripcion</div>
+                                }
+                            </td>
+                            <td>@(prod.categoria?.nombre ?? "-")</td>
+                            <td>@(prod.unidadMedida?.abreviatura ?? "-")</td>
+                            <td style="font-weight:600; color:@(esBajo ? "#DC3545" : "#28A745");">
+                                @prod.stockActual
+                            </td>
+                            <td>@prod.stockMinimo</td>
+                            <td>S/ @prod.precioCosto.ToString("N2")</td>
+                            <td>S/ @prod.precioVenta.ToString("N2")</td>
+                            <td>
+                                @if (prod.estado)
+                                {
+                                    <span style="color:#28A745; font-weight:600;">Activo</span>
+                                }
+                                else
+                                {
+                                    <span style="color:#FFC107; font-weight:600;">Inactivo</span>
+                                }
+                            </td>
+                            <td style="white-space:nowrap;">
+                                <a asp-controller="Producto" asp-action="Editar" asp-route-id="@prod.idProducto"
+                                   style="padding:4px 10px; border-radius:4px; text-decoration:none; font-size:0.85rem; color:#fff; background:#304D8A; margin-right:4px; display:inline-block;">
+                                    Editar
+                                </a>
+                                <form asp-controller="Producto" asp-action="CambiarEstado" asp-route-id="@prod.idProducto" method="post" style="display:inline;">
+                                    <button type="submit"
+                                            style="padding:4px 10px; border:none; border-radius:4px; cursor:pointer; font-size:0.85rem; color:#fff; background:@(prod.estado ? "#DC3545" : "#28A745");"
+                                            onclick="return confirm('@(prod.estado ? "¿Desactivar este producto?" : "¿Activar este producto?")');">
+                                        @(prod.estado ? "Desactivar" : "Activar")
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
