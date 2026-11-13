@@ -26,8 +26,9 @@ namespace AppWeb.Models
         [StringLength(15, ErrorMessage = "El teléfono no puede exceder los 15 caracteres")]
         public string telefono { get; set; } = string.Empty;
 
-        /*[Required]
-        public bool estado { get; set; }*/
+        [Required]
+        [Display(Name = "Estado")]
+        public bool estado { get; set; } = true;
 
         // Relacion de M : 1 con Rol
         [Required(ErrorMessage = "El rol es obligatorio")]

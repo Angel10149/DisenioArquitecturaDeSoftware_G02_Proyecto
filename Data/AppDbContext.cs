@@ -202,14 +202,22 @@ namespace AppWeb.Data
                 .HasForeignKey(d => d.idProducto)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Usuario>()
+                .Property(u => u.estado)
+                .HasDefaultValue(true);
+
+            modelBuilder.Entity<Rol>()
+                .Property(r => r.estado)
+                .HasDefaultValue(true);
+
             // Datos Precargados para la tabla de Roles
             modelBuilder.Entity<Rol>().HasData(
-                new Rol { idRol = 1, nameRol = "Administrador", descripcion = "Encargado de la gestión del sistema" },
-                new Rol { idRol = 2, nameRol = "Socio", descripcion = "Empleado que tiene un interés en el negocio" },
-                new Rol { idRol = 3, nameRol = "Vendedor", descripcion = "Encargado de la venta de productos" },
-                new Rol { idRol = 4, nameRol = "Cajero", descripcion = "Encargado de la caja y el cobro de los productos" },
-                new Rol { idRol = 5, nameRol = "Encargado de Inventario", descripcion = "Encargado de la gestión del inventario" },
-                new Rol { idRol = 6, nameRol = "Encargado de Compras", descripcion = "Encargado de la gestión de compras" }
+                new Rol { idRol = 1, nameRol = "Administrador", descripcion = "Encargado de la gestión del sistema", estado = true },
+                new Rol { idRol = 2, nameRol = "Socio", descripcion = "Empleado que tiene un interés en el negocio", estado = true },
+                new Rol { idRol = 3, nameRol = "Vendedor", descripcion = "Encargado de la venta de productos", estado = true },
+                new Rol { idRol = 4, nameRol = "Cajero", descripcion = "Encargado de la caja y el cobro de los productos", estado = true },
+                new Rol { idRol = 5, nameRol = "Encargado de Inventario", descripcion = "Encargado de la gestión del inventario", estado = true },
+                new Rol { idRol = 6, nameRol = "Encargado de Compras", descripcion = "Encargado de la gestión de compras", estado = true }
             );
         }
     }

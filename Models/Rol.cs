@@ -11,8 +11,9 @@ namespace AppWeb.Models
         public string nameRol { get; set; }
         [Required, StringLength(200)]
         public string descripcion { get; set; }
-        /*[Required]
-        public bool estado { get; set; }*/
+        [Required]
+        [Display(Name = "Estado")]
+        public bool estado { get; set; } = true;
 
         //Relaciones 1 : M con Usuarios
         public ICollection<Usuario> Usuarios { get; set; }

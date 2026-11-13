@@ -591,6 +591,11 @@ namespace AppWeb.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<bool>("estado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
                     b.Property<string>("nameRol")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -605,36 +610,42 @@ namespace AppWeb.Migrations
                         {
                             idRol = 1,
                             descripcion = "Encargado de la gestión del sistema",
+                            estado = true,
                             nameRol = "Administrador"
                         },
                         new
                         {
                             idRol = 2,
                             descripcion = "Empleado que tiene un interés en el negocio",
+                            estado = true,
                             nameRol = "Socio"
                         },
                         new
                         {
                             idRol = 3,
                             descripcion = "Encargado de la venta de productos",
+                            estado = true,
                             nameRol = "Vendedor"
                         },
                         new
                         {
                             idRol = 4,
                             descripcion = "Encargado de la caja y el cobro de los productos",
+                            estado = true,
                             nameRol = "Cajero"
                         },
                         new
                         {
                             idRol = 5,
                             descripcion = "Encargado de la gestión del inventario",
+                            estado = true,
                             nameRol = "Encargado de Inventario"
                         },
                         new
                         {
                             idRol = 6,
                             descripcion = "Encargado de la gestión de compras",
+                            estado = true,
                             nameRol = "Encargado de Compras"
                         });
                 });
@@ -704,6 +715,11 @@ namespace AppWeb.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("estado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("nombreUsuario")
                         .IsRequired()
