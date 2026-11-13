@@ -19,10 +19,10 @@ namespace AppWeb.Models
 
         //Relacion de M : 1 con IngresoMercaderia
         public int idIngresoMercaderia { get; set; }
-        public IngresoMercaderia ingresoMercaderia { get; set; }
+        public IngresoMercaderia? ingresoMercaderia { get; set; }
 
         //Relacion de M : 1 con Producto
         public int idProducto { get; set; }
-        public Producto producto { get; set; }
+        public Producto? producto { get; set; }
     }
 }
