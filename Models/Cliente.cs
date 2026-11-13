@@ -22,14 +22,14 @@ namespace AppWeb.Models
         [Required, StringLength(100)]
         public String email { get; set; }
         [Required]
-        public bool estado { get; set; }
+        public bool estado { get; set; } = true;
 
 
         //Relaciones 1 : M con Cotizacion
-        public ICollection<Cotizacion> Cotizacions { get; set; }
+        public ICollection<Cotizacion> Cotizacions { get; set; } = new List<Cotizacion>();
 
         //Relaciones 1 : M con Venta
-        public ICollection<Venta> Ventas { get; set; }
+        public ICollection<Venta> Ventas { get; set; } = new List<Venta>();
 
     }
 }
