@@ -13,10 +13,10 @@ namespace AppWeb.Models
         [Required, StringLength(255)]
         public String descripcion { get; set; }
         [Required]
-        public bool estado {  get; set; }
+        public bool estado { get; set; } = true;
 
 
         //Relaciones 1 : M con Producto
-        public ICollection<Producto> Productos { get; set; }
+        public ICollection<Producto> Productos { get; set; } = new List<Producto>();
     }
 }
