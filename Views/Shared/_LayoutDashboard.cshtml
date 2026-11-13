@@ -35,6 +35,9 @@
                     <a class="@(currentController == "Venta" ? "active" : "")" href="#">
                         <i class="fas fa-shopping-cart"></i><span>Ventas</span>
                     </a>
+                    <a class="@(currentController == "Cotizaciones" ? "active" : "")" asp-controller="Cotizaciones" asp-action="Index">
+                        <i class="fas fa-file-signature"></i><span>Cotizaciones</span>
+                    </a>
                     <a class="@(currentController == "Producto" || currentController == "Inventario" ? "active" : "")" asp-controller="Producto" asp-action="Index">
                         <i class="fas fa-boxes"></i><span>Inventario</span>
                     </a>

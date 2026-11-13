@@ -1,0 +1,164 @@
+﻿@model IEnumerable<AppWeb.Models.Cotizacion>
+@{
+    ViewData["Title"] = "Cotizaciones";
+    Layout = "_LayoutDashboard";
+    string? estadoSel = ViewBag.Estado as string;
+}
+
+<div id="viewCotizaciones" class="view-container active">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2>Cotizaciones</h2>
+            <div class="breadcrumb">
+                <a asp-controller="Home" asp-action="Index" style="color:inherit; text-decoration:none;">Inicio</a> &gt;
+                <span>Cotizaciones</span>
+            </div>
+        </div>
+        <a asp-controller="Cotizaciones" asp-action="Crear"
+           style="background:#304D8A; color:#fff; padding:9px 18px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+            <i class="fas fa-plus"></i> Nueva Cotización
+        </a>
+    </div>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #d4edda; color: #155724;">
+            @TempData["Mensaje"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #f8d7da; color: #721c24;">
+            @TempData["Error"]
+        </div>
+    }
+
+    <!-- TARJETAS DE MÉTRICAS -->
+    <div class="metrics-row">
+        <div class="metric-box">
+            <span class="label">Total Cotizaciones</span>
+            <span class="value">@Model.Count()</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Pendientes</span>
+            <span class="value">@Model.Count(c => c.estado == "Pendiente")</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Aprobadas</span>
+            <span class="value">@Model.Count(c => c.estado == "Aprobada")</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Monto Total</span>
+            <span class="value">S/ @Model.Where(c => c.estado != "Anulada").Sum(c => c.total).ToString("N2")</span>
+        </div>
+    </div>
+
+    <!-- FILTROS Y BUSCADOR -->
+    <form asp-controller="Cotizaciones" asp-action="Index" method="get" style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+        <select name="estado" onchange="this.form.submit()"
+                style="padding:9px 12px; border:1px solid #ced4da; border-radius:6px; background:#fff;">
+            <option value="">Todos los Estados</option>
+            <option value="Pendiente" selected="@(estadoSel == "Pendiente")">Pendiente</option>
+            <option value="Aprobada" selected="@(estadoSel == "Aprobada")">Aprobada</option>
+            <option value="Convertida" selected="@(estadoSel == "Convertida")">Convertida</option>
+            <option value="Anulada" selected="@(estadoSel == "Anulada")">Anulada</option>
+        </select>
+
+        <input type="text" name="buscar" value="@ViewBag.Buscar" placeholder="Buscar por cliente, documento, responsable o # cotización..."
+               style="flex:1; min-width:240px; padding:9px 12px; border:1px solid #ced4da; border-radius:6px;" />
+
+        <button type="submit" style="padding:9px 16px; border:none; border-radius:6px; background:#304D8A; color:#fff; cursor:pointer;">
+            <i class="fas fa-search"></i> Buscar
+        </button>
+
+        @if (!string.IsNullOrWhiteSpace(ViewBag.Buscar as string) || !string.IsNullOrWhiteSpace(estadoSel))
+        {
+            <a asp-controller="Cotizaciones" asp-action="Index"
+               style="padding:9px 16px; border-radius:6px; background:#e2e6ea; color:#333; text-decoration:none; display:inline-flex; align-items:center;">
+                Limpiar
+            </a>
+        }
+    </form>
+
+    <!-- TABLA DE COTIZACIONES -->
+    <div class="table-wrapper">
+        <table class="data-table" id="cotizacionesTable">
+            <thead>
+                <tr>
+                    <th>Cotización</th>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>Ítems</th>
+                    <th>Total</th>
+                    <th>Responsable</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="8" style="text-align:center; padding:20px; color:#6c757d;">
+                            No se encontraron cotizaciones.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var cot in Model)
+                    {
+                        var nombreCliente = !string.IsNullOrWhiteSpace(cot.cliente?.razonSocial)
+                            ? cot.cliente.razonSocial
+                            : (cot.cliente?.nombres ?? "-");
+                        var colorEstado = cot.estado switch
+                        {
+                            "Aprobada" => "#28A745",
+                            "Convertida" => "#304D8A",
+                            "Anulada" => "#DC3545",
+                            _ => "#FFC107"
+                        };
+                        <tr>
+                            <td><strong>#@cot.idCotizacion</strong></td>
+                            <td>@cot.fechaEmision.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@nombreCliente</td>
+                            <td>@(cot.DetalleCotizacions?.Count ?? 0)</td>
+                            <td><strong>S/ @cot.total.ToString("N2")</strong></td>
+                            <td>@(cot.usuario?.nombreUsuario ?? "-")</td>
+                            <td><span style="color:@colorEstado; font-weight:600;">@cot.estado</span></td>
+                            <td style="white-space:nowrap;">
+                                <a asp-controller="Cotizaciones" asp-action="Detalle" asp-route-id="@cot.idCotizacion"
+                                   style="padding:4px 10px; border-radius:4px; text-decoration:none; font-size:0.85rem; color:#fff; background:#304D8A; margin-right:4px; display:inline-block;">
+                                    Detalle
+                                </a>
+                                @if (cot.estado == "Pendiente")
+                                {
+                                    <form asp-controller="Cotizaciones" asp-action="CambiarEstado" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@cot.idCotizacion" />
+                                        <input type="hidden" name="nuevoEstado" value="Aprobada" />
+                                        <button type="submit"
+                                                style="padding:4px 10px; border:none; border-radius:4px; cursor:pointer; font-size:0.85rem; color:#fff; background:#28A745; margin-right:4px;">
+                                            Aprobar
+                                        </button>
+                                    </form>
+                                }
+                                @if (cot.estado == "Pendiente" || cot.estado == "Aprobada")
+                                {
+                                    <form asp-controller="Cotizaciones" asp-action="CambiarEstado" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@cot.idCotizacion" />
+                                        <input type="hidden" name="nuevoEstado" value="Anulada" />
+                                        <button type="submit"
+                                                style="padding:4px 10px; border:none; border-radius:4px; cursor:pointer; font-size:0.85rem; color:#fff; background:#DC3545;"
+                                                onclick="return confirm('¿Anular esta cotización?');">
+                                            Anular
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
