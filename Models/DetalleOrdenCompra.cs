@@ -16,10 +16,10 @@ namespace AppWeb.Models
 
         //Relacion de M : 1 con OrdenCompra
         public int idOrdenCompra { get; set; }
-        public OrdenCompra ordenCompra { get; set; }
+        public OrdenCompra? ordenCompra { get; set; }
 
         //Relacion de M : 1 con Producto
         public int idProducto { get; set; }
-        public Producto producto { get; set; }
+        public Producto? producto { get; set; }
     }
 }

@@ -12,26 +12,26 @@ namespace AppWeb.Models
         [Required]
         public DateTime fechaCompra { get; set; }
         [Required]
-        public String estado { get; set; }
+        public String estado { get; set; } = "Pendiente";
         [Required, Column(TypeName = "decimal(18, 2)")]
         public decimal total { get; set; }
 
         //relacion de m : 1 con OrdenCompra
         public int idProveedor { get; set; }
-        public Proveedor proveedor { get; set; }
+        public Proveedor? proveedor { get; set; }
 
         //relacion de m : 1 con OrdenCompra
         public int idUsuario { get; set; }
-        public Usuario usuario { get; set; }
+        public Usuario? usuario { get; set; }
 
         //relacion de m : 1 con OrdenCompra
         public int idRequerimiento { get; set; }
-        public RequerimientoCompra requerimiento { get; set; }
+        public RequerimientoCompra? requerimiento { get; set; }
 
         //Relaciones 1 : M con DetalleOrdenCompra
-        public ICollection<DetalleOrdenCompra> DetalleOrdenCompras { get; set; }
+        public ICollection<DetalleOrdenCompra> DetalleOrdenCompras { get; set; } = new List<DetalleOrdenCompra>();
 
         //Relaciones 1 : M con IngresoMercaderia
-        public ICollection<IngresoMercaderia> IngresosMercaderia { get; set; }
+        public ICollection<IngresoMercaderia> IngresosMercaderia { get; set; } = new List<IngresoMercaderia>();
     }
 }
