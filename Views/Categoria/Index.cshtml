@@ -1,0 +1,125 @@
+﻿@model IEnumerable<AppWeb.Models.Categoria>
+@{
+    ViewData["Title"] = "Categorías";
+    Layout = "_LayoutDashboard";
+}
+
+<div id="viewCategorias" class="view-container active">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2>Categorías</h2>
+            <div class="breadcrumb">Inicio &gt; <span>Categorías</span></div>
+        </div>
+        <a asp-controller="Categoria" asp-action="Crear"
+           style="background:#304D8A; color:#fff; padding:10px 18px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+            <i class="fas fa-plus"></i> Nueva Categoría
+        </a>
+    </div>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #d4edda; color: #155724;">
+            @TempData["Mensaje"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #f8d7da; color: #721c24;">
+            @TempData["Error"]
+        </div>
+    }
+
+    <!-- TARJETAS DE MÉTRICAS -->
+    <div class="metrics-row">
+        <div class="metric-box">
+            <span class="label">Total Categorías</span>
+            <span class="value">@Model.Count()</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Categorías Activas</span>
+            <span class="value">@Model.Count(c => c.estado)</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Con Productos</span>
+            <span class="value">@Model.Count(c => c.Productos.Any())</span>
+        </div>
+    </div>
+
+    <!-- BUSCADOR -->
+    <form asp-controller="Categoria" asp-action="Index" method="get" style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+        <input type="text" name="buscar" value="@ViewBag.Buscar" placeholder="Buscar por nombre o descripción..."
+               style="flex:1; min-width:240px; padding:9px 12px; border:1px solid #ced4da; border-radius:6px;" />
+        <button type="submit" style="padding:9px 16px; border:none; border-radius:6px; background:#304D8A; color:#fff; cursor:pointer;">
+            <i class="fas fa-search"></i> Buscar
+        </button>
+        @if (!string.IsNullOrWhiteSpace(ViewBag.Buscar as string))
+        {
+            <a asp-controller="Categoria" asp-action="Index"
+               style="padding:9px 16px; border-radius:6px; background:#e2e6ea; color:#333; text-decoration:none; display:inline-flex; align-items:center;">
+                Limpiar
+            </a>
+        }
+    </form>
+
+    <!-- TABLA DE CATEGORÍAS -->
+    <div class="table-wrapper">
+        <table class="data-table" id="categoriasTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Productos</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" style="text-align:center; padding:20px; color:#6c757d;">
+                            No se encontraron categorías registradas.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var categoria in Model)
+                    {
+                        <tr>
+                            <td>@categoria.idCategoria</td>
+                            <td><strong>@categoria.nombre</strong></td>
+                            <td>@categoria.descripcion</td>
+                            <td>@(categoria.Productos?.Count ?? 0)</td>
+                            <td>
+                                @if (categoria.estado)
+                                {
+                                    <span style="color:#28A745; font-weight:600;">Activo</span>
+                                }
+                                else
+                                {
+                                    <span style="color:#FFC107; font-weight:600;">Inactivo</span>
+                                }
+                            </td>
+                            <td style="white-space:nowrap;">
+                                <a asp-controller="Categoria" asp-action="Editar" asp-route-id="@categoria.idCategoria"
+                                   style="padding:4px 10px; border-radius:4px; text-decoration:none; font-size:0.85rem; color:#fff; background:#304D8A; margin-right:4px; display:inline-block;">
+                                    Editar
+                                </a>
+                                <form asp-controller="Categoria" asp-action="CambiarEstado" asp-route-id="@categoria.idCategoria" method="post" style="display:inline;">
+                                    <button type="submit"
+                                            style="padding:4px 10px; border:none; border-radius:4px; cursor:pointer; font-size:0.85rem; color:#fff; background:@(categoria.estado ? "#DC3545" : "#28A745");"
+                                            onclick="return confirm('@(categoria.estado ? "¿Desactivar esta categoría?" : "¿Activar esta categoría?")');">
+                                        @(categoria.estado ? "Desactivar" : "Activar")
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
