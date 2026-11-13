@@ -24,8 +24,8 @@ namespace AppWeb.Controllers
         // mientras no exista ningun administrador (primer usuario del sistema).
         private async Task CargarRolesAsync()
         {
-            bool existeAdmin = await _context.Usuarios.AnyAsync(u => u.Rol!.nameRol == RolAdministrador);
-            var roles = _context.Roles.AsQueryable();
+            bool existeAdmin = await _context.Usuarios.AnyAsync(u => u.estado && u.Rol!.nameRol == RolAdministrador);
+            var roles = _context.Roles.Where(r => r.estado).AsQueryable();
             if (existeAdmin)
             {
                 roles = roles.Where(r => r.nameRol != RolAdministrador);
@@ -70,6 +70,7 @@ namespace AppWeb.Controllers
                 telefono = usuarioVM.telefono.Trim(),
                 correo = correo,
                 password = usuarioVM.password,
+                estado = true,
                 IDROL = usuarioVM.IDROL
             };
             try
@@ -105,6 +106,11 @@ namespace AppWeb.Controllers
             if (usuario == null || usuario.Rol == null)
             {
                 ViewData["Mensaje"] = "No se encontraron usuarios";
+                return View(loginVM);
+            }
+            if (!usuario.estado || !usuario.Rol.estado)
+            {
+                ViewData["Mensaje"] = "El usuario se encuentra inactivo. Contacte al administrador.";
                 return View(loginVM);
             }
             //Claims
@@ -155,6 +161,35 @@ namespace AppWeb.Controllers
                 .ToListAsync();
 
             return View(usuarios);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> CambiarEstado(int id)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null)
+            {
+                TempData["Error"] = "Usuario no encontrado.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (usuario.id.ToString() == currentUserId)
+            {
+                TempData["Error"] = "No puede desactivar su propia cuenta de administrador.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            usuario.estado = !usuario.estado;
+            await _context.SaveChangesAsync();
+
+            TempData["Mensaje"] = usuario.estado
+                ? $"Usuario '{usuario.nombreUsuario}' activado correctamente."
+                : $"Usuario '{usuario.nombreUsuario}' desactivado correctamente.";
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }

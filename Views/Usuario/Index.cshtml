@@ -1,7 +1,9 @@
 ﻿@model IEnumerable<AppWeb.Models.Usuario>
+@using System.Security.Claims
 @{
     ViewData["Title"] = "Usuarios";
     Layout = "_LayoutDashboard";
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 }
 
 <div id="viewUsuarios" class="view-container active">
@@ -10,11 +12,28 @@
         <div class="breadcrumb">Inicio &gt; <span>Usuarios</span></div>
     </div>
 
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success" style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #d4edda; color: #155724;">
+            @TempData["Mensaje"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger" style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #f8d7da; color: #721c24;">
+            @TempData["Error"]
+        </div>
+    }
+
     <!-- TARJETAS DE MÉTRICAS (calculadas con los datos reales) -->
     <div class="metrics-row">
         <div class="metric-box">
             <span class="label">Total Usuarios</span>
             <span class="value">@Model.Count()</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Activos</span>
+            <span class="value">@Model.Count(u => u.estado)</span>
         </div>
         <div class="metric-box">
             <span class="label">Administradores</span>
@@ -40,6 +59,8 @@
                     <th>Email</th>
                     <th>Rol</th>
                     <th>Teléfono</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody id="usuariosTableBody">
@@ -51,6 +72,32 @@
                         <td>@usuario.correo</td>
                         <td>@(usuario.Rol?.nameRol ?? "Sin Rol")</td>
                         <td>@usuario.telefono</td>
+                        <td>
+                            @if (usuario.estado)
+                            {
+                                <span style="color:#28A745; font-weight:600;">Activo</span>
+                            }
+                            else
+                            {
+                                <span style="color:#FFC107; font-weight:600;">Inactivo</span>
+                            }
+                        </td>
+                        <td>
+                            @if (usuario.id.ToString() == currentUserId)
+                            {
+                                <span style="color:#6c757d; font-size:0.85rem;">Sesión actual</span>
+                            }
+                            else
+                            {
+                                <form asp-controller="Usuario" asp-action="CambiarEstado" asp-route-id="@usuario.id" method="post" style="display:inline;">
+                                    <button type="submit"
+                                            style="padding:4px 10px; border:none; border-radius:4px; cursor:pointer; font-size:0.85rem; color:#fff; background:@(usuario.estado ? "#DC3545" : "#28A745");"
+                                            onclick="return confirm('@(usuario.estado ? "¿Desactivar este usuario?" : "¿Activar este usuario?")');">
+                                        @(usuario.estado ? "Desactivar" : "Activar")
+                                    </button>
+                                </form>
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>
