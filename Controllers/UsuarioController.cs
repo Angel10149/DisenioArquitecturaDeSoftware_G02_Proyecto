@@ -4,6 +4,7 @@ using AppWeb.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -15,6 +16,8 @@ namespace AppWeb.Controllers
         private const string RolAdministrador = "Administrador";
 
         private readonly AppDbContext _context;
+        private readonly PasswordHasher<Usuario> _passwordHasher = new();
+
         public UsuarioController(AppDbContext context)
         {
             _context = context;
@@ -88,10 +91,10 @@ namespace AppWeb.Controllers
                 nombreUsuario = usuarioVM.nombreUsuario.Trim(),
                 telefono = usuarioVM.telefono.Trim(),
                 correo = correo,
-                password = usuarioVM.password,
                 estado = true,
                 IDROL = usuarioVM.IDROL
             };
+            usuario.password = _passwordHasher.HashPassword(usuario, usuarioVM.password);
             try
             {
                 await _context.Usuarios.AddAsync(usuario);
@@ -126,16 +129,56 @@ namespace AppWeb.Controllers
             {
                 return View(loginVM);
             }
-            Usuario? usuario = await _context.Usuarios.Include(u => u.Rol).FirstOrDefaultAsync(u => u.correo == loginVM.correo && u.password == loginVM.password);
+            string correo = loginVM.correo.Trim();
+            Usuario? usuario = await _context.Usuarios.Include(u => u.Rol).FirstOrDefaultAsync(u => u.correo == correo);
             if (usuario == null || usuario.Rol == null)
             {
                 ViewData["Mensaje"] = "No se encontraron usuarios";
                 return View(loginVM);
             }
+
+            bool passwordValida = false;
+            bool requiereRehash = false;
+            try
+            {
+                var resultado = _passwordHasher.VerifyHashedPassword(usuario, usuario.password, loginVM.password);
+                if (resultado == PasswordVerificationResult.Success)
+                {
+                    passwordValida = true;
+                }
+                else if (resultado == PasswordVerificationResult.SuccessRehashNeeded)
+                {
+                    passwordValida = true;
+                    requiereRehash = true;
+                }
+            }
+            catch (FormatException)
+            {
+                // Contraseña heredada en texto plano
+            }
+
+            if (!passwordValida && usuario.password == loginVM.password)
+            {
+                passwordValida = true;
+                requiereRehash = true;
+            }
+
+            if (!passwordValida)
+            {
+                ViewData["Mensaje"] = "No se encontraron usuarios";
+                return View(loginVM);
+            }
+
             if (!usuario.estado || !usuario.Rol.estado)
             {
                 ViewData["Mensaje"] = "El usuario se encuentra inactivo. Contacte al administrador.";
                 return View(loginVM);
+            }
+
+            if (requiereRehash)
+            {
+                usuario.password = _passwordHasher.HashPassword(usuario, loginVM.password);
+                await _context.SaveChangesAsync();
             }
             //Claims
             var claims = new List<Claim>{
