@@ -47,6 +47,15 @@
                     <a class="@(currentController == "Proveedor" ? "active" : "")" asp-controller="Proveedor" asp-action="Index">
                         <i class="fas fa-truck"></i><span>Proveedores</span>
                     </a>
+                    <a class="@(currentController == "RequerimientoCompra" ? "active" : "")" asp-controller="RequerimientoCompra" asp-action="Index">
+                        <i class="fas fa-clipboard-list"></i><span>Requerimientos</span>
+                    </a>
+                    <a class="@(currentController == "OrdenCompra" ? "active" : "")" asp-controller="OrdenCompra" asp-action="Index">
+                        <i class="fas fa-file-invoice-dollar"></i><span>Órdenes Compra</span>
+                    </a>
+                    <a class="@(currentController == "IngresoMercaderia" ? "active" : "")" asp-controller="IngresoMercaderia" asp-action="Index">
+                        <i class="fas fa-dolly"></i><span>Ingresos</span>
+                    </a>
                     <a class="@(currentController == "Reporte" ? "active" : "")" href="#">
                         <i class="fas fa-file-alt"></i><span>Reportes</span>
                     </a>
