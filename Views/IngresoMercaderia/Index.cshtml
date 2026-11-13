@@ -1,0 +1,138 @@
+﻿@model IEnumerable<AppWeb.Models.IngresoMercaderia>
+@{
+    ViewData["Title"] = "Ingreso de Mercadería";
+    Layout = "_LayoutDashboard";
+    string? estadoSel = ViewBag.Estado as string;
+}
+
+<div id="viewIngresosMercaderia" class="view-container active">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2>Ingreso de Mercadería</h2>
+            <div class="breadcrumb">
+                <a asp-controller="Home" asp-action="Index" style="color:inherit; text-decoration:none;">Inicio</a> &gt;
+                <span>Ingreso de Mercadería</span>
+            </div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <a asp-controller="OrdenCompra" asp-action="Index"
+               style="background:#e2e6ea; color:#333; padding:9px 14px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:6px;">
+                <i class="fas fa-file-invoice"></i> Órdenes de Compra
+            </a>
+            <a asp-controller="IngresoMercaderia" asp-action="Crear"
+               style="background:#304D8A; color:#fff; padding:9px 18px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+                <i class="fas fa-plus"></i> Nuevo Ingreso
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #d4edda; color: #155724;">
+            @TempData["Mensaje"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #f8d7da; color: #721c24;">
+            @TempData["Error"]
+        </div>
+    }
+
+    <!-- TARJETAS DE MÉTRICAS -->
+    <div class="metrics-row">
+        <div class="metric-box">
+            <span class="label">Total Ingresos</span>
+            <span class="value">@Model.Count()</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Unidades Recibidas</span>
+            <span class="value">@Model.Sum(i => i.DetalleIngresos?.Sum(d => d.cantidadRecibida) ?? 0)</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Unidades Rechazadas</span>
+            <span class="value">@Model.Sum(i => i.DetalleIngresos?.Sum(d => d.cantidadRechazada) ?? 0)</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Monto Total Ingresado</span>
+            <span class="value">S/ @Model.Sum(i => i.DetalleIngresos?.Sum(d => d.subtotal) ?? 0).ToString("N2")</span>
+        </div>
+    </div>
+
+    <!-- FILTROS Y BUSCADOR -->
+    <form asp-controller="IngresoMercaderia" asp-action="Index" method="get" style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+        <select name="estado" onchange="this.form.submit()"
+                style="padding:9px 12px; border:1px solid #ced4da; border-radius:6px; background:#fff;">
+            <option value="">Todos los Estados</option>
+            <option value="Registrado" selected="@(estadoSel == "Registrado")">Registrado</option>
+        </select>
+
+        <input type="text" name="buscar" value="@ViewBag.Buscar" placeholder="Buscar por proveedor, observación, # ingreso o # orden..."
+               style="flex:1; min-width:240px; padding:9px 12px; border:1px solid #ced4da; border-radius:6px;" />
+
+        <button type="submit" style="padding:9px 16px; border:none; border-radius:6px; background:#304D8A; color:#fff; cursor:pointer;">
+            <i class="fas fa-search"></i> Buscar
+        </button>
+
+        @if (!string.IsNullOrWhiteSpace(ViewBag.Buscar as string) || !string.IsNullOrWhiteSpace(estadoSel))
+        {
+            <a asp-controller="IngresoMercaderia" asp-action="Index"
+               style="padding:9px 16px; border-radius:6px; background:#e2e6ea; color:#333; text-decoration:none; display:inline-flex; align-items:center;">
+                Limpiar
+            </a>
+        }
+    </form>
+
+    <!-- TABLA DE INGRESOS -->
+    <div class="table-wrapper">
+        <table class="data-table" id="ingresosTable">
+            <thead>
+                <tr>
+                    <th>Ingreso</th>
+                    <th>Fecha</th>
+                    <th>Orden Compra</th>
+                    <th>Proveedor</th>
+                    <th>Ítems</th>
+                    <th>Recibido</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="9" style="text-align:center; padding:20px; color:#6c757d;">
+                            No se encontraron ingresos de mercadería.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var ing in Model)
+                    {
+                        var totalRecibido = ing.DetalleIngresos?.Sum(d => d.cantidadRecibida) ?? 0;
+                        var montoTotal = ing.DetalleIngresos?.Sum(d => d.subtotal) ?? 0;
+                        <tr>
+                            <td><strong>#@ing.idIngresoMercaderia</strong></td>
+                            <td>@ing.fechaIngreso.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>#@ing.idOrdenCompra</td>
+                            <td>@(ing.proveedor?.razonSocial ?? "-")</td>
+                            <td>@(ing.DetalleIngresos?.Count ?? 0)</td>
+                            <td>@totalRecibido</td>
+                            <td><strong>S/ @montoTotal.ToString("N2")</strong></td>
+                            <td><span style="color:#28A745; font-weight:600;">@ing.estado</span></td>
+                            <td style="white-space:nowrap;">
+                                <a asp-controller="IngresoMercaderia" asp-action="Detalle" asp-route-id="@ing.idIngresoMercaderia"
+                                   style="padding:4px 10px; border-radius:4px; text-decoration:none; font-size:0.85rem; color:#fff; background:#304D8A; display:inline-block;">
+                                    Detalle
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

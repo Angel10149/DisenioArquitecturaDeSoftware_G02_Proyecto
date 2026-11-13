@@ -1,0 +1,77 @@
+﻿@model AppWeb.Models.IngresoMercaderia
+@{
+    ViewData["Title"] = $"Ingreso #{Model.idIngresoMercaderia}";
+    Layout = "_LayoutDashboard";
+    var totalIngreso = Model.DetalleIngresos?.Sum(d => d.subtotal) ?? 0;
+}
+
+<div id="viewDetalleIngreso" class="view-container active">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2>Ingreso de Mercadería #@Model.idIngresoMercaderia</h2>
+            <div class="breadcrumb">
+                <a asp-controller="Home" asp-action="Index" style="color:inherit; text-decoration:none;">Inicio</a> &gt;
+                <a asp-controller="IngresoMercaderia" asp-action="Index" style="color:inherit; text-decoration:none;">Ingreso de Mercadería</a> &gt;
+                <span>Detalle #@Model.idIngresoMercaderia</span>
+            </div>
+        </div>
+        <a asp-controller="IngresoMercaderia" asp-action="Index"
+           style="background:#6c757d; color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <!-- DATOS GENERALES -->
+    <div class="metrics-row">
+        <div class="metric-box">
+            <span class="label">Proveedor</span>
+            <span class="value" style="font-size:1.05rem;">@(Model.proveedor?.razonSocial ?? "-")</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Orden de Compra</span>
+            <span class="value" style="font-size:1.05rem;">#@Model.idOrdenCompra</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Fecha de Ingreso</span>
+            <span class="value" style="font-size:1.05rem;">@Model.fechaIngreso.ToString("yyyy-MM-dd HH:mm")</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Total Ingresado</span>
+            <span class="value">S/ @totalIngreso.ToString("N2")</span>
+        </div>
+    </div>
+
+    <div class="table-wrapper" style="padding: 20px; margin-bottom: 20px;">
+        <p style="margin:0 0 8px 0;"><strong>Estado:</strong> <span style="color:#28A745; font-weight:600;">@Model.estado</span></p>
+        <p style="margin:0;"><strong>Observaciones:</strong> @(string.IsNullOrWhiteSpace(Model.observaciones) ? "-" : Model.observaciones)</p>
+    </div>
+
+    <!-- DETALLE DE PRODUCTOS -->
+    <div class="table-wrapper" style="margin-bottom: 20px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Código</th>
+                    <th>Recibido</th>
+                    <th>Rechazado</th>
+                    <th>Costo Unitario</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var det in Model.DetalleIngresos ?? Enumerable.Empty<AppWeb.Models.DetalleIngreso>())
+                {
+                    <tr>
+                        <td><strong>@(det.producto?.nombre ?? "-")</strong></td>
+                        <td><code>@(det.producto?.codigoBarras ?? "-")</code></td>
+                        <td>@det.cantidadRecibida</td>
+                        <td>@det.cantidadRechazada</td>
+                        <td>S/ @det.costoUnitario.ToString("N2")</td>
+                        <td><strong>S/ @det.subtotal.ToString("N2")</strong></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

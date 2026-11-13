@@ -1,0 +1,168 @@
+﻿@using System.Globalization
+@{
+    ViewData["Title"] = "Registrar Ingreso de Mercadería";
+    Layout = "_LayoutDashboard";
+    var ordenes = ViewBag.OrdenesCompra as IEnumerable<AppWeb.Models.OrdenCompra> ?? Enumerable.Empty<AppWeb.Models.OrdenCompra>();
+    var ordenSel = ViewBag.OrdenSeleccionada as AppWeb.Models.OrdenCompra;
+    int? idOrdenSel = ViewBag.IdOrdenSeleccionada as int?;
+}
+
+<div id="viewCrearIngreso" class="view-container active">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2>Registrar Ingreso de Mercadería</h2>
+            <div class="breadcrumb">
+                <a asp-controller="Home" asp-action="Index" style="color:inherit; text-decoration:none;">Inicio</a> &gt;
+                <a asp-controller="IngresoMercaderia" asp-action="Index" style="color:inherit; text-decoration:none;">Ingreso de Mercadería</a> &gt;
+                <span>Nuevo Ingreso</span>
+            </div>
+        </div>
+        <a asp-controller="IngresoMercaderia" asp-action="Index"
+           style="background:#6c757d; color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="table-wrapper" style="padding: 24px;">
+        @if (ViewData["Error"] != null)
+        {
+            <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #f8d7da; color: #721c24;">
+                @ViewData["Error"]
+            </div>
+        }
+
+        <!-- SELECCIÓN DE ORDEN DE COMPRA -->
+        <div style="margin-bottom: 20px;">
+            <label style="display:block; font-weight:500; margin-bottom:6px;">Orden de Compra Pendiente / Emitida</label>
+            <select id="selectOrdenCompra"
+                    onchange="if(this.value){ window.location.href='@Url.Action("Crear", "IngresoMercaderia")?idOrdenCompra=' + this.value; } else { window.location.href='@Url.Action("Crear", "IngresoMercaderia")'; }"
+                    style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box; background:#fff;">
+                <option value="">Seleccione una orden de compra...</option>
+                @foreach (var ord in ordenes)
+                {
+                    <option value="@ord.idOrdenCompra" selected="@(idOrdenSel == ord.idOrdenCompra)">
+                        Orden #@ord.idOrdenCompra - @(ord.proveedor?.razonSocial ?? "Sin proveedor") (@ord.estado | S/ @ord.total.ToString("N2"))
+                    </option>
+                }
+            </select>
+        </div>
+
+        @if (ordenSel == null)
+        {
+            <div style="padding: 16px; border-radius: 6px; background: #eef2f7; color: #304D8A;">
+                @if (!ordenes.Any())
+                {
+                    <span>No hay órdenes de compra pendientes o emitidas para recepcionar.</span>
+                }
+                else
+                {
+                    <span>Seleccione una orden de compra para cargar los productos a recepcionar.</span>
+                }
+            </div>
+        }
+        else
+        {
+            <div style="padding:14px 16px; border-radius:6px; background:#f8f9fa; border:1px solid #dee2e6; margin-bottom:20px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                <div><strong>Orden:</strong> #@ordenSel.idOrdenCompra</div>
+                <div><strong>Proveedor:</strong> @(ordenSel.proveedor?.razonSocial ?? "-")</div>
+                <div><strong>Fecha Orden:</strong> @ordenSel.fechaCompra.ToString("yyyy-MM-dd")</div>
+                <div><strong>Estado:</strong> @ordenSel.estado</div>
+            </div>
+
+            <form asp-controller="IngresoMercaderia" asp-action="Crear" method="post" autocomplete="off">
+                <input type="hidden" name="idOrdenCompra" value="@ordenSel.idOrdenCompra" />
+
+                <div style="margin-bottom:20px;">
+                    <label style="display:block; font-weight:500; margin-bottom:6px;">Observaciones de Recepción</label>
+                    <input type="text" name="observaciones" placeholder="Ej. Mercadería conforme, guía de remisión #001-234..."
+                           style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                </div>
+
+                <h3 style="margin:0 0 10px 0; font-size:1.05rem;">Detalle de Productos a Recepcionar</h3>
+                <table class="data-table" id="detalleIngresoTable" style="margin-bottom:16px;">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th style="width:120px;">Ordenado</th>
+                            <th style="width:130px;">Recibido</th>
+                            <th style="width:130px;">Rechazado</th>
+                            <th style="width:150px;">Costo Unit. (S/)</th>
+                            <th style="width:140px;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detalleIngresoBody">
+                        @foreach (var det in ordenSel.DetalleOrdenCompras)
+                        {
+                            <tr>
+                                <td>
+                                    <input type="hidden" name="idProductos" value="@det.idProducto" />
+                                    <strong>@(det.producto?.nombre ?? "-")</strong>
+                                    <div style="font-size:0.8rem; color:#6c757d;">@(det.producto?.codigoBarras ?? "")</div>
+                                </td>
+                                <td>@det.cantidad</td>
+                                <td>
+                                    <input type="number" name="cantidadesRecibidas" class="input-recibida" min="0" value="@det.cantidad" required
+                                           style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                                </td>
+                                <td>
+                                    <input type="number" name="cantidadesRechazadas" class="input-rechazada" min="0" value="0" required
+                                           style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                                </td>
+                                <td>
+                                    <input type="number" name="costosUnitarios" class="input-costo" step="0.01" min="0"
+                                           value="@det.precioUnitario.ToString("0.00", CultureInfo.InvariantCulture)" required
+                                           style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                                </td>
+                                <td class="celda-subtotal" style="font-weight:600;">S/ 0.00</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div style="display:flex; justify-content:flex-end; align-items:center; gap:16px; margin-bottom:20px; font-size:1.15rem;">
+                    <span>Total Ingreso:</span>
+                    <strong id="totalIngresoTexto" style="color:#304D8A;">S/ 0.00</strong>
+                </div>
+
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <a asp-controller="IngresoMercaderia" asp-action="Index"
+                       style="padding:10px 18px; border-radius:6px; text-decoration:none; background:#e2e6ea; color:#333; font-weight:500;">
+                        Cancelar
+                    </a>
+                    <button type="submit"
+                            style="padding:10px 20px; border:none; border-radius:6px; background:#28A745; color:#fff; font-weight:500; cursor:pointer;">
+                        <i class="fas fa-check"></i> Registrar Ingreso y Actualizar Stock
+                    </button>
+                </div>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const tbody = document.getElementById('detalleIngresoBody');
+            const totalTexto = document.getElementById('totalIngresoTexto');
+            if (!tbody || !totalTexto) return;
+
+            function recalcular() {
+                let total = 0;
+                tbody.querySelectorAll('tr').forEach(tr => {
+                    const rec = parseFloat(tr.querySelector('.input-recibida').value) || 0;
+                    const costo = parseFloat(tr.querySelector('.input-costo').value) || 0;
+                    const sub = rec * costo;
+                    tr.querySelector('.celda-subtotal').textContent = 'S/ ' + sub.toFixed(2);
+                    total += sub;
+                });
+                totalTexto.textContent = 'S/ ' + total.toFixed(2);
+            }
+
+            tbody.querySelectorAll('.input-recibida, .input-costo').forEach(inp => {
+                inp.addEventListener('input', recalcular);
+            });
+
+            recalcular();
+        })();
+    </script>
+}
