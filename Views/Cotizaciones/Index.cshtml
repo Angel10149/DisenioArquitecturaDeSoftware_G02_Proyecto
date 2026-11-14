@@ -111,7 +111,10 @@
                         var nombreCliente = !string.IsNullOrWhiteSpace(cot.cliente?.razonSocial)
                             ? cot.cliente.razonSocial
                             : (cot.cliente?.nombres ?? "-");
-                        var colorEstado = cot.estado switch
+                        var estadoNorm = cot.estado?.Trim() ?? string.Empty;
+                        bool esPendiente = string.Equals(estadoNorm, "Pendiente", StringComparison.OrdinalIgnoreCase);
+                        bool esAprobada = string.Equals(estadoNorm, "Aprobada", StringComparison.OrdinalIgnoreCase);
+                        var colorEstado = estadoNorm switch
                         {
                             "Aprobada" => "#28A745",
                             "Convertida" => "#304D8A",
@@ -131,7 +134,7 @@
                                    style="padding:4px 10px; border-radius:4px; text-decoration:none; font-size:0.85rem; color:#fff; background:#304D8A; margin-right:4px; display:inline-block;">
                                     Detalle
                                 </a>
-                                @if (cot.estado == "Pendiente")
+                                @if (esPendiente)
                                 {
                                     <form asp-controller="Cotizaciones" asp-action="CambiarEstado" method="post" style="display:inline;">
                                         <input type="hidden" name="id" value="@cot.idCotizacion" />
@@ -142,14 +145,14 @@
                                         </button>
                                     </form>
                                 }
-                                @if (cot.estado == "Aprobada")
+                                @if (esAprobada)
                                 {
                                     <a asp-controller="Venta" asp-action="Crear" asp-route-idCotizacion="@cot.idCotizacion"
                                        style="padding:4px 10px; border-radius:4px; text-decoration:none; font-size:0.85rem; color:#fff; background:#28A745; margin-right:4px; display:inline-block;">
                                         Generar Venta
                                     </a>
                                 }
-                                @if (cot.estado == "Pendiente" || cot.estado == "Aprobada")
+                                @if (esPendiente || esAprobada)
                                 {
                                     <form asp-controller="Cotizaciones" asp-action="CambiarEstado" method="post" style="display:inline;">
                                         <input type="hidden" name="id" value="@cot.idCotizacion" />

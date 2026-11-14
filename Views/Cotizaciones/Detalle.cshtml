@@ -5,6 +5,9 @@
     var nombreCliente = !string.IsNullOrWhiteSpace(Model.cliente?.razonSocial)
         ? Model.cliente.razonSocial
         : (Model.cliente?.nombres ?? "-");
+    var estadoNorm = Model.estado?.Trim() ?? string.Empty;
+    bool esPendiente = string.Equals(estadoNorm, "Pendiente", StringComparison.OrdinalIgnoreCase);
+    bool esAprobada = string.Equals(estadoNorm, "Aprobada", StringComparison.OrdinalIgnoreCase);
 }
 
 <div id="viewDetalleCotizacion" class="view-container active">
@@ -17,10 +20,42 @@
                 <span>Detalle #@Model.idCotizacion</span>
             </div>
         </div>
-        <a asp-controller="Cotizaciones" asp-action="Index"
-           style="background:#6c757d; color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
-            <i class="fas fa-arrow-left"></i> Volver
-        </a>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            @if (esPendiente)
+            {
+                <form asp-controller="Cotizaciones" asp-action="CambiarEstado" method="post" style="display:inline;">
+                    <input type="hidden" name="id" value="@Model.idCotizacion" />
+                    <input type="hidden" name="nuevoEstado" value="Aprobada" />
+                    <button type="submit"
+                            style="background:#28A745; color:#fff; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:500; display:inline-flex; align-items:center; gap:6px;">
+                        <i class="fas fa-check"></i> Aprobar Cotización
+                    </button>
+                </form>
+            }
+            @if (esAprobada)
+            {
+                <a asp-controller="Venta" asp-action="Crear" asp-route-idCotizacion="@Model.idCotizacion"
+                   style="background:#28A745; color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:6px;">
+                    <i class="fas fa-shopping-cart"></i> Generar Venta
+                </a>
+            }
+            @if (esPendiente || esAprobada)
+            {
+                <form asp-controller="Cotizaciones" asp-action="CambiarEstado" method="post" style="display:inline;">
+                    <input type="hidden" name="id" value="@Model.idCotizacion" />
+                    <input type="hidden" name="nuevoEstado" value="Anulada" />
+                    <button type="submit"
+                            style="background:#DC3545; color:#fff; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:500; display:inline-flex; align-items:center; gap:6px;"
+                            onclick="return confirm('¿Anular esta cotización?');">
+                        <i class="fas fa-times"></i> Anular
+                    </button>
+                </form>
+            }
+            <a asp-controller="Cotizaciones" asp-action="Index"
+               style="background:#6c757d; color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
     </div>
 
     <!-- DATOS GENERALES -->
