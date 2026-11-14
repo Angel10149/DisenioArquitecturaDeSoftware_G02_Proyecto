@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace AppWeb.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Administrador,Cajero")]
     public class CajaController : Controller
     {
         private readonly AppDbContext _context;

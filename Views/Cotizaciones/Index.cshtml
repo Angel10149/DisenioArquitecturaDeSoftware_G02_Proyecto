@@ -142,6 +142,13 @@
                                         </button>
                                     </form>
                                 }
+                                @if (cot.estado == "Aprobada")
+                                {
+                                    <a asp-controller="Venta" asp-action="Crear" asp-route-idCotizacion="@cot.idCotizacion"
+                                       style="padding:4px 10px; border-radius:4px; text-decoration:none; font-size:0.85rem; color:#fff; background:#28A745; margin-right:4px; display:inline-block;">
+                                        Generar Venta
+                                    </a>
+                                }
                                 @if (cot.estado == "Pendiente" || cot.estado == "Aprobada")
                                 {
                                     <form asp-controller="Cotizaciones" asp-action="CambiarEstado" method="post" style="display:inline;">

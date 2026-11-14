@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace AppWeb.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Administrador,Vendedor")]
     public class CotizacionesController : Controller
     {
         private readonly AppDbContext _context;
