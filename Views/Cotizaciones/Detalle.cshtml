@@ -6,7 +6,8 @@
         ? Model.cliente.razonSocial
         : (Model.cliente?.nombres ?? "-");
     var estadoNorm = Model.estado?.Trim() ?? string.Empty;
-    bool esPendiente = string.Equals(estadoNorm, "Pendiente", StringComparison.OrdinalIgnoreCase);
+    bool esPendiente = string.Equals(estadoNorm, "Pendiente", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(estadoNorm, "Emitida", StringComparison.OrdinalIgnoreCase);
     bool esAprobada = string.Equals(estadoNorm, "Aprobada", StringComparison.OrdinalIgnoreCase);
 }
 
