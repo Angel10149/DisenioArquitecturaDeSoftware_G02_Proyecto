@@ -1,7 +1,7 @@
 @import "base.css";
 @import "layout.css";
 @import "modules/accesibilidad.css";
-@import "modules/dashboard.css";
+@import "modules/dashboard.css?v=2";
 @import "modules/configuracion.css";
 @import "modules/ventas.css";
 @import "modules/inventario.css";
