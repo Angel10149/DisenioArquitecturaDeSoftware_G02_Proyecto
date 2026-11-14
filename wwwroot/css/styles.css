@@ -1,5 +1,5 @@
 @import "base.css";
-@import "layout.css";
+@import "layout.css?v=4";
 @import "modules/accesibilidad.css";
 @import "modules/dashboard.css?v=2";
 @import "modules/configuracion.css";
