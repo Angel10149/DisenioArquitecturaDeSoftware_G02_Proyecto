@@ -59,7 +59,7 @@
                     <a class="@(currentController == "IngresoMercaderia" ? "active" : "")" asp-controller="IngresoMercaderia" asp-action="Index">
                         <i class="fas fa-dolly"></i><span>Ingresos</span>
                     </a>
-                    <a class="@(currentController == "Reporte" ? "active" : "")" href="#">
+                    <a class="@(currentController == "Reporte" ? "active" : "")" asp-controller="Reporte" asp-action="Index">
                         <i class="fas fa-file-alt"></i><span>Reportes</span>
                     </a>
                     <a class="@(currentController == "Usuario" ? "active" : "")" asp-controller="Usuario" asp-action="Index">
