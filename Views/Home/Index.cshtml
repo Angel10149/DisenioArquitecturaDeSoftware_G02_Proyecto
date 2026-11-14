@@ -4,6 +4,23 @@
     Layout = "_LayoutDashboard";
     var maxVentaDia = Model.VentasUltimos7Dias.Any() ? Math.Max(1m, Model.VentasUltimos7Dias.Max(d => d.Total)) : 1m;
     var coloresCat = new[] { "#304D8A", "#28A745", "#FFC107", "#DC3545", "#4A78C2" };
+    var totalCatMes = Model.VentasPorCategoriaMes.Sum(c => c.Total);
+    var gradienteParts = new List<string>();
+    if (totalCatMes > 0)
+    {
+        decimal acumulado = 0m;
+        for (int i = 0; i < Model.VentasPorCategoriaMes.Count; i++)
+        {
+            var pct = (Model.VentasPorCategoriaMes[i].Total / totalCatMes) * 100m;
+            var inicioPct = acumulado;
+            acumulado += pct;
+            var color = coloresCat[i % coloresCat.Length];
+            gradienteParts.Add($"{color} {inicioPct.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}% {acumulado.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}%");
+        }
+    }
+    var donutStyle = gradienteParts.Any()
+        ? $"background: conic-gradient({string.Join(", ", gradienteParts)});"
+        : "background: conic-gradient(#e2e6ea 0% 100%);";
 }
 
 <div id="viewDashboard" class="view-container active">
@@ -56,13 +73,13 @@
                     <span>S/ @((maxVentaDia * 0.33m).ToString("N0"))</span>
                     <span>S/ 0</span>
                 </div>
-                <div class="chart-bars" id="chartBars" style="display:flex; align-items:flex-end; gap:10px; height:160px; flex:1; padding-top:10px;">
+                <div class="chart-bars" id="chartBars">
                     @foreach (var dia in Model.VentasUltimos7Dias)
                     {
-                        var pct = (int)Math.Round((dia.Total / maxVentaDia) * 100m);
-                        <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%;" title="@dia.Dia: S/ @dia.Total.ToString("N2")">
-                            <div style="width:100%; max-width:34px; height:@(Math.Max(4, pct))%; background:#304D8A; border-radius:4px 4px 0 0;"></div>
-                            <span style="font-size:0.75rem; color:#6c757d; margin-top:4px;">@dia.Dia</span>
+                        var alturaPx = (int)Math.Round((dia.Total / maxVentaDia) * 170m) + 8;
+                        <div class="bar-item" title="@dia.Dia: S/ @dia.Total.ToString("N2")">
+                            <div class="bar animated" style="height:@(alturaPx)px; --target-height:@(alturaPx)px;"></div>
+                            <div class="bar-label">@dia.Dia</div>
                         </div>
                     }
                 </div>
@@ -115,7 +132,7 @@
             <h3>Ventas por categoría (Este mes)</h3>
             <div class="pie-container">
                 <div class="donut-wrapper">
-                    <div class="donut-chart"></div>
+                    <div class="donut-chart" style="@donutStyle"></div>
                     <div class="donut-hole"></div>
                 </div>
                 <div class="pie-legend">

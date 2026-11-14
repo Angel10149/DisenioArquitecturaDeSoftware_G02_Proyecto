@@ -96,27 +96,18 @@
                         <div class="notification-wrapper">
                             <button class="notification-bell" id="notifBtn" aria-label="Notificaciones">
                                 <i class="fas fa-bell"></i>
-                                <span class="badge">3</span>
+                                <span class="badge" id="notifBadge" style="display:none;">0</span>
                             </button>
                             <div class="notif-dropdown" id="notifDropdown">
                                 <div class="notif-header">📬 Notificaciones</div>
-                                <div class="notif-item">
-                                    <i class="fas fa-shopping-cart" style="color:#304D8A;"></i>
-                                    <div class="notif-text">Nueva venta registrada por S/ 280.00</div>
-                                    <span class="notif-time">hace 5 min</span>
-                                </div>
-                                <div class="notif-item">
-                                    <i class="fas fa-exclamation-triangle" style="color:#DC3545;"></i>
-                                    <div class="notif-text">Stock bajo: Pastilla de freno (5 UNI)</div>
-                                    <span class="notif-time">hace 15 min</span>
-                                </div>
-                                <div class="notif-item">
-                                    <i class="fas fa-arrow-down" style="color:#28A745;"></i>
-                                    <div class="notif-text">Ingreso de mercadería: Filtro de aire (+50)</div>
-                                    <span class="notif-time">hace 1 hora</span>
+                                <div id="notifItemsContainer">
+                                    <div class="notif-item">
+                                        <i class="fas fa-spinner fa-spin" style="color:#304D8A;"></i>
+                                        <div class="notif-text">Cargando notificaciones...</div>
+                                    </div>
                                 </div>
                                 <div class="notif-footer">
-                                    <a href="#" id="verTodasNotif">Ver todas las notificaciones</a>
+                                    <a asp-controller="Reporte" asp-action="Index">Ver alertas y reportes</a>
                                 </div>
                             </div>
                         </div>
@@ -223,43 +214,237 @@
                 }
             });
 
-            // Controles de accesibilidad básica
-            const highContrast = document.getElementById("highContrast");
-            if (highContrast) {
-                highContrast.addEventListener("change", function () {
-                    document.body.classList.toggle("high-contrast", this.checked);
-                });
+            // ===== ACCESIBILIDAD COMPLETA (DEL PROTOTIPO) =====
+            const ACCESSIBILITY_STORAGE_KEY = "grupo-mkg-accessibility-state";
+            const counter = document.getElementById("accessibilityCounter");
+            let accState = {
+                textSize: "normal",
+                lineSpacing: "normal",
+                highContrast: false,
+                daltonism: false,
+                dyslexicFont: false,
+                underlineLinks: false,
+                textReader: false
+            };
+
+            function saveAccessibilityState() {
+                try {
+                    localStorage.setItem(ACCESSIBILITY_STORAGE_KEY, JSON.stringify(accState));
+                } catch (e) { }
             }
 
-            const daltonism = document.getElementById("daltonism");
-            if (daltonism) {
-                daltonism.addEventListener("change", function () {
-                    document.body.classList.toggle("daltonism", this.checked);
-                });
+            function loadAccessibilityState() {
+                try {
+                    const saved = localStorage.getItem(ACCESSIBILITY_STORAGE_KEY);
+                    if (saved) {
+                        accState = { ...accState, ...JSON.parse(saved) };
+                    }
+                } catch (e) { }
             }
 
-            const dyslexicFont = document.getElementById("dyslexicFont");
-            if (dyslexicFont) {
-                dyslexicFont.addEventListener("change", function () {
-                    document.body.classList.toggle("dyslexic-font", this.checked);
-                });
+            function updateCounter() {
+                if (!counter) return;
+                let count = 0;
+                if (accState.textSize !== "normal") count++;
+                if (accState.lineSpacing !== "normal") count++;
+                if (accState.highContrast) count++;
+                if (accState.daltonism) count++;
+                if (accState.dyslexicFont) count++;
+                if (accState.underlineLinks) count++;
+                if (accState.textReader) count++;
+                counter.textContent = count;
+                counter.style.display = count > 0 ? "block" : "none";
             }
 
-            const underlineLinks = document.getElementById("underlineLinks");
-            if (underlineLinks) {
-                underlineLinks.addEventListener("change", function () {
-                    document.body.classList.toggle("underline-links", this.checked);
-                });
+            let hoverTimeout = null;
+            function speakText(text) {
+                if (!window.speechSynthesis) return;
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = "es-ES";
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
             }
 
-            const resetBtn = document.getElementById("resetAccessibility");
-            if (resetBtn) {
-                resetBtn.addEventListener("click", function () {
-                    document.body.classList.remove("high-contrast", "daltonism", "dyslexic-font", "underline-links");
-                    if (highContrast) highContrast.checked = false;
-                    if (daltonism) daltonism.checked = false;
-                    if (dyslexicFont) dyslexicFont.checked = false;
-                    if (underlineLinks) underlineLinks.checked = false;
+            function handleTextReaderHover(e) {
+                if (!accState.textReader) return;
+                const textEl = e.target.closest(".view-container, .sidebar, .top-bar, .metric-card, .chart-box, .stock-box, .pie-box, .top-box, .data-table, .metric-box, .welcome-row, .view-header");
+                if (textEl) {
+                    const text = textEl.textContent.trim();
+                    if (text.length > 0) {
+                        if (hoverTimeout) clearTimeout(hoverTimeout);
+                        hoverTimeout = setTimeout(() => speakText(text), 300);
+                    }
+                }
+            }
+
+            function syncAccessibilityControls() {
+                const hc = document.getElementById("highContrast");
+                const dl = document.getElementById("daltonism");
+                const df = document.getElementById("dyslexicFont");
+                const ul = document.getElementById("underlineLinks");
+                const tr = document.getElementById("textReader");
+                if (hc) hc.checked = accState.highContrast;
+                if (dl) dl.checked = accState.daltonism;
+                if (df) df.checked = accState.dyslexicFont;
+                if (ul) ul.checked = accState.underlineLinks;
+                if (tr) tr.checked = accState.textReader;
+
+                document.querySelectorAll("[data-size]").forEach(b => b.classList.remove("active"));
+                document.querySelector(`[data-size="${accState.textSize}"]`)?.classList.add("active");
+                document.querySelectorAll("[data-line]").forEach(b => b.classList.remove("active"));
+                document.querySelector(`[data-line="${accState.lineSpacing}"]`)?.classList.add("active");
+            }
+
+            function applyAccessibility() {
+                const body = document.body;
+                const html = document.documentElement;
+
+                body.classList.remove("text-small", "text-normal", "text-large");
+                body.classList.add(`text-${accState.textSize}`);
+
+                body.classList.remove("line-spacing-compact", "line-spacing-normal", "line-spacing-wide");
+                body.classList.add(`line-spacing-${accState.lineSpacing}`);
+
+                body.classList.toggle("high-contrast", accState.highContrast);
+                body.classList.toggle("daltonism", accState.daltonism);
+                body.classList.toggle("font-dyslexic", accState.dyslexicFont);
+                html.classList.toggle("font-dyslexic", accState.dyslexicFont);
+                body.classList.toggle("underline-links", accState.underlineLinks);
+
+                if (accState.textReader) {
+                    document.addEventListener("mouseover", handleTextReaderHover);
+                } else {
+                    document.removeEventListener("mouseover", handleTextReaderHover);
+                    if (window.speechSynthesis) window.speechSynthesis.cancel();
+                }
+
+                saveAccessibilityState();
+                updateCounter();
+            }
+
+            document.querySelectorAll("[data-size]").forEach(btn => {
+                btn.addEventListener("click", function () {
+                    accState.textSize = this.dataset.size;
+                    syncAccessibilityControls();
+                    applyAccessibility();
+                });
+            });
+
+            document.querySelectorAll("[data-line]").forEach(btn => {
+                btn.addEventListener("click", function () {
+                    accState.lineSpacing = this.dataset.line;
+                    syncAccessibilityControls();
+                    applyAccessibility();
+                });
+            });
+
+            document.getElementById("highContrast")?.addEventListener("change", function () {
+                accState.highContrast = this.checked;
+                applyAccessibility();
+            });
+            document.getElementById("daltonism")?.addEventListener("change", function () {
+                accState.daltonism = this.checked;
+                applyAccessibility();
+            });
+            document.getElementById("dyslexicFont")?.addEventListener("change", function () {
+                accState.dyslexicFont = this.checked;
+                applyAccessibility();
+            });
+            document.getElementById("underlineLinks")?.addEventListener("change", function () {
+                accState.underlineLinks = this.checked;
+                applyAccessibility();
+            });
+            document.getElementById("textReader")?.addEventListener("change", function () {
+                accState.textReader = this.checked;
+                applyAccessibility();
+            });
+
+            document.getElementById("resetAccessibility")?.addEventListener("click", function () {
+                accState = {
+                    textSize: "normal",
+                    lineSpacing: "normal",
+                    highContrast: false,
+                    daltonism: false,
+                    dyslexicFont: false,
+                    underlineLinks: false,
+                    textReader: false
+                };
+                syncAccessibilityControls();
+                applyAccessibility();
+            });
+
+            loadAccessibilityState();
+            syncAccessibilityControls();
+            applyAccessibility();
+
+            // ===== NOTIFICACIONES REALES =====
+            const notifContainer = document.getElementById("notifItemsContainer");
+            const notifBadge = document.getElementById("notifBadge");
+            if (notifContainer) {
+                fetch('@Url.Action("Notificaciones", "Home")')
+                    .then(r => r.ok ? r.json() : [])
+                    .then(items => {
+                        if (!items || items.length === 0) {
+                            notifContainer.innerHTML = '<div class="notif-item"><i class="fas fa-check-circle" style="color:#28A745;"></i><div class="notif-text">Sin notificaciones pendientes</div></div>';
+                            if (notifBadge) notifBadge.style.display = "none";
+                            return;
+                        }
+                        if (notifBadge) {
+                            notifBadge.textContent = items.length;
+                            notifBadge.style.display = "inline-block";
+                        }
+                        notifContainer.innerHTML = items.map(it =>
+                            `<a href="${it.url}" class="notif-item" style="text-decoration:none; color:inherit;">
+                                <i class="fas ${it.icono}" style="color:${it.color};"></i>
+                                <div class="notif-text">${it.texto}</div>
+                                <span class="notif-time">${it.tiempo}</span>
+                            </a>`
+                        ).join("");
+                    })
+                    .catch(() => { });
+            }
+
+            // ===== BUSCADOR GLOBAL =====
+            const globalSearch = document.getElementById("globalSearch");
+            const searchResults = document.getElementById("searchResults");
+            let searchTimer = null;
+            if (globalSearch && searchResults) {
+                globalSearch.addEventListener("input", function () {
+                    const q = this.value.trim();
+                    if (searchTimer) clearTimeout(searchTimer);
+                    if (q.length < 2) {
+                        searchResults.innerHTML = "";
+                        searchResults.classList.remove("active");
+                        return;
+                    }
+                    searchTimer = setTimeout(() => {
+                        fetch('@Url.Action("BuscarGlobal", "Home")?q=' + encodeURIComponent(q))
+                            .then(r => r.ok ? r.json() : [])
+                            .then(items => {
+                                if (!items || items.length === 0) {
+                                    searchResults.innerHTML = '<div class="search-result-item" style="padding:10px 14px; color:#6c757d;">Sin resultados</div>';
+                                } else {
+                                    searchResults.innerHTML = items.map(it =>
+                                        `<a href="${it.url}" class="search-result-item" style="display:flex; align-items:center; gap:10px; padding:10px 14px; text-decoration:none; color:inherit; border-bottom:1px solid #f1f3f5;">
+                                            <i class="fas ${it.icono}" style="color:#304D8A;"></i>
+                                            <div>
+                                                <div style="font-weight:600; font-size:0.9rem;">${it.titulo} <span style="font-size:0.75rem; color:#6c757d;">(${it.tipo})</span></div>
+                                                <div style="font-size:0.8rem; color:#6c757d;">${it.subtitulo}</div>
+                                            </div>
+                                        </a>`
+                                    ).join("");
+                                }
+                                searchResults.classList.add("active");
+                            })
+                            .catch(() => { });
+                    }, 250);
+                });
+
+                document.addEventListener("click", function (e) {
+                    if (!globalSearch.contains(e.target) && !searchResults.contains(e.target)) {
+                        searchResults.classList.remove("active");
+                    }
                 });
             }
         });

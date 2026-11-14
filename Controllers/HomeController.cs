@@ -133,6 +133,107 @@ namespace AppWeb.Controllers
             return View(vm);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> BuscarGlobal(string? q)
+        {
+            if (string.IsNullOrWhiteSpace(q))
+            {
+                return Json(Array.Empty<object>());
+            }
+
+            string filtro = q.Trim();
+
+            var productos = await _context.Productos
+                .Where(p => p.estado && (p.nombre.Contains(filtro) || p.codigoBarras.Contains(filtro)))
+                .OrderBy(p => p.nombre)
+                .Take(4)
+                .Select(p => new
+                {
+                    tipo = "Producto",
+                    icono = "fa-box",
+                    titulo = p.nombre,
+                    subtitulo = $"Stock: {p.stockActual} · S/ {p.precioVenta:N2}",
+                    url = Url.Action("Index", "Producto", new { buscar = p.nombre })
+                })
+                .ToListAsync();
+
+            var clientes = await _context.Clientes
+                .Where(c => c.estado && (c.nombres.Contains(filtro) || c.razonSocial.Contains(filtro) || c.numeroDocumento.Contains(filtro)))
+                .OrderBy(c => c.nombres)
+                .Take(4)
+                .Select(c => new
+                {
+                    tipo = "Cliente",
+                    icono = "fa-user",
+                    titulo = string.IsNullOrWhiteSpace(c.razonSocial) ? c.nombres : c.razonSocial,
+                    subtitulo = $"{c.tipoDocumento}: {c.numeroDocumento}",
+                    url = Url.Action("Index", "Cliente", new { buscar = c.numeroDocumento })
+                })
+                .ToListAsync();
+
+            var ventas = await _context.Ventas
+                .Include(v => v.cliente)
+                .Where(v => v.idVenta.ToString() == filtro || v.cliente!.nombres.Contains(filtro) || v.cliente!.razonSocial.Contains(filtro))
+                .OrderByDescending(v => v.idVenta)
+                .Take(3)
+                .Select(v => new
+                {
+                    tipo = "Venta",
+                    icono = "fa-shopping-cart",
+                    titulo = $"Venta #{v.idVenta}",
+                    subtitulo = $"S/ {v.total:N2} · {v.estado}",
+                    url = Url.Action("Detalle", "Venta", new { id = v.idVenta })
+                })
+                .ToListAsync();
+
+            return Json(productos.Concat<object>(clientes).Concat(ventas));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Notificaciones()
+        {
+            var items = new List<object>();
+
+            var stockBajo = await _context.Productos
+                .Include(p => p.unidadMedida)
+                .Where(p => p.estado && p.stockActual <= p.stockMinimo)
+                .OrderBy(p => p.stockActual)
+                .Take(3)
+                .ToListAsync();
+
+            foreach (var p in stockBajo)
+            {
+                items.Add(new
+                {
+                    icono = "fa-exclamation-triangle",
+                    color = "#DC3545",
+                    texto = $"Stock bajo: {p.nombre} ({p.stockActual} {p.unidadMedida?.abreviatura ?? "UNI"})",
+                    tiempo = "Inventario",
+                    url = Url.Action("Index", "Producto", new { buscar = p.nombre })
+                });
+            }
+
+            var ultimasVentas = await _context.Ventas
+                .Where(v => v.estado != "Anulada")
+                .OrderByDescending(v => v.idVenta)
+                .Take(2)
+                .ToListAsync();
+
+            foreach (var v in ultimasVentas)
+            {
+                items.Add(new
+                {
+                    icono = "fa-shopping-cart",
+                    color = "#304D8A",
+                    texto = $"Venta #{v.idVenta} por S/ {v.total:N2} ({v.estado})",
+                    tiempo = v.fechaVenta.ToString("dd/MM HH:mm"),
+                    url = Url.Action("Detalle", "Venta", new { id = v.idVenta })
+                });
+            }
+
+            return Json(items);
+        }
+
         public IActionResult Privacy()
         {
             return View();
