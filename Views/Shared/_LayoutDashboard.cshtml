@@ -41,7 +41,7 @@
                     <a class="@(currentController == "Producto" || currentController == "Inventario" ? "active" : "")" asp-controller="Producto" asp-action="Index">
                         <i class="fas fa-boxes"></i><span>Inventario</span>
                     </a>
-                    <a class="@(currentController == "Caja" ? "active" : "")" href="#">
+                    <a class="@(currentController == "Caja" ? "active" : "")" asp-controller="Caja" asp-action="Index">
                         <i class="fas fa-cash-register"></i><span>Caja</span>
                     </a>
                     <a class="@(currentController == "Cliente" ? "active" : "")" asp-controller="Cliente" asp-action="Index">

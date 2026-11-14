@@ -1,0 +1,173 @@
+﻿@model IEnumerable<AppWeb.Models.Pago>
+@{
+    ViewData["Title"] = "Caja";
+    Layout = "_LayoutDashboard";
+    string? metodoSel = ViewBag.MetodoPago as string;
+    var ventasPendientes = ViewBag.VentasPendientes as IEnumerable<AppWeb.Models.Venta> ?? Enumerable.Empty<AppWeb.Models.Venta>();
+}
+
+<div id="viewCaja" class="view-container active">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2>Caja y Cobros</h2>
+            <div class="breadcrumb">
+                <a asp-controller="Home" asp-action="Index" style="color:inherit; text-decoration:none;">Inicio</a> &gt;
+                <span>Caja</span>
+            </div>
+        </div>
+        <a asp-controller="Caja" asp-action="Cobrar"
+           style="background:#28A745; color:#fff; padding:9px 18px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+            <i class="fas fa-cash-register"></i> Cobrar Venta
+        </a>
+    </div>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #d4edda; color: #155724;">
+            @TempData["Mensaje"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; background: #f8d7da; color: #721c24;">
+            @TempData["Error"]
+        </div>
+    }
+
+    <!-- TARJETAS DE MÉTRICAS -->
+    <div class="metrics-row">
+        <div class="metric-box">
+            <span class="label">Pendientes de Cobro</span>
+            <span class="value">@ventasPendientes.Count()</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Pagos Registrados</span>
+            <span class="value">@Model.Count()</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Cobrado Hoy</span>
+            <span class="value">S/ @Model.Where(p => p.fechaPago.Date == DateTime.Today).Sum(p => p.venta?.total ?? p.montoRecibido).ToString("N2")</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Total Acumulado</span>
+            <span class="value">S/ @Model.Sum(p => p.venta?.total ?? p.montoRecibido).ToString("N2")</span>
+        </div>
+    </div>
+
+    @if (ventasPendientes.Any())
+    {
+        <div class="table-wrapper" style="padding: 16px; margin-bottom: 20px;">
+            <h3 style="margin:0 0 12px 0; font-size:1.05rem;">Ventas Pendientes de Cobro</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Venta</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Total</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var vp in ventasPendientes)
+                    {
+                        var cliNom = !string.IsNullOrWhiteSpace(vp.cliente?.razonSocial) ? vp.cliente.razonSocial : (vp.cliente?.nombres ?? "-");
+                        <tr>
+                            <td><strong>#@vp.idVenta</strong></td>
+                            <td>@vp.fechaVenta.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@cliNom</td>
+                            <td><strong>S/ @vp.total.ToString("N2")</strong></td>
+                            <td>
+                                <a asp-controller="Caja" asp-action="Cobrar" asp-route-idVenta="@vp.idVenta"
+                                   style="padding:4px 12px; border-radius:4px; text-decoration:none; font-size:0.85rem; color:#fff; background:#28A745; display:inline-block;">
+                                    <i class="fas fa-dollar-sign"></i> Cobrar
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <!-- FILTROS Y BUSCADOR -->
+    <form asp-controller="Caja" asp-action="Index" method="get" style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+        <select name="metodoPago" onchange="this.form.submit()"
+                style="padding:9px 12px; border:1px solid #ced4da; border-radius:6px; background:#fff;">
+            <option value="">Todos los Métodos</option>
+            <option value="Efectivo" selected="@(metodoSel == "Efectivo")">Efectivo</option>
+            <option value="Tarjeta" selected="@(metodoSel == "Tarjeta")">Tarjeta</option>
+            <option value="Transferencia" selected="@(metodoSel == "Transferencia")">Transferencia</option>
+            <option value="Yape / Plin" selected="@(metodoSel == "Yape / Plin")">Yape / Plin</option>
+        </select>
+
+        <input type="text" name="buscar" value="@ViewBag.Buscar" placeholder="Buscar por cliente, documento, # venta o # pago..."
+               style="flex:1; min-width:240px; padding:9px 12px; border:1px solid #ced4da; border-radius:6px;" />
+
+        <button type="submit" style="padding:9px 16px; border:none; border-radius:6px; background:#304D8A; color:#fff; cursor:pointer;">
+            <i class="fas fa-search"></i> Buscar
+        </button>
+
+        @if (!string.IsNullOrWhiteSpace(ViewBag.Buscar as string) || !string.IsNullOrWhiteSpace(metodoSel))
+        {
+            <a asp-controller="Caja" asp-action="Index"
+               style="padding:9px 16px; border-radius:6px; background:#e2e6ea; color:#333; text-decoration:none; display:inline-flex; align-items:center;">
+                Limpiar
+            </a>
+        }
+    </form>
+
+    <!-- HISTORIAL DE PAGOS -->
+    <div class="table-wrapper">
+        <table class="data-table" id="pagosTable">
+            <thead>
+                <tr>
+                    <th>Pago</th>
+                    <th>Fecha</th>
+                    <th>Venta</th>
+                    <th>Cliente</th>
+                    <th>Método</th>
+                    <th>Recibido</th>
+                    <th>Comprobante</th>
+                    <th>Cajero</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="9" style="text-align:center; padding:20px; color:#6c757d;">
+                            No se encontraron pagos registrados.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var pago in Model)
+                    {
+                        var cli = pago.venta?.cliente;
+                        var nombreCliente = !string.IsNullOrWhiteSpace(cli?.razonSocial) ? cli.razonSocial : (cli?.nombres ?? "-");
+                        var comp = pago.Comprobantes?.FirstOrDefault();
+                        <tr>
+                            <td><strong>#@pago.idPago</strong></td>
+                            <td>@pago.fechaPago.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>#@pago.idVenta</td>
+                            <td>@nombreCliente</td>
+                            <td>@pago.metodoPago</td>
+                            <td><strong>S/ @pago.montoRecibido.ToString("N2")</strong></td>
+                            <td>@(comp != null ? $"{comp.tipoComprobante} {comp.serie}-{comp.numero}" : "-")</td>
+                            <td>@(pago.usuario?.nombreUsuario ?? "-")</td>
+                            <td style="white-space:nowrap;">
+                                <a asp-controller="Caja" asp-action="Comprobante" asp-route-id="@pago.idPago"
+                                   style="padding:4px 10px; border-radius:4px; text-decoration:none; font-size:0.85rem; color:#fff; background:#304D8A; display:inline-block;">
+                                    Comprobante
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
