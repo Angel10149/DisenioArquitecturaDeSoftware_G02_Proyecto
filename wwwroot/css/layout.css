@@ -92,6 +92,62 @@
             border-top: 1px solid #F5F5F5;
             padding-top: 1rem;
         }
+        .sidebar nav .nav-group {
+            margin-top: 0.4rem;
+            border-top: 1px solid #F0F2F5;
+            padding-top: 0.4rem;
+        }
+        .sidebar nav .nav-group-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.9rem;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            color: #6c757d;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+        .sidebar nav .nav-group-toggle:hover {
+            background: #F5F7FA;
+            color: #304D8A;
+        }
+        .sidebar nav .nav-group-toggle .nav-group-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+        .sidebar nav .nav-group-toggle .nav-group-label i {
+            width: 1.4rem;
+            font-size: 1rem;
+            text-align: center;
+        }
+        .sidebar nav .nav-group-toggle .nav-chevron {
+            font-size: 0.75rem;
+            transition: transform 0.25s ease;
+        }
+        .sidebar nav .nav-group.open .nav-group-toggle {
+            color: #304D8A;
+        }
+        .sidebar nav .nav-group.open .nav-group-toggle .nav-chevron {
+            transform: rotate(180deg);
+        }
+        .sidebar nav .nav-group-items {
+            display: none;
+            flex-direction: column;
+            gap: 0.15rem;
+            padding-left: 0.35rem;
+            margin-top: 0.15rem;
+        }
+        .sidebar nav .nav-group.open .nav-group-items {
+            display: flex;
+        }
         .sidebar nav .logout-btn a {
             color: #DC3545 !important;
             transition: all 0.3s ease;

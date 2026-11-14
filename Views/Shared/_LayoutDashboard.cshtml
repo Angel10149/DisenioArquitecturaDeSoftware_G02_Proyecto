@@ -1,6 +1,9 @@
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    bool isVentasCaja = currentController == "Venta" || currentController == "Cotizaciones" || currentController == "Cliente" || currentController == "Caja";
+    bool isLogistica = currentController == "Producto" || currentController == "Inventario" || currentController == "Categoria" || currentController == "UnidadMedida" || currentController == "Proveedor" || currentController == "RequerimientoCompra" || currentController == "OrdenCompra" || currentController == "IngresoMercaderia";
+    bool isAdmin = currentController == "Reporte" || currentController == "Usuario" || currentController == "Configuracion";
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -28,46 +31,72 @@
             <aside class="sidebar" id="sidebar">
                 <img src="https://i.postimg.cc/FRcSYwJ6/Logo-MKG.webp" alt="Logo" class="logo-side" />
                 <nav>
-
                     <a class="@(currentController == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">
                         <i class="fas fa-home"></i><span>Inicio</span>
                     </a>
-                    <a class="@(currentController == "Venta" ? "active" : "")" asp-controller="Venta" asp-action="Index">
-                        <i class="fas fa-shopping-cart"></i><span>Ventas</span>
-                    </a>
-                    <a class="@(currentController == "Cotizaciones" ? "active" : "")" asp-controller="Cotizaciones" asp-action="Index">
-                        <i class="fas fa-file-signature"></i><span>Cotizaciones</span>
-                    </a>
-                    <a class="@(currentController == "Producto" || currentController == "Inventario" ? "active" : "")" asp-controller="Producto" asp-action="Index">
-                        <i class="fas fa-boxes"></i><span>Inventario</span>
-                    </a>
-                    <a class="@(currentController == "Caja" ? "active" : "")" asp-controller="Caja" asp-action="Index">
-                        <i class="fas fa-cash-register"></i><span>Caja</span>
-                    </a>
-                    <a class="@(currentController == "Cliente" ? "active" : "")" asp-controller="Cliente" asp-action="Index">
-                        <i class="fas fa-users"></i><span>Clientes</span>
-                    </a>
-                    <a class="@(currentController == "Proveedor" ? "active" : "")" asp-controller="Proveedor" asp-action="Index">
-                        <i class="fas fa-truck"></i><span>Proveedores</span>
-                    </a>
-                    <a class="@(currentController == "RequerimientoCompra" ? "active" : "")" asp-controller="RequerimientoCompra" asp-action="Index">
-                        <i class="fas fa-clipboard-list"></i><span>Requerimientos</span>
-                    </a>
-                    <a class="@(currentController == "OrdenCompra" ? "active" : "")" asp-controller="OrdenCompra" asp-action="Index">
-                        <i class="fas fa-file-invoice-dollar"></i><span>Órdenes Compra</span>
-                    </a>
-                    <a class="@(currentController == "IngresoMercaderia" ? "active" : "")" asp-controller="IngresoMercaderia" asp-action="Index">
-                        <i class="fas fa-dolly"></i><span>Ingresos</span>
-                    </a>
-                    <a class="@(currentController == "Reporte" ? "active" : "")" asp-controller="Reporte" asp-action="Index">
-                        <i class="fas fa-file-alt"></i><span>Reportes</span>
-                    </a>
-                    <a class="@(currentController == "Usuario" ? "active" : "")" asp-controller="Usuario" asp-action="Index">
-                        <i class="fas fa-user-cog"></i><span>Usuarios</span>
-                    </a>
-                    <a class="@(currentController == "Configuracion" ? "active" : "")" href="#">
-                        <i class="fas fa-cog"></i><span>Configuración</span>
-                    </a>
+
+                    <div class="nav-group @(isVentasCaja ? "open" : "")">
+                        <button type="button" class="nav-group-toggle" aria-expanded="@(isVentasCaja ? "true" : "false")">
+                            <span class="nav-group-label"><i class="fas fa-store"></i><span>Ventas y Caja</span></span>
+                            <i class="fas fa-chevron-down nav-chevron"></i>
+                        </button>
+                        <div class="nav-group-items">
+                            <a class="@(currentController == "Venta" ? "active" : "")" asp-controller="Venta" asp-action="Index">
+                                <i class="fas fa-shopping-cart"></i><span>Ventas</span>
+                            </a>
+                            <a class="@(currentController == "Cotizaciones" ? "active" : "")" asp-controller="Cotizaciones" asp-action="Index">
+                                <i class="fas fa-file-signature"></i><span>Cotizaciones</span>
+                            </a>
+                            <a class="@(currentController == "Cliente" ? "active" : "")" asp-controller="Cliente" asp-action="Index">
+                                <i class="fas fa-users"></i><span>Clientes</span>
+                            </a>
+                            <a class="@(currentController == "Caja" ? "active" : "")" asp-controller="Caja" asp-action="Index">
+                                <i class="fas fa-cash-register"></i><span>Caja</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="nav-group @(isLogistica ? "open" : "")">
+                        <button type="button" class="nav-group-toggle" aria-expanded="@(isLogistica ? "true" : "false")">
+                            <span class="nav-group-label"><i class="fas fa-warehouse"></i><span>Inventario y Compras</span></span>
+                            <i class="fas fa-chevron-down nav-chevron"></i>
+                        </button>
+                        <div class="nav-group-items">
+                            <a class="@(currentController == "Producto" || currentController == "Inventario" ? "active" : "")" asp-controller="Producto" asp-action="Index">
+                                <i class="fas fa-boxes"></i><span>Inventario</span>
+                            </a>
+                            <a class="@(currentController == "Proveedor" ? "active" : "")" asp-controller="Proveedor" asp-action="Index">
+                                <i class="fas fa-truck"></i><span>Proveedores</span>
+                            </a>
+                            <a class="@(currentController == "RequerimientoCompra" ? "active" : "")" asp-controller="RequerimientoCompra" asp-action="Index">
+                                <i class="fas fa-clipboard-list"></i><span>Requerimientos</span>
+                            </a>
+                            <a class="@(currentController == "OrdenCompra" ? "active" : "")" asp-controller="OrdenCompra" asp-action="Index">
+                                <i class="fas fa-file-invoice-dollar"></i><span>Órdenes Compra</span>
+                            </a>
+                            <a class="@(currentController == "IngresoMercaderia" ? "active" : "")" asp-controller="IngresoMercaderia" asp-action="Index">
+                                <i class="fas fa-dolly"></i><span>Ingresos</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="nav-group @(isAdmin ? "open" : "")">
+                        <button type="button" class="nav-group-toggle" aria-expanded="@(isAdmin ? "true" : "false")">
+                            <span class="nav-group-label"><i class="fas fa-shield-alt"></i><span>Administración</span></span>
+                            <i class="fas fa-chevron-down nav-chevron"></i>
+                        </button>
+                        <div class="nav-group-items">
+                            <a class="@(currentController == "Reporte" ? "active" : "")" asp-controller="Reporte" asp-action="Index">
+                                <i class="fas fa-file-alt"></i><span>Reportes</span>
+                            </a>
+                            <a class="@(currentController == "Usuario" ? "active" : "")" asp-controller="Usuario" asp-action="Index">
+                                <i class="fas fa-user-cog"></i><span>Usuarios</span>
+                            </a>
+                            <a class="@(currentController == "Configuracion" ? "active" : "")" href="#">
+                                <i class="fas fa-cog"></i><span>Configuración</span>
+                            </a>
+                        </div>
+                    </div>
 
                     <div class="logout-btn">
                         <a id="btnCerrarSesion" href="javascript:void(0);" onclick="document.getElementById('logoutForm').submit();">
@@ -148,6 +177,16 @@
     <!-- SCRIPTS DE INTERACCIÓN DE INTERFAZ -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            // Grupos desplegables en el menú lateral
+            document.querySelectorAll(".nav-group-toggle").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    const group = btn.closest(".nav-group");
+                    if (!group) return;
+                    const isOpen = group.classList.toggle("open");
+                    btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+                });
+            });
+
             // Dropdown de perfil
             const profileBtn = document.getElementById("profileBtn");
             const profileDropdown = document.getElementById("profileDropdown");
