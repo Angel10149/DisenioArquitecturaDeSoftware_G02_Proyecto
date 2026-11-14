@@ -14,13 +14,22 @@
                 <span>Reportes</span>
             </div>
         </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <a asp-controller="Reporte" asp-action="ExportarVentasCsv"
-               asp-route-fechaInicio="@Model.FechaInicio.ToString("yyyy-MM-dd")"
-               asp-route-fechaFin="@Model.FechaFin.ToString("yyyy-MM-dd")"
-               style="background:#28A745; color:#fff; padding:9px 16px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
-                <i class="fas fa-file-csv"></i> Exportar Ventas CSV
-            </a>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <form asp-controller="Reporte" asp-action="ExportarCsv" method="get" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                <input type="hidden" name="fechaInicio" value="@Model.FechaInicio.ToString("yyyy-MM-dd")" />
+                <input type="hidden" name="fechaFin" value="@Model.FechaFin.ToString("yyyy-MM-dd")" />
+                <select name="tipo" style="padding:9px 12px; border:1px solid #ced4da; border-radius:8px; background:#fff; font-weight:500;">
+                    <option value="ventas">Reporte de Ventas</option>
+                    <option value="compras">Reporte de Compras / Ingresos</option>
+                    <option value="productos_cuadre">Cuadre Productos (Comprados vs. Vendidos vs. Stock)</option>
+                    <option value="inventario">Reporte de Inventario / Stock Actual</option>
+                    <option value="caja">Reporte de Caja / Pagos</option>
+                </select>
+                <button type="submit"
+                        style="background:#28A745; color:#fff; border:none; padding:9px 16px; border-radius:8px; cursor:pointer; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+                    <i class="fas fa-file-csv"></i> Descargar CSV
+                </button>
+            </form>
             <button type="button" onclick="window.print()"
                     style="background:#304D8A; color:#fff; border:none; padding:9px 16px; border-radius:8px; cursor:pointer; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
                 <i class="fas fa-print"></i> Imprimir
@@ -165,6 +174,137 @@
                             <td>@(v.usuario?.nombreUsuario ?? "-")</td>
                             <td>@v.estado</td>
                             <td><strong>S/ @v.total.ToString("N2")</strong></td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DETALLE DE COMPRAS / INGRESOS DEL PERIODO -->
+    <div class="table-wrapper" style="padding:16px; margin-top:20px;">
+        <h3 style="margin:0 0 12px 0; font-size:1.05rem;">Compras / Ingresos del Periodo</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ingreso</th>
+                    <th>Fecha</th>
+                    <th>Proveedor</th>
+                    <th>Orden Compra</th>
+                    <th>Ítems</th>
+                    <th>Estado</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Ingresos.Any())
+                {
+                    <tr>
+                        <td colspan="7" style="text-align:center; padding:16px; color:#6c757d;">No se registraron compras/ingresos en el rango seleccionado.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var ing in Model.Ingresos)
+                    {
+                        var totalIng = ing.DetalleIngresos?.Sum(d => d.subtotal) ?? 0m;
+                        <tr>
+                            <td><strong>#@ing.idIngresoMercaderia</strong></td>
+                            <td>@ing.fechaIngreso.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@(ing.proveedor?.razonSocial ?? "-")</td>
+                            <td>OC-@ing.idOrdenCompra</td>
+                            <td>@(ing.DetalleIngresos?.Count ?? 0)</td>
+                            <td>@ing.estado</td>
+                            <td><strong>S/ @totalIng.ToString("N2")</strong></td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- DETALLE DE CAJA / PAGOS DEL PERIODO -->
+    <div class="table-wrapper" style="padding:16px; margin-top:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+            <h3 style="margin:0; font-size:1.05rem;">Movimientos de Caja (Pagos del Periodo)</h3>
+            <span style="font-weight:600; color:#28A745;">Total Cobrado: S/ @Model.TotalCobradoCaja.ToString("N2")</span>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Pago</th>
+                    <th>Fecha</th>
+                    <th>Venta</th>
+                    <th>Cliente</th>
+                    <th>Método</th>
+                    <th>Cajero</th>
+                    <th>Total Venta</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Pagos.Any())
+                {
+                    <tr>
+                        <td colspan="7" style="text-align:center; padding:16px; color:#6c757d;">No se registraron pagos en caja en el rango seleccionado.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var p in Model.Pagos)
+                    {
+                        var cliPago = !string.IsNullOrWhiteSpace(p.venta?.cliente?.razonSocial)
+                            ? p.venta.cliente.razonSocial
+                            : (p.venta?.cliente?.nombres ?? "-");
+                        <tr>
+                            <td><strong>#@p.idPago</strong></td>
+                            <td>@p.fechaPago.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>#@p.idVenta</td>
+                            <td>@cliPago</td>
+                            <td>@p.metodoPago</td>
+                            <td>@(p.usuario?.nombreUsuario ?? "-")</td>
+                            <td><strong>S/ @((p.venta?.total ?? p.montoRecibido).ToString("N2"))</strong></td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- CUADRE DE PRODUCTOS: COMPRADOS VS VENDIDOS VS STOCK -->
+    <div class="table-wrapper" style="padding:16px; margin-top:20px;">
+        <h3 style="margin:0 0 12px 0; font-size:1.05rem;">Cuadre de Productos (Comprados vs. Vendidos vs. Stock Actual)</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Cant. Comprada</th>
+                    <th>Total Comprado</th>
+                    <th>Cant. Vendida</th>
+                    <th>Total Vendido</th>
+                    <th>Stock Actual</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.MovimientosProductos.Any())
+                {
+                    <tr>
+                        <td colspan="7" style="text-align:center; padding:16px; color:#6c757d;">No hay productos activos registrados.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var mp in Model.MovimientosProductos)
+                    {
+                        bool bajo = mp.StockActual <= mp.StockMinimo;
+                        <tr>
+                            <td><strong>@mp.Nombre</strong> <span style="font-size:0.8rem; color:#6c757d;">(@mp.Codigo)</span></td>
+                            <td>@mp.Categoria</td>
+                            <td>@mp.CantidadComprada @mp.Unidad</td>
+                            <td>S/ @mp.TotalComprado.ToString("N2")</td>
+                            <td>@mp.CantidadVendida @mp.Unidad</td>
+                            <td>S/ @mp.TotalVendido.ToString("N2")</td>
+                            <td style="font-weight:700; color:@(bajo ? "#DC3545" : "#28A745");">@mp.StockActual @mp.Unidad</td>
                         </tr>
                     }
                 }
