@@ -1,6 +1,9 @@
+@model AppWeb.Controllers.DashboardVM
 @{
     ViewData["Title"] = "Dashboard";
     Layout = "_LayoutDashboard";
+    var maxVentaDia = Model.VentasUltimos7Dias.Any() ? Math.Max(1m, Model.VentasUltimos7Dias.Max(d => d.Total)) : 1m;
+    var coloresCat = new[] { "#304D8A", "#28A745", "#FFC107", "#DC3545", "#4A78C2" };
 }
 
 <div id="viewDashboard" class="view-container active">
@@ -14,29 +17,29 @@
         <div class="metric-card card-ventas">
             <div class="info">
                 <span class="label">Ventas de hoy</span>
-                <span class="value">S/ 1,250.00</span>
+                <span class="value">S/ @Model.VentasHoy.ToString("N2")</span>
             </div>
             <i class="fas fa-shopping-cart icon"></i>
         </div>
         <div class="metric-card card-inventario">
             <div class="info">
                 <span class="label">Inventario</span>
-                <span class="value">256 productos</span>
+                <span class="value">@Model.TotalProductosActivos productos</span>
             </div>
             <i class="fas fa-cube icon"></i>
         </div>
         <div class="metric-card card-caja">
             <div class="info">
                 <span class="label">Caja hoy</span>
-                <span class="value">S/ 890.00</span>
-                <span class="sub">3 movimientos</span>
+                <span class="value">S/ @Model.CajaHoy.ToString("N2")</span>
+                <span class="sub">@Model.MovimientosCajaHoy movimientos</span>
             </div>
             <i class="fas fa-box icon"></i>
         </div>
         <div class="metric-card card-alertas">
             <div class="info">
                 <span class="label">Alertas</span>
-                <span class="value">8 stock bajo</span>
+                <span class="value">@Model.AlertasStockBajo stock bajo</span>
             </div>
             <i class="fas fa-bell icon"></i>
         </div>
@@ -48,21 +51,41 @@
             <h3>Ventas (últimos 7 días)</h3>
             <div class="chart-wrapper">
                 <div class="chart-y-axis">
-                    <span>S/ 1,500</span>
-                    <span>S/ 1,000</span>
-                    <span>S/ 500</span>
+                    <span>S/ @maxVentaDia.ToString("N0")</span>
+                    <span>S/ @((maxVentaDia * 0.66m).ToString("N0"))</span>
+                    <span>S/ @((maxVentaDia * 0.33m).ToString("N0"))</span>
                     <span>S/ 0</span>
                 </div>
-                <div class="chart-bars" id="chartBars"></div>
+                <div class="chart-bars" id="chartBars" style="display:flex; align-items:flex-end; gap:10px; height:160px; flex:1; padding-top:10px;">
+                    @foreach (var dia in Model.VentasUltimos7Dias)
+                    {
+                        var pct = (int)Math.Round((dia.Total / maxVentaDia) * 100m);
+                        <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%;" title="@dia.Dia: S/ @dia.Total.ToString("N2")">
+                            <div style="width:100%; max-width:34px; height:@(Math.Max(4, pct))%; background:#304D8A; border-radius:4px 4px 0 0;"></div>
+                            <span style="font-size:0.75rem; color:#6c757d; margin-top:4px;">@dia.Dia</span>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
         <div class="stock-box">
             <h3>Productos con stock bajo</h3>
             <div class="stock-list">
-                <div class="stock-item"><i class="fas fa-bell"></i><span class="name">Pastilla de freno</span><span class="qty">5 UNI</span></div>
-                <div class="stock-item"><i class="fas fa-bell"></i><span class="name">Filtro de aire</span><span class="qty">3 UNI</span></div>
-                <div class="stock-item"><i class="fas fa-bell"></i><span class="name">Bujía</span><span class="qty">2 UNI</span></div>
-                <div class="stock-item"><i class="fas fa-bell"></i><span class="name">Aceite 10w30</span><span class="qty">4 UNI</span></div>
+                @if (!Model.ProductosStockBajo.Any())
+                {
+                    <div class="stock-item"><i class="fas fa-check-circle" style="color:#28A745;"></i><span class="name">Sin alertas de stock</span><span class="qty">OK</span></div>
+                }
+                else
+                {
+                    @foreach (var prod in Model.ProductosStockBajo)
+                    {
+                        <div class="stock-item">
+                            <i class="fas fa-bell"></i>
+                            <span class="name">@prod.nombre</span>
+                            <span class="qty">@prod.stockActual @(prod.unidadMedida?.abreviatura ?? "UNI")</span>
+                        </div>
+                    }
+                }
             </div>
         </div>
     </div>
@@ -96,22 +119,36 @@
                     <div class="donut-hole"></div>
                 </div>
                 <div class="pie-legend">
-                    <div class="legend-item"><span class="color-box" style="background:#304D8A;"></span> Frenos <span class="value">S/ 2,450.00</span></div>
-                    <div class="legend-item"><span class="color-box" style="background:#28A745;"></span> Filtros <span class="value">S/ 1,890.00</span></div>
-                    <div class="legend-item"><span class="color-box" style="background:#FFC107;"></span> Lubricantes <span class="value">S/ 1,250.00</span></div>
-                    <div class="legend-item"><span class="color-box" style="background:#DC3545;"></span> Encendido <span class="value">S/ 980.00</span></div>
-                    <div class="legend-item"><span class="color-box" style="background:#4A78C2;"></span> Otros <span class="value">S/ 730.00</span></div>
+                    @if (!Model.VentasPorCategoriaMes.Any())
+                    {
+                        <div class="legend-item"><span class="color-box" style="background:#ced4da;"></span> Sin ventas este mes <span class="value">S/ 0.00</span></div>
+                    }
+                    else
+                    {
+                        @for (int i = 0; i < Model.VentasPorCategoriaMes.Count; i++)
+                        {
+                            var cat = Model.VentasPorCategoriaMes[i];
+                            var color = coloresCat[i % coloresCat.Length];
+                            <div class="legend-item"><span class="color-box" style="background:@color;"></span> @cat.Categoria <span class="value">S/ @cat.Total.ToString("N2")</span></div>
+                        }
+                    }
                 </div>
             </div>
         </div>
         <div class="top-box">
             <h3>Top productos más vendidos</h3>
             <div class="top-list">
-                <div class="top-item"><span class="rank">1</span><span class="name">Pastilla de freno</span></div>
-                <div class="top-item"><span class="rank">2</span><span class="name">Filtro de aire</span></div>
-                <div class="top-item"><span class="rank">3</span><span class="name">Aceite 10w30</span></div>
-                <div class="top-item"><span class="rank">4</span><span class="name">Bujía</span></div>
-                <div class="top-item"><span class="rank">5</span><span class="name">Filtro de aceite</span></div>
+                @if (!Model.TopProductos.Any())
+                {
+                    <div class="top-item"><span class="rank">-</span><span class="name">Sin ventas registradas</span></div>
+                }
+                else
+                {
+                    @for (int i = 0; i < Model.TopProductos.Count; i++)
+                    {
+                        <div class="top-item"><span class="rank">@(i + 1)</span><span class="name">@Model.TopProductos[i]</span></div>
+                    }
+                }
             </div>
         </div>
     </div>
