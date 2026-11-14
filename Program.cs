@@ -20,7 +20,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(5);
+    options.IdleTimeout = TimeSpan.FromMinutes(20);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
@@ -29,7 +29,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 {
     options.LoginPath = "/Usuario/Login";
     options.AccessDeniedPath = "/Usuario/AccesoDenegado";
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
     options.SlidingExpiration = true;
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
@@ -48,7 +48,9 @@ using (var scope = app.Services.CreateScope())
         {
             new Rol { nameRol = "Administrador", descripcion = "Acceso total al sistema y administración de usuarios", estado = true },
             new Rol { nameRol = "Vendedor", descripcion = "Gestión de cotizaciones, ventas y clientes", estado = true },
-            new Rol { nameRol = "Cajero", descripcion = "Cobro de ventas y emisión de comprobantes en caja", estado = true }
+            new Rol { nameRol = "Cajero", descripcion = "Cobro de ventas y emisión de comprobantes en caja", estado = true },
+            new Rol { nameRol = "Encargado de Inventario", descripcion = "Gestión de productos, categorías, unidades de medida y stock", estado = true },
+            new Rol { nameRol = "Encargado de Compras", descripcion = "Gestión de proveedores, requerimientos, órdenes de compra e ingresos", estado = true }
         };
 
         bool rolesAgregados = false;

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AppWeb.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Administrador,Vendedor")]
     public class ClienteController : Controller
     {
         private readonly AppDbContext _context;

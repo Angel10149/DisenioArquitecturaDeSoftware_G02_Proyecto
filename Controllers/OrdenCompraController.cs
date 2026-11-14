@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace AppWeb.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Administrador,Encargado de Compras")]
     public class OrdenCompraController : Controller
     {
         private readonly AppDbContext _context;

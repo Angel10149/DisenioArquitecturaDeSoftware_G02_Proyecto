@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AppWeb.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Administrador,Encargado de Inventario")]
     public class ProductoController : Controller
     {
         private readonly AppDbContext _context;

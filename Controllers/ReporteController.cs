@@ -27,7 +27,7 @@ namespace AppWeb.Controllers
         public decimal TotalCompras { get; set; }
     }
 
-    [Authorize]
+    [Authorize(Roles = "Administrador")]
     public class ReporteController : Controller
     {
         private readonly AppDbContext _context;
