@@ -60,7 +60,14 @@ namespace AppWeb.Controllers
 
             if (!string.IsNullOrWhiteSpace(estado))
             {
-                query = query.Where(v => v.estado == estado);
+                if (string.Equals(estado, "Pagada", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.Where(v => v.estado == "Pagada" || v.estado == "Completada");
+                }
+                else
+                {
+                    query = query.Where(v => v.estado == estado);
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(buscar))

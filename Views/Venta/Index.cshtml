@@ -47,15 +47,15 @@
         </div>
         <div class="metric-box">
             <span class="label">Pendientes de Pago</span>
-            <span class="value">@Model.Count(v => v.estado == "Pendiente")</span>
+            <span class="value">@Model.Count(v => string.Equals(v.estado?.Trim(), "Pendiente", StringComparison.OrdinalIgnoreCase))</span>
         </div>
         <div class="metric-box">
             <span class="label">Pagadas</span>
-            <span class="value">@Model.Count(v => v.estado == "Pagada")</span>
+            <span class="value">@Model.Count(v => string.Equals(v.estado?.Trim(), "Pagada", StringComparison.OrdinalIgnoreCase) || string.Equals(v.estado?.Trim(), "Completada", StringComparison.OrdinalIgnoreCase))</span>
         </div>
         <div class="metric-box">
             <span class="label">Monto Total</span>
-            <span class="value">S/ @Model.Where(v => v.estado != "Anulada").Sum(v => v.total).ToString("N2")</span>
+            <span class="value">S/ @Model.Where(v => !string.Equals(v.estado?.Trim(), "Anulada", StringComparison.OrdinalIgnoreCase)).Sum(v => v.total).ToString("N2")</span>
         </div>
     </div>
 
@@ -66,6 +66,7 @@
             <option value="">Todos los Estados</option>
             <option value="Pendiente" selected="@(estadoSel == "Pendiente")">Pendiente</option>
             <option value="Pagada" selected="@(estadoSel == "Pagada")">Pagada</option>
+            <option value="Completada" selected="@(estadoSel == "Completada")">Completada</option>
             <option value="Anulada" selected="@(estadoSel == "Anulada")">Anulada</option>
         </select>
 
@@ -117,9 +118,10 @@
                         var nombreCliente = !string.IsNullOrWhiteSpace(v.cliente?.razonSocial)
                             ? v.cliente.razonSocial
                             : (v.cliente?.nombres ?? "-");
-                        var colorEstado = v.estado switch
+                        var estadoNorm = v.estado?.Trim() ?? string.Empty;
+                        var colorEstado = estadoNorm switch
                         {
-                            "Pagada" => "#28A745",
+                            "Pagada" or "Completada" => "#28A745",
                             "Anulada" => "#DC3545",
                             _ => "#FFC107"
                         };
