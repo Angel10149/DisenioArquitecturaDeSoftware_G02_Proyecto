@@ -1,5 +1,7 @@
 using AppWeb.Data;
+using AppWeb.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,6 +36,62 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 });
 
 var app = builder.Build();
+
+// Seed idempotente de roles base y usuario Administrador predeterminado para despliegues nuevos
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var db = services.GetRequiredService<AppDbContext>();
+        var rolesBase = new[]
+        {
+            new Rol { nameRol = "Administrador", descripcion = "Acceso total al sistema y administración de usuarios", estado = true },
+            new Rol { nameRol = "Vendedor", descripcion = "Gestión de cotizaciones, ventas y clientes", estado = true },
+            new Rol { nameRol = "Cajero", descripcion = "Cobro de ventas y emisión de comprobantes en caja", estado = true }
+        };
+
+        bool rolesAgregados = false;
+        foreach (var rolBase in rolesBase)
+        {
+            if (!db.Roles.Any(r => r.nameRol == rolBase.nameRol))
+            {
+                db.Roles.Add(rolBase);
+                rolesAgregados = true;
+            }
+        }
+        if (rolesAgregados)
+        {
+            db.SaveChanges();
+        }
+
+        var rolAdmin = db.Roles.FirstOrDefault(r => r.nameRol == "Administrador");
+        const string correoAdminDefault = "administrador@gmail.com";
+        bool existeAdmin = db.Usuarios.Any(u =>
+            (u.estado && u.Rol != null && u.Rol.nameRol == "Administrador") ||
+            u.correo == correoAdminDefault);
+
+        if (rolAdmin != null && !existeAdmin)
+        {
+            var passwordHasher = new PasswordHasher<Usuario>();
+            var adminDefault = new Usuario
+            {
+                nombreUsuario = "Administrador",
+                correo = correoAdminDefault,
+                telefono = "999999999",
+                estado = true,
+                IDROL = rolAdmin.idRol
+            };
+            adminDefault.password = passwordHasher.HashPassword(adminDefault, "administrador123");
+            db.Usuarios.Add(adminDefault);
+            db.SaveChanges();
+        }
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "No se pudo ejecutar el seed inicial de roles/administrador.");
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
