@@ -73,12 +73,23 @@ namespace AppWeb.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Crear(Producto producto)
+        public async Task<IActionResult> Crear(Producto producto, decimal? margenGanancia)
         {
             await CargarCatalogosAsync();
 
+            if (margenGanancia.HasValue && margenGanancia.Value >= 0 && margenGanancia.Value < 100)
+            {
+                producto.precioVenta = Math.Round(producto.precioCosto / (1m - (margenGanancia.Value / 100m)), 2);
+            }
+
             if (!ModelState.IsValid)
             {
+                return View(producto);
+            }
+
+            if (producto.precioVenta < producto.precioCosto)
+            {
+                ModelState.AddModelError(nameof(producto.precioVenta), "El precio de venta no puede ser menor al precio de costo.");
                 return View(producto);
             }
 
@@ -126,7 +137,7 @@ namespace AppWeb.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Editar(int id, Producto producto)
+        public async Task<IActionResult> Editar(int id, Producto producto, decimal? margenGanancia)
         {
             if (id != producto.idProducto)
             {
@@ -135,8 +146,19 @@ namespace AppWeb.Controllers
 
             await CargarCatalogosAsync();
 
+            if (margenGanancia.HasValue && margenGanancia.Value >= 0 && margenGanancia.Value < 100)
+            {
+                producto.precioVenta = Math.Round(producto.precioCosto / (1m - (margenGanancia.Value / 100m)), 2);
+            }
+
             if (!ModelState.IsValid)
             {
+                return View(producto);
+            }
+
+            if (producto.precioVenta < producto.precioCosto)
+            {
+                ModelState.AddModelError(nameof(producto.precioVenta), "El precio de venta no puede ser menor al precio de costo.");
                 return View(producto);
             }
 

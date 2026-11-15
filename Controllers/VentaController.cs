@@ -100,6 +100,7 @@ namespace AppWeb.Controllers
         public async Task<IActionResult> Crear(
             int idCliente,
             int? idCotizacion,
+            bool aplicarIgv,
             List<int> idProductos,
             List<int> cantidades,
             List<decimal> preciosUnitarios,
@@ -193,11 +194,20 @@ namespace AppWeb.Controllers
                     }
                 }
 
+                var subtotalVenta = detalles.Sum(d => d.subtotal);
+                decimal totalVenta = subtotalVenta;
+                if (aplicarIgv)
+                {
+                    var cfg = await _context.ConfiguracionesEmpresa.FirstOrDefaultAsync();
+                    var igvPct = cfg?.igv ?? 18m;
+                    totalVenta = Math.Round(subtotalVenta * (1m + (igvPct / 100m)), 2);
+                }
+
                 var venta = new Venta
                 {
                     fechaVenta = DateTime.Now,
                     estado = "Pendiente",
-                    total = detalles.Sum(d => d.subtotal),
+                    total = totalVenta,
                     idCliente = idCliente,
                     idUsuario = idUsuario,
                     idCotizacion = (idCotizacion.HasValue && idCotizacion.Value > 0) ? idCotizacion.Value : null,

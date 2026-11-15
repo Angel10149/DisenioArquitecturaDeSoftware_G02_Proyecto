@@ -77,13 +77,29 @@
                 </div>
                 <div>
                     <label asp-for="precioCosto" style="display:block; font-weight:500; margin-bottom:6px;">Precio Costo (S/)</label>
-                    <input type="number" asp-for="precioCosto" step="0.01" min="0"
+                    <input type="number" asp-for="precioCosto" id="inputPrecioCosto" step="0.01" min="0"
                            style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
                 </div>
                 <div>
-                    <label asp-for="precioVenta" style="display:block; font-weight:500; margin-bottom:6px;">Precio Venta (S/)</label>
-                    <input type="number" asp-for="precioVenta" step="0.01" min="0"
-                           style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box;" />
+                    <label asp-for="precioVenta" style="display:block; font-weight:500; margin-bottom:6px;">Precio Venta (S/) <small style="color:#6c757d;">(Calculado)</small></label>
+                    <input type="number" asp-for="precioVenta" id="inputPrecioVenta" step="0.01" min="0" readonly
+                           style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box; background:#e9ecef; color:#304D8A; font-weight:600; cursor:not-allowed;" />
+                </div>
+            </div>
+
+            <div style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:8px; padding:14px 16px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <label for="inputMargenGanancia" style="font-weight:500; margin:0;">Margen de Ganancia (%):</label>
+                    <input type="number" id="inputMargenGanancia" name="margenGanancia" min="0" max="99.99" step="0.01" required
+                           style="width:95px; padding:6px 10px; border:1px solid #ced4da; border-radius:6px;" />
+                    <button type="button" class="btn-margen-rapido" data-margen="15" style="padding:5px 10px; border:1px solid #ced4da; border-radius:6px; background:#fff; cursor:pointer;">15%</button>
+                    <button type="button" class="btn-margen-rapido" data-margen="20" style="padding:5px 10px; border:1px solid #ced4da; border-radius:6px; background:#fff; cursor:pointer;">20%</button>
+                    <button type="button" class="btn-margen-rapido" data-margen="25" style="padding:5px 10px; border:1px solid #ced4da; border-radius:6px; background:#fff; cursor:pointer;">25%</button>
+                    <button type="button" class="btn-margen-rapido" data-margen="30" style="padding:5px 10px; border:1px solid #ced4da; border-radius:6px; background:#fff; cursor:pointer;">30%</button>
+                    <button type="button" class="btn-margen-rapido" data-margen="40" style="padding:5px 10px; border:1px solid #ced4da; border-radius:6px; background:#fff; cursor:pointer;">40%</button>
+                </div>
+                <div id="resumenMargenInfo" style="font-size:0.9rem; color:#304D8A; font-weight:500;">
+                    Ganancia: S/ 0.00 (0.00%)
                 </div>
             </div>
 
@@ -100,4 +116,56 @@
         </form>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const costoInput = document.getElementById('inputPrecioCosto');
+            const ventaInput = document.getElementById('inputPrecioVenta');
+            const margenInput = document.getElementById('inputMargenGanancia');
+            const infoEl = document.getElementById('resumenMargenInfo');
+            if (!costoInput || !ventaInput || !margenInput || !infoEl) return;
+
+            function actualizarResumenDesdePrecios() {
+                const costo = parseFloat(costoInput.value) || 0;
+                const venta = parseFloat(ventaInput.value) || 0;
+                const ganancia = venta - costo;
+                const margenReal = venta > 0 ? (ganancia / venta) * 100 : 0;
+                infoEl.textContent = 'Ganancia: S/ ' + ganancia.toFixed(2) + ' (' + margenReal.toFixed(2) + '%)';
+                infoEl.style.color = ganancia < 0 ? '#DC3545' : '#304D8A';
+            }
+
+            function calcularVentaDesdeMargen() {
+                const costo = parseFloat(costoInput.value) || 0;
+                const margen = parseFloat(margenInput.value);
+                if (isNaN(margen) || margen < 0 || margen >= 100) {
+                    actualizarResumenDesdePrecios();
+                    return;
+                }
+                const precioVenta = costo / (1 - (margen / 100));
+                ventaInput.value = precioVenta.toFixed(2);
+                actualizarResumenDesdePrecios();
+            }
+
+            margenInput.addEventListener('input', calcularVentaDesdeMargen);
+            costoInput.addEventListener('input', calcularVentaDesdeMargen);
+
+            document.querySelectorAll('.btn-margen-rapido').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    margenInput.value = this.dataset.margen;
+                    calcularVentaDesdeMargen();
+                });
+            });
+
+            if ((parseFloat(ventaInput.value) || 0) > 0) {
+                const costo = parseFloat(costoInput.value) || 0;
+                const venta = parseFloat(ventaInput.value) || 0;
+                margenInput.value = (((venta - costo) / venta) * 100).toFixed(2);
+            } else {
+                margenInput.value = '20';
+            }
+            calcularVentaDesdeMargen();
+        })();
+    </script>
+}
 

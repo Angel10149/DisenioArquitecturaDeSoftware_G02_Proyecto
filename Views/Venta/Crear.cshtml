@@ -1,4 +1,5 @@
 ﻿@using System.Globalization
+@inject AppWeb.Data.AppDbContext DbContext
 @{
     ViewData["Title"] = "Nueva Venta";
     Layout = "_LayoutDashboard";
@@ -7,6 +8,8 @@
     var cotizaciones = ViewBag.CotizacionesAprobadas as IEnumerable<AppWeb.Models.Cotizacion> ?? Enumerable.Empty<AppWeb.Models.Cotizacion>();
     var cotSel = ViewBag.CotizacionSeleccionada as AppWeb.Models.Cotizacion;
     int? idCotSel = ViewBag.IdCotizacionSeleccionada as int?;
+    var cfg = DbContext.ConfiguracionesEmpresa.FirstOrDefault();
+    var igvPorcentaje = cfg?.igv ?? 18m;
 }
 
 <div id="viewCrearVenta" class="view-container active">
@@ -169,9 +172,26 @@
                 </tbody>
             </table>
 
-            <div style="display:flex; justify-content:flex-end; align-items:center; gap:16px; margin-bottom:20px; font-size:1.15rem;">
-                <span>Total Venta:</span>
-                <strong id="totalVentaTexto" style="color:#304D8A;">S/ 0.00</strong>
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px; margin-bottom:20px; padding:14px 16px; background:#f8f9fa; border:1px solid #dee2e6; border-radius:8px;">
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:500; margin:0;">
+                    <input type="checkbox" id="chkAplicarIgv" name="aplicarIgv" value="true" checked
+                           data-igv="@igvPorcentaje.ToString(CultureInfo.InvariantCulture)"
+                           style="width:18px; height:18px; accent-color:#304D8A;" />
+                    <span>Aplicar IGV (@igvPorcentaje.ToString("0.##")%)</span>
+                </label>
+
+                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                    <div style="font-size:0.95rem; color:#555;">
+                        Subtotal: <strong id="subtotalVentaTexto">S/ 0.00</strong>
+                    </div>
+                    <div style="font-size:0.95rem; color:#555;">
+                        IGV (@igvPorcentaje.ToString("0.##")%): <strong id="igvVentaTexto">S/ 0.00</strong>
+                    </div>
+                    <div style="font-size:1.15rem;">
+                        <span>Total Venta:</span>
+                        <strong id="totalVentaTexto" style="color:#304D8A;">S/ 0.00</strong>
+                    </div>
+                </div>
             </div>
 
             <div style="display:flex; gap:10px; justify-content:flex-end;">
@@ -192,22 +212,32 @@
     <script>
         (function () {
             const tbody = document.getElementById('detalleBody');
+            const subtotalTexto = document.getElementById('subtotalVentaTexto');
+            const igvTexto = document.getElementById('igvVentaTexto');
             const totalTexto = document.getElementById('totalVentaTexto');
+            const chkAplicarIgv = document.getElementById('chkAplicarIgv');
             const btnAgregar = document.getElementById('btnAgregarFila');
             const plantillaFila = tbody.querySelector('tr').cloneNode(true);
+            const igvPct = parseFloat(chkAplicarIgv?.dataset.igv) || 18;
 
             function recalcular() {
-                let total = 0;
+                let subtotal = 0;
                 tbody.querySelectorAll('tr').forEach(tr => {
                     const cant = parseFloat(tr.querySelector('.input-cantidad').value) || 0;
                     const precio = parseFloat(tr.querySelector('.input-precio').value) || 0;
                     const desc = parseFloat(tr.querySelector('.input-descuento').value) || 0;
                     const sub = Math.max(0, (cant * precio) - desc);
                     tr.querySelector('.celda-subtotal').textContent = 'S/ ' + sub.toFixed(2);
-                    total += sub;
+                    subtotal += sub;
                 });
+                const montoIgv = (chkAplicarIgv && chkAplicarIgv.checked) ? (subtotal * (igvPct / 100)) : 0;
+                const total = subtotal + montoIgv;
+                if (subtotalTexto) subtotalTexto.textContent = 'S/ ' + subtotal.toFixed(2);
+                if (igvTexto) igvTexto.textContent = 'S/ ' + montoIgv.toFixed(2);
                 totalTexto.textContent = 'S/ ' + total.toFixed(2);
             }
+
+            chkAplicarIgv?.addEventListener('change', recalcular);
 
             function enlazarEventos(tr) {
                 const select = tr.querySelector('.select-producto');
