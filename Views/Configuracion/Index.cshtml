@@ -1,0 +1,184 @@
+﻿@model AppWeb.Models.ConfiguracionEmpresa
+@{
+    ViewData["Title"] = "Configuración";
+    Layout = "_LayoutDashboard";
+    var logoPreviewUrl = string.IsNullOrWhiteSpace(Model?.logoUrl)
+        ? "https://i.postimg.cc/FRcSYwJ6/Logo-MKG.webp"
+        : Model.logoUrl;
+}
+
+<div id="viewConfiguracion" class="view-container active">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2>Configuración del Sistema</h2>
+            <div class="breadcrumb">
+                <a asp-controller="Home" asp-action="Index" style="color:inherit; text-decoration:none;">Inicio</a> &gt;
+                <span>Configuración</span>
+            </div>
+        </div>
+        <a asp-controller="Home" asp-action="Index"
+           style="background:#6c757d; color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:8px;">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    @if (TempData["MensajeExito"] != null)
+    {
+        <div style="margin-bottom:15px; padding:10px 15px; border-radius:6px; background:#d4edda; color:#155724;">
+            <i class="fas fa-check-circle"></i> @TempData["MensajeExito"]
+        </div>
+    }
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div asp-validation-summary="All" style="margin-bottom:15px; padding:10px 15px; border-radius:6px; background:#f8d7da; color:#721c24;"></div>
+    }
+
+    <form asp-action="Index" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="idConfiguracion" />
+
+        <div class="config-grid">
+            <!-- DATOS DE LA EMPRESA -->
+            <div class="config-section">
+                <h3><i class="fas fa-building"></i> Datos de la Empresa</h3>
+                <div class="config-item">
+                    <span class="label">Razón Social</span>
+                    <input asp-for="razonSocial" style="width:210px;" required />
+                </div>
+                <div class="config-item">
+                    <span class="label">RUC</span>
+                    <input asp-for="ruc" maxlength="11" required />
+                </div>
+                <div class="config-item">
+                    <span class="label">Dirección</span>
+                    <input asp-for="direccion" style="width:210px;" />
+                </div>
+                <div class="config-item">
+                    <span class="label">Teléfono</span>
+                    <input asp-for="telefono" />
+                </div>
+                <div class="config-item">
+                    <span class="label">Correo</span>
+                    <input asp-for="correo" type="email" style="width:210px;" placeholder="contacto@empresa.com" />
+                </div>
+                <div class="config-item">
+                    <span class="label">URL del Logo</span>
+                    <input asp-for="logoUrl" id="cfgLogoUrl" type="url" style="width:210px;" placeholder="https://.../logo.png" />
+                </div>
+                <div class="config-item" style="align-items:center;">
+                    <span class="label">Vista Previa</span>
+                    <img id="cfgLogoPreview"
+                         src="@logoPreviewUrl"
+                         data-fallback="https://i.postimg.cc/FRcSYwJ6/Logo-MKG.webp"
+                         alt="Logo de la empresa"
+                         style="max-height:54px; max-width:160px; object-fit:contain; border-radius:6px; border:1px solid #e2e8f0; padding:4px; background:#fff;" />
+                </div>
+            </div>
+
+            <!-- COMPROBANTES Y MONEDA -->
+            <div class="config-section">
+                <h3><i class="fas fa-receipt"></i> Comprobantes y Moneda</h3>
+                <div class="config-item">
+                    <span class="label">Moneda Principal</span>
+                    <select asp-for="moneda">
+                        <option value="PEN">Soles (S/ PEN)</option>
+                        <option value="USD">Dólares ($ USD)</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <span class="label">IGV (%)</span>
+                    <input asp-for="igv" type="number" min="0" max="30" step="0.5" />
+                </div>
+                <div class="config-item">
+                    <span class="label">Serie Boleta</span>
+                    <input asp-for="serieBoleta" maxlength="10" required />
+                </div>
+                <div class="config-item">
+                    <span class="label">Serie Factura</span>
+                    <input asp-for="serieFactura" maxlength="10" required />
+                </div>
+                <div class="config-item">
+                    <span class="label">Pie de Comprobante</span>
+                    <input asp-for="mensajePie" style="width:210px;" placeholder="Gracias por su compra" />
+                </div>
+            </div>
+
+            <!-- RESUMEN Y SEGURIDAD DEL SISTEMA -->
+            <div class="config-section">
+                <h3><i class="fas fa-shield-alt"></i> Estado y Seguridad</h3>
+                <div class="config-item">
+                    <span class="label">Roles Activos</span>
+                    <span class="value-text"><strong>@ViewBag.TotalRoles</strong> roles</span>
+                </div>
+                <div class="config-item">
+                    <span class="label">Usuarios Activos</span>
+                    <span class="value-text"><strong>@ViewBag.TotalUsuarios</strong> usuarios</span>
+                </div>
+                <div class="config-item">
+                    <span class="label">Productos / Clientes / Prov.</span>
+                    <span class="value-text"><strong>@ViewBag.TotalProductos</strong> prod. · <strong>@ViewBag.TotalClientes</strong> cli. · <strong>@ViewBag.TotalProveedores</strong> prov.</span>
+                </div>
+                <div class="config-item">
+                    <span class="label">Expiración de Sesión</span>
+                    <span class="value-text"><strong>20 minutos</strong> (inactividad)</span>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+                    <a asp-controller="Usuario" asp-action="Index" class="btn-imprimir-prueba" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                        <i class="fas fa-user-cog"></i> Gestionar Usuarios
+                    </a>
+                    <a asp-controller="Reporte" asp-action="Index" class="btn-imprimir-prueba" style="text-decoration:none; background:#1F2A56; display:inline-flex; align-items:center; gap:6px;">
+                        <i class="fas fa-file-alt"></i> Ir a Reportes
+                    </a>
+                </div>
+            </div>
+
+            <!-- ACCIONES Y PRUEBAS -->
+            <div class="config-section">
+                <h3><i class="fas fa-sliders-h"></i> Preferencias e Impresión</h3>
+                <div class="config-item">
+                    <span class="label">Accesibilidad (WCAG 2.2)</span>
+                    <button type="button" class="btn-imprimir-prueba" style="margin-top:0; padding:0.45rem 1.1rem;"
+                            onclick="document.getElementById('accessibilityToggle')?.click();">
+                        <i class="fas fa-universal-access"></i> Abrir Panel
+                    </button>
+                </div>
+                <div class="config-item">
+                    <span class="label">Prueba de Impresión</span>
+                    <button type="button" class="btn-imprimir-prueba" style="margin-top:0; padding:0.45rem 1.1rem;"
+                            onclick="window.print();">
+                        <i class="fas fa-print"></i> Imprimir Prueba
+                    </button>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;">
+                    <button type="submit" class="btn-imprimir-prueba">
+                        <i class="fas fa-save"></i> Guardar Configuración
+                    </button>
+                    <a asp-action="Index" class="btn-imprimir-prueba" style="background:#6c757d; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                        <i class="fas fa-undo"></i> Recargar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const logoInput = document.getElementById("cfgLogoUrl");
+        const logoImg = document.getElementById("cfgLogoPreview");
+        if (!logoInput || !logoImg) return;
+
+        const fallback = logoImg.dataset.fallback || "";
+        logoImg.addEventListener("error", function () {
+            if (fallback && logoImg.src !== fallback) {
+                logoImg.src = fallback;
+            }
+        });
+
+        logoInput.addEventListener("input", function () {
+            const url = logoInput.value.trim();
+            logoImg.src = url || fallback;
+        });
+    });
+</script>

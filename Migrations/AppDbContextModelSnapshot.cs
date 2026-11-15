@@ -140,6 +140,70 @@ namespace AppWeb.Migrations
                     b.ToTable("Comprobantes");
                 });
 
+            modelBuilder.Entity("AppWeb.Models.ConfiguracionEmpresa", b =>
+                {
+                    b.Property<int>("idConfiguracion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("idConfiguracion"));
+
+                    b.Property<string>("correo")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("direccion")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("fechaActualizacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("igv")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<string>("logoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("mensajePie")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("moneda")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("razonSocial")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("ruc")
+                        .IsRequired()
+                        .HasMaxLength(11)
+                        .HasColumnType("nvarchar(11)");
+
+                    b.Property<string>("serieBoleta")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("serieFactura")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("telefono")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("idConfiguracion");
+
+                    b.ToTable("ConfiguracionesEmpresa");
+                });
+
             modelBuilder.Entity("AppWeb.Models.Cotizacion", b =>
                 {
                     b.Property<int>("idCotizacion")
@@ -443,7 +507,6 @@ namespace AppWeb.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("descripcion")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
@@ -560,7 +623,6 @@ namespace AppWeb.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("motivo")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 

@@ -1,6 +1,19 @@
 @model AppWeb.ViewModels.LoginVM;
+@inject AppWeb.Data.AppDbContext DbContext
 @{
     Layout = null;
+    var logoUrl = "https://i.postimg.cc/FRcSYwJ6/Logo-MKG.webp";
+    var razonSocial = "GRUPO MKG IMPORTACIONES S.A.C.";
+    try
+    {
+        var cfg = DbContext.ConfiguracionesEmpresa.FirstOrDefault();
+        if (cfg != null)
+        {
+            if (!string.IsNullOrWhiteSpace(cfg.logoUrl)) logoUrl = cfg.logoUrl;
+            if (!string.IsNullOrWhiteSpace(cfg.razonSocial)) razonSocial = cfg.razonSocial;
+        }
+    }
+    catch { }
 }
 
 @* <!DOCTYPE html>
@@ -43,7 +56,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GRUPO MKG · Dashboard</title>
+    <title>@razonSocial · Iniciar Sesión</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/styles.css" />
@@ -52,9 +65,9 @@
 
     <div id="loginSection">
         <div class="login-left">
-            <img src="https://i.postimg.cc/FRcSYwJ6/Logo-MKG.webp" alt="Logo" class="logo-img" />
+            <img src="@logoUrl" alt="Logo @razonSocial" class="logo-img" onerror="this.onerror=null;this.src='https://i.postimg.cc/FRcSYwJ6/Logo-MKG.webp';" />
             <div class="system-title">Sistema Integral de Ventas e Inventario</div>
-            <div class="company-name">GRUPO MKG IMPORTACIONES S.A.C.</div>
+            <div class="company-name">@razonSocial</div>
 
             <div class="feature-item">
                 <i class="bi bi-house-fill"></i>
@@ -128,7 +141,7 @@
                 }
 
                 <div class="login-footer-text">
-                    <i class="bi bi-c-circle"></i> 2026 GRUPO MKG Importaciones S.A.C.
+                    <i class="bi bi-c-circle"></i> 2026 @razonSocial
                 </div>
                 <div id="feedbackMessage" class="message">
                     <i class="bi bi-info-circle-fill"></i>

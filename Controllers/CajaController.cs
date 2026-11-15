@@ -125,12 +125,16 @@ namespace AppWeb.Controllers
                 return View();
             }
 
+            var cfg = await _context.ConfiguracionesEmpresa.FirstOrDefaultAsync();
+            var serieBoleta = !string.IsNullOrWhiteSpace(cfg?.serieBoleta) ? cfg.serieBoleta : "B001";
+            var serieFactura = !string.IsNullOrWhiteSpace(cfg?.serieFactura) ? cfg.serieFactura : "F001";
+
             string tipoComp = string.IsNullOrWhiteSpace(tipoComprobante) ? "Boleta" : tipoComprobante.Trim();
             string serie = tipoComp switch
             {
-                "Factura" => "F001",
+                "Factura" => serieFactura,
                 "Ticket" => "T001",
-                _ => "B001"
+                _ => serieBoleta
             };
 
             using var transaction = await _context.Database.BeginTransactionAsync();

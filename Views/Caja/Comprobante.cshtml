@@ -1,4 +1,5 @@
 ﻿@model AppWeb.Models.Pago
+@inject AppWeb.Data.AppDbContext DbContext
 @{
     var comp = Model.Comprobantes?.FirstOrDefault();
     var tituloComp = comp != null ? $"{comp.tipoComprobante} {comp.serie}-{comp.numero}" : $"Pago #{Model.idPago}";
@@ -8,6 +9,15 @@
     var nombreCliente = !string.IsNullOrWhiteSpace(cli?.razonSocial) ? cli.razonSocial : (cli?.nombres ?? "-");
     var totalVenta = Model.venta?.total ?? 0m;
     var vuelto = Math.Max(0m, Model.montoRecibido - totalVenta);
+
+    var cfg = DbContext.ConfiguracionesEmpresa.FirstOrDefault();
+    var logoUrl = !string.IsNullOrWhiteSpace(cfg?.logoUrl) ? cfg.logoUrl : "https://i.postimg.cc/FRcSYwJ6/Logo-MKG.webp";
+    var razonSocial = !string.IsNullOrWhiteSpace(cfg?.razonSocial) ? cfg.razonSocial : "MKG Importaciones S.A.C.";
+    var rucEmpresa = !string.IsNullOrWhiteSpace(cfg?.ruc) ? cfg.ruc : "20601234567";
+    var dirEmpresa = cfg?.direccion ?? "Cajamarca, Perú";
+    var telEmpresa = cfg?.telefono ?? "076-555-0100";
+    var correoEmpresa = cfg?.correo;
+    var mensajePie = cfg?.mensajePie;
 }
 
 <style>
@@ -83,9 +93,22 @@
 
     <div id="comprobanteImprimible" class="table-wrapper" style="padding: 28px; max-width: 820px;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; border-bottom:2px solid #dee2e6; padding-bottom:16px; margin-bottom:20px;">
-            <div>
-                <h3 style="margin:0 0 4px 0; color:#304D8A;">GRUPO MKG</h3>
-                <div style="font-size:0.9rem; color:#6c757d;">Comprobante de Venta</div>
+            <div style="display:flex; align-items:center; gap:14px;">
+                <img src="@logoUrl" alt="Logo @razonSocial"
+                     onerror="this.onerror=null;this.src='https://i.postimg.cc/FRcSYwJ6/Logo-MKG.webp';"
+                     style="max-height:56px; max-width:130px; object-fit:contain;" />
+                <div>
+                    <h3 style="margin:0 0 4px 0; color:#304D8A;">@razonSocial</h3>
+                    <div style="font-size:0.85rem; color:#6c757d;">RUC: @rucEmpresa</div>
+                    @if (!string.IsNullOrWhiteSpace(dirEmpresa) || !string.IsNullOrWhiteSpace(telEmpresa))
+                    {
+                        <div style="font-size:0.82rem; color:#6c757d;">@dirEmpresa @(!string.IsNullOrWhiteSpace(telEmpresa) ? $"· Tel: {telEmpresa}" : "")</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(correoEmpresa))
+                    {
+                        <div style="font-size:0.82rem; color:#6c757d;">@correoEmpresa</div>
+                    }
+                </div>
             </div>
             <div style="text-align:right;">
                 <div style="font-size:1.15rem; font-weight:700; color:#304D8A;">@tituloComp</div>
@@ -131,5 +154,12 @@
             <div>Monto Recibido: <strong>S/ @Model.montoRecibido.ToString("N2")</strong></div>
             <div>Vuelto: <strong style="color:#28A745;">S/ @vuelto.ToString("N2")</strong></div>
         </div>
+
+        @if (!string.IsNullOrWhiteSpace(mensajePie))
+        {
+            <div style="margin-top:20px; padding-top:12px; border-top:1px dashed #dee2e6; text-align:center; font-size:0.9rem; color:#6c757d;">
+                @mensajePie
+            </div>
+        }
     </div>
 </div>

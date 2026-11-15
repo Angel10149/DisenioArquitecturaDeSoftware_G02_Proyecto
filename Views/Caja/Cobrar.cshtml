@@ -1,10 +1,14 @@
 ﻿@using System.Globalization
+@inject AppWeb.Data.AppDbContext DbContext
 @{
     ViewData["Title"] = "Cobrar Venta";
     Layout = "_LayoutDashboard";
     var ventasPendientes = ViewBag.VentasPendientes as IEnumerable<AppWeb.Models.Venta> ?? Enumerable.Empty<AppWeb.Models.Venta>();
     var ventaSel = ViewBag.VentaSeleccionada as AppWeb.Models.Venta;
     int? idVentaSel = ViewBag.IdVentaSeleccionada as int?;
+    var cfg = DbContext.ConfiguracionesEmpresa.FirstOrDefault();
+    var serieBoleta = !string.IsNullOrWhiteSpace(cfg?.serieBoleta) ? cfg.serieBoleta : "B001";
+    var serieFactura = !string.IsNullOrWhiteSpace(cfg?.serieFactura) ? cfg.serieFactura : "F001";
 }
 
 <div id="viewCobrarVenta" class="view-container active">
@@ -115,8 +119,8 @@
                         <label style="display:block; font-weight:500; margin-bottom:6px;">Tipo de Comprobante</label>
                         <select name="tipoComprobante" required
                                 style="width:100%; padding:10px 12px; border:1px solid #ced4da; border-radius:6px; box-sizing:border-box; background:#fff;">
-                            <option value="Boleta">Boleta (B001)</option>
-                            <option value="Factura">Factura (F001)</option>
+                            <option value="Boleta">Boleta (@serieBoleta)</option>
+                            <option value="Factura">Factura (@serieFactura)</option>
                             <option value="Ticket">Ticket (T001)</option>
                         </select>
                     </div>

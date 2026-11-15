@@ -28,6 +28,7 @@ namespace AppWeb.Data
         public DbSet<Stock> Stocks { get; set; }
         public DbSet<UnidadMedida> UnidadesMedida { get; set; }
         public DbSet<Venta> Ventas { get; set; }
+        public DbSet<ConfiguracionEmpresa> ConfiguracionesEmpresa { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
