@@ -1,8 +1,7 @@
-﻿using AppWeb.Data;
-using AppWeb.Models;
+﻿using AppWeb.Models;
+using AppWeb.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace AppWeb.Controllers
@@ -10,61 +9,27 @@ namespace AppWeb.Controllers
     [Authorize(Roles = "Administrador,Encargado de Compras")]
     public class OrdenCompraController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly ICompraService _compraService;
 
-        public OrdenCompraController(AppDbContext context)
+        public OrdenCompraController(ICompraService compraService)
         {
-            _context = context;
+            _compraService = compraService;
         }
 
         private async Task CargarListasAsync()
         {
-            ViewBag.Proveedores = await _context.Proveedores
-                .Where(p => p.estado)
-                .OrderBy(p => p.razonSocial)
-                .ToListAsync();
-
-            ViewBag.Requerimientos = await _context.RequerimientosCompra
-                .Include(r => r.producto)
-                .Where(r => r.estado == "Aprobado")
-                .OrderByDescending(r => r.idRequerimiento)
-                .ToListAsync();
-
-            ViewBag.Productos = await _context.Productos
-                .Where(p => p.estado)
-                .OrderBy(p => p.nombre)
-                .ToListAsync();
+            ViewBag.Proveedores = await _compraService.ListarProveedoresActivosAsync();
+            ViewBag.Requerimientos = await _compraService.ListarRequerimientosAprobadosAsync();
+            ViewBag.Productos = await _compraService.ListarProductosActivosAsync();
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(string? buscar, string? estado)
         {
-            var query = _context.OrdenesCompra
-                .Include(o => o.proveedor)
-                .Include(o => o.usuario)
-                .Include(o => o.requerimiento)
-                    .ThenInclude(r => r!.producto)
-                .Include(o => o.DetalleOrdenCompras)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(estado))
-            {
-                query = query.Where(o => o.estado == estado);
-            }
-
-            if (!string.IsNullOrWhiteSpace(buscar))
-            {
-                string filtro = buscar.Trim();
-                query = query.Where(o =>
-                    o.proveedor!.razonSocial.Contains(filtro) ||
-                    o.usuario!.nombreUsuario.Contains(filtro) ||
-                    o.idOrdenCompra.ToString() == filtro);
-            }
-
             ViewBag.Buscar = buscar;
             ViewBag.Estado = estado;
 
-            var ordenes = await query.OrderByDescending(o => o.idOrdenCompra).ToListAsync();
+            var ordenes = await _compraService.ListarOrdenesCompraFiltradasAsync(buscar, estado);
             return View(ordenes);
         }
 
@@ -76,10 +41,7 @@ namespace AppWeb.Controllers
             ViewBag.IdRequerimientoSeleccionado = idRequerimiento;
             if (idRequerimiento.HasValue && idRequerimiento.Value > 0)
             {
-                var req = await _context.RequerimientosCompra
-                    .Include(r => r.producto)
-                    .FirstOrDefaultAsync(r => r.idRequerimiento == idRequerimiento.Value);
-                ViewBag.RequerimientoSeleccionado = req;
+                ViewBag.RequerimientoSeleccionado = await _compraService.ObtenerRequerimientoConProductoAsync(idRequerimiento.Value);
             }
 
             return View();
@@ -140,44 +102,15 @@ namespace AppWeb.Controllers
                 return View();
             }
 
-            var orden = new OrdenCompra
-            {
-                fechaCompra = DateTime.Now,
-                estado = "Pendiente",
-                idProveedor = idProveedor,
-                idRequerimiento = idRequerimiento,
-                idUsuario = idUsuario,
-                total = detalles.Sum(d => d.subtotal),
-                DetalleOrdenCompras = detalles
-            };
-
-            await _context.OrdenesCompra.AddAsync(orden);
-
-            var req = await _context.RequerimientosCompra.FindAsync(idRequerimiento);
-            if (req != null && req.estado == "Aprobado")
-            {
-                req.estado = "Atendido";
-            }
-
-            await _context.SaveChangesAsync();
-
-            TempData["Mensaje"] = $"Orden de Compra #{orden.idOrdenCompra} generada correctamente por S/ {orden.total:N2}.";
+            var resultado = await _compraService.CrearOrdenCompraAsync(idProveedor, idRequerimiento, idUsuario, detalles);
+            TempData["Mensaje"] = $"Orden de Compra #{resultado.Orden!.idOrdenCompra} generada correctamente por S/ {resultado.Orden.total:N2}.";
             return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
         public async Task<IActionResult> Detalle(int id)
         {
-            var orden = await _context.OrdenesCompra
-                .Include(o => o.proveedor)
-                .Include(o => o.usuario)
-                .Include(o => o.requerimiento)
-                    .ThenInclude(r => r!.producto)
-                .Include(o => o.DetalleOrdenCompras)
-                    .ThenInclude(d => d.producto)
-                .Include(o => o.IngresosMercaderia)
-                .FirstOrDefaultAsync(o => o.idOrdenCompra == id);
-
+            var orden = await _compraService.ObtenerOrdenCompraDetalleAsync(id);
             if (orden == null)
             {
                 TempData["Error"] = "Orden de compra no encontrada.";
@@ -191,24 +124,16 @@ namespace AppWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CambiarEstado(int id, string nuevoEstado)
         {
-            var estadosPermitidos = new[] { "Pendiente", "Emitida", "Recibida", "Anulada" };
-            if (!estadosPermitidos.Contains(nuevoEstado))
+            var resultado = await _compraService.CambiarEstadoOrdenCompraAsync(id, nuevoEstado);
+            if (!resultado.Ok)
             {
-                TempData["Error"] = "Estado no válido.";
-                return RedirectToAction(nameof(Index));
+                TempData["Error"] = resultado.Error;
+            }
+            else
+            {
+                TempData["Mensaje"] = $"Orden de Compra #{id} actualizada a '{nuevoEstado}'.";
             }
 
-            var orden = await _context.OrdenesCompra.FindAsync(id);
-            if (orden == null)
-            {
-                TempData["Error"] = "Orden de compra no encontrada.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            orden.estado = nuevoEstado;
-            await _context.SaveChangesAsync();
-
-            TempData["Mensaje"] = $"Orden de Compra #{orden.idOrdenCompra} actualizada a '{nuevoEstado}'.";
             return RedirectToAction(nameof(Index));
         }
     }

@@ -1,38 +1,25 @@
-﻿using AppWeb.Data;
-using AppWeb.Models;
+﻿using AppWeb.Models;
+using AppWeb.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AppWeb.Controllers
 {
     [Authorize(Roles = "Administrador,Encargado de Inventario")]
     public class CategoriaController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IProductoService _productoService;
 
-        public CategoriaController(AppDbContext context)
+        public CategoriaController(IProductoService productoService)
         {
-            _context = context;
+            _productoService = productoService;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(string? buscar)
         {
-            var query = _context.Categorias
-                .Include(c => c.Productos)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(buscar))
-            {
-                string filtro = buscar.Trim();
-                query = query.Where(c =>
-                    c.nombre.Contains(filtro) ||
-                    c.descripcion.Contains(filtro));
-            }
-
             ViewBag.Buscar = buscar;
-            var categorias = await query.OrderByDescending(c => c.idCategoria).ToListAsync();
+            var categorias = await _productoService.ListarCategoriasAsync(buscar);
             return View(categorias);
         }
 
@@ -51,19 +38,13 @@ namespace AppWeb.Controllers
                 return View(categoria);
             }
 
-            string nombre = categoria.nombre.Trim();
-            if (await _context.Categorias.AnyAsync(c => c.nombre == nombre))
+            if (await _productoService.ExisteNombreCategoriaAsync(categoria.nombre))
             {
                 ModelState.AddModelError(nameof(categoria.nombre), "Ya existe una categoría registrada con ese nombre.");
                 return View(categoria);
             }
 
-            categoria.nombre = nombre;
-            categoria.descripcion = categoria.descripcion.Trim();
-            categoria.estado = true;
-
-            await _context.Categorias.AddAsync(categoria);
-            await _context.SaveChangesAsync();
+            await _productoService.CrearCategoriaAsync(categoria);
 
             TempData["Mensaje"] = $"Categoría '{categoria.nombre}' registrada correctamente.";
             return RedirectToAction(nameof(Index));
@@ -72,7 +53,7 @@ namespace AppWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> Editar(int id)
         {
-            var categoria = await _context.Categorias.FindAsync(id);
+            var categoria = await _productoService.ObtenerCategoriaPorIdAsync(id);
             if (categoria == null)
             {
                 TempData["Error"] = "Categoría no encontrada.";
@@ -96,26 +77,20 @@ namespace AppWeb.Controllers
                 return View(categoria);
             }
 
-            string nombre = categoria.nombre.Trim();
-            if (await _context.Categorias.AnyAsync(c => c.nombre == nombre && c.idCategoria != id))
+            if (await _productoService.ExisteNombreCategoriaAsync(categoria.nombre, id))
             {
                 ModelState.AddModelError(nameof(categoria.nombre), "Otra categoría ya tiene registrado ese nombre.");
                 return View(categoria);
             }
 
-            var categoriaDb = await _context.Categorias.FindAsync(id);
-            if (categoriaDb == null)
+            bool actualizado = await _productoService.ActualizarCategoriaAsync(id, categoria);
+            if (!actualizado)
             {
                 TempData["Error"] = "Categoría no encontrada.";
                 return RedirectToAction(nameof(Index));
             }
 
-            categoriaDb.nombre = nombre;
-            categoriaDb.descripcion = categoria.descripcion.Trim();
-
-            await _context.SaveChangesAsync();
-
-            TempData["Mensaje"] = $"Categoría '{categoriaDb.nombre}' actualizada correctamente.";
+            TempData["Mensaje"] = $"Categoría '{categoria.nombre.Trim()}' actualizada correctamente.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -123,15 +98,12 @@ namespace AppWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CambiarEstado(int id)
         {
-            var categoria = await _context.Categorias.FindAsync(id);
+            var categoria = await _productoService.CambiarEstadoCategoriaAsync(id);
             if (categoria == null)
             {
                 TempData["Error"] = "Categoría no encontrada.";
                 return RedirectToAction(nameof(Index));
             }
-
-            categoria.estado = !categoria.estado;
-            await _context.SaveChangesAsync();
 
             TempData["Mensaje"] = categoria.estado
                 ? $"Categoría '{categoria.nombre}' activada correctamente."

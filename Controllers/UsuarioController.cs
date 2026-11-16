@@ -1,10 +1,9 @@
-using AppWeb.Data;
 using AppWeb.Models;
+using AppWeb.Services;
 using AppWeb.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -14,30 +13,18 @@ namespace AppWeb.Controllers
     public class UsuarioController : Controller
     {
         private const string RolAdministrador = "Administrador";
+        private readonly IUsuarioService _usuarioService;
 
-        private readonly AppDbContext _context;
-        private readonly PasswordHasher<Usuario> _passwordHasher = new();
-
-        public UsuarioController(AppDbContext context)
+        public UsuarioController(IUsuarioService usuarioService)
         {
-            _context = context;
+            _usuarioService = usuarioService;
         }
 
-        // Roles disponibles en el registro: el rol Administrador solo se ofrece
-        // mientras no exista ningun administrador (primer usuario del sistema).
         private async Task CargarRolesAsync()
         {
-            bool existeAdmin = await _context.Usuarios.AnyAsync(u => u.estado && u.Rol!.nameRol == RolAdministrador);
-            var roles = _context.Roles.Where(r => r.estado).AsQueryable();
-            if (existeAdmin)
-            {
-                roles = roles.Where(r => r.nameRol != RolAdministrador);
-            }
-            ViewBag.Roles = await roles.ToListAsync();
+            ViewBag.Roles = await _usuarioService.ObtenerRolesDisponiblesRegistroAsync();
         }
 
-        // Solo el Administrador puede registrar nuevos usuarios una vez que ya existe uno.
-        // Si no existe ningún administrador activo, se permite el registro inicial sin sesión.
         private async Task<IActionResult?> ValidarAccesoRegistroAsync()
         {
             if (User.Identity?.IsAuthenticated == true)
@@ -45,7 +32,7 @@ namespace AppWeb.Controllers
                 return User.IsInRole(RolAdministrador) ? null : RedirectToAction(nameof(AccesoDenegado));
             }
 
-            bool existeAdmin = await _context.Usuarios.AnyAsync(u => u.estado && u.Rol!.nameRol == RolAdministrador);
+            bool existeAdmin = await _usuarioService.ExisteAdministradorActivoAsync();
             return existeAdmin ? RedirectToAction(nameof(Login)) : null;
         }
 
@@ -58,6 +45,7 @@ namespace AppWeb.Controllers
             await CargarRolesAsync();
             return View();
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Registro(UsuarioVM usuarioVM)
@@ -71,7 +59,6 @@ namespace AppWeb.Controllers
                 return View(usuarioVM);
             }
 
-            //El rol enviado debe estar entre los roles permitidos en el registro
             var rolesPermitidos = (IEnumerable<Rol>)ViewBag.Roles;
             if (!rolesPermitidos.Any(r => r.idRol == usuarioVM.IDROL))
             {
@@ -80,7 +67,7 @@ namespace AppWeb.Controllers
             }
 
             string correo = usuarioVM.correo.Trim();
-            if (await _context.Usuarios.AnyAsync(u => u.correo == correo))
+            if (await _usuarioService.ExisteCorreoAsync(correo))
             {
                 ModelState.AddModelError(nameof(usuarioVM.correo), "Ya existe un usuario registrado con ese correo");
                 return View(usuarioVM);
@@ -94,17 +81,17 @@ namespace AppWeb.Controllers
                 estado = true,
                 IDROL = usuarioVM.IDROL
             };
-            usuario.password = _passwordHasher.HashPassword(usuario, usuarioVM.password);
+
             try
             {
-                await _context.Usuarios.AddAsync(usuario);
-                await _context.SaveChangesAsync();
+                await _usuarioService.RegistrarAsync(usuario, usuarioVM.password);
             }
             catch (DbUpdateException)
             {
                 ViewData["Mensaje"] = "El usuario no pudo ser registrado";
                 return View(usuarioVM);
             }
+
             if (User.Identity?.IsAuthenticated == true && User.IsInRole(RolAdministrador))
             {
                 TempData["Mensaje"] = $"Usuario '{usuario.nombreUsuario}' registrado correctamente.";
@@ -112,6 +99,7 @@ namespace AppWeb.Controllers
             }
             return RedirectToAction("Login", "Usuario");
         }
+
         [HttpGet]
         public IActionResult Login()
         {
@@ -121,6 +109,7 @@ namespace AppWeb.Controllers
             }
             return View();
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginVM loginVM, string? returnUrl = null)
@@ -129,41 +118,15 @@ namespace AppWeb.Controllers
             {
                 return View(loginVM);
             }
-            string correo = loginVM.correo.Trim();
-            Usuario? usuario = await _context.Usuarios.Include(u => u.Rol).FirstOrDefaultAsync(u => u.correo == correo);
+
+            Usuario? usuario = await _usuarioService.ObtenerPorCorreoAsync(loginVM.correo);
             if (usuario == null || usuario.Rol == null)
             {
                 ViewData["Mensaje"] = "No se encontraron usuarios";
                 return View(loginVM);
             }
 
-            bool passwordValida = false;
-            bool requiereRehash = false;
-            try
-            {
-                var resultado = _passwordHasher.VerifyHashedPassword(usuario, usuario.password, loginVM.password);
-                if (resultado == PasswordVerificationResult.Success)
-                {
-                    passwordValida = true;
-                }
-                else if (resultado == PasswordVerificationResult.SuccessRehashNeeded)
-                {
-                    passwordValida = true;
-                    requiereRehash = true;
-                }
-            }
-            catch (FormatException)
-            {
-                // Contraseña heredada en texto plano
-            }
-
-            if (!passwordValida && usuario.password == loginVM.password)
-            {
-                passwordValida = true;
-                requiereRehash = true;
-            }
-
-            if (!passwordValida)
+            if (!_usuarioService.VerificarPassword(usuario, loginVM.password, out bool requiereRehash))
             {
                 ViewData["Mensaje"] = "No se encontraron usuarios";
                 return View(loginVM);
@@ -177,34 +140,19 @@ namespace AppWeb.Controllers
 
             if (requiereRehash)
             {
-                usuario.password = _passwordHasher.HashPassword(usuario, loginVM.password);
-                await _context.SaveChangesAsync();
+                usuario.password = _usuarioService.HashearPassword(usuario, loginVM.password);
+                await _usuarioService.ActualizarAsync(usuario);
             }
-            //Claims
-            var claims = new List<Claim>{
-                new Claim(ClaimTypes.NameIdentifier, usuario.id.ToString()),
-                new Claim(ClaimTypes.Name, usuario.nombreUsuario),
-                new Claim(ClaimTypes.Email, usuario.correo),
-                new Claim(ClaimTypes.Role, usuario.Rol.nameRol)
-            };
-            //Identidad
-            var identidad = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            //Principal
-            var principal = new ClaimsPrincipal(identidad);
-            //Cookies con autenticacion
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
-            //SESIONES
-            HttpContext.Session.SetString("IdUsuario", usuario.id.ToString());
-            HttpContext.Session.SetString("NombreUsuario", usuario.nombreUsuario);
-            HttpContext.Session.SetString("CorreoUsuario", usuario.correo);
-            HttpContext.Session.SetString("RolUsuario", usuario.Rol.nameRol);
-            //Redireccion
+
+            await RefrescarSesionAsync(usuario);
+
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
                 return LocalRedirect(returnUrl);
             }
             return RedirectToAction("Index", "Home");
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
@@ -213,6 +161,7 @@ namespace AppWeb.Controllers
             HttpContext.Session.Clear();
             return RedirectToAction("Login", "Usuario");
         }
+
         [HttpGet]
         public IActionResult AccesoDenegado()
         {
@@ -220,13 +169,10 @@ namespace AppWeb.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Administrador")] // Solo los administradores deberían ver esta lista
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Index()
         {
-            var usuarios = await _context.Usuarios
-                .Include(u => u.Rol)
-                .ToListAsync();
-
+            var usuarios = await _usuarioService.ListarConRolAsync();
             return View(usuarios);
         }
 
@@ -235,22 +181,19 @@ namespace AppWeb.Controllers
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> CambiarEstado(int id)
         {
-            var usuario = await _context.Usuarios.FindAsync(id);
-            if (usuario == null)
-            {
-                TempData["Error"] = "Usuario no encontrado.";
-                return RedirectToAction(nameof(Index));
-            }
-
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (usuario.id.ToString() == currentUserId)
+            if (id.ToString() == currentUserId)
             {
                 TempData["Error"] = "No puede desactivar su propia cuenta de administrador.";
                 return RedirectToAction(nameof(Index));
             }
 
-            usuario.estado = !usuario.estado;
-            await _context.SaveChangesAsync();
+            var usuario = await _usuarioService.CambiarEstadoAsync(id);
+            if (usuario == null)
+            {
+                TempData["Error"] = "Usuario no encontrado.";
+                return RedirectToAction(nameof(Index));
+            }
 
             TempData["Mensaje"] = usuario.estado
                 ? $"Usuario '{usuario.nombreUsuario}' activado correctamente."
@@ -261,10 +204,7 @@ namespace AppWeb.Controllers
 
         private async Task CargarRolesEdicionAsync(int idRolActual)
         {
-            var roles = await _context.Roles
-                .Where(r => r.estado || r.idRol == idRolActual)
-                .ToListAsync();
-            ViewBag.Roles = roles;
+            ViewBag.Roles = await _usuarioService.ObtenerRolesEdicionAsync(idRolActual);
         }
 
         private async Task RefrescarSesionAsync(Usuario usuario)
@@ -291,10 +231,7 @@ namespace AppWeb.Controllers
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Editar(int id)
         {
-            var usuario = await _context.Usuarios
-                .Include(u => u.Rol)
-                .FirstOrDefaultAsync(u => u.id == id);
-
+            var usuario = await _usuarioService.ObtenerPorIdConRolAsync(id);
             if (usuario == null)
             {
                 TempData["Error"] = "Usuario no encontrado.";
@@ -316,10 +253,7 @@ namespace AppWeb.Controllers
             int IDROL,
             string? nuevaPassword)
         {
-            var usuario = await _context.Usuarios
-                .Include(u => u.Rol)
-                .FirstOrDefaultAsync(u => u.id == id);
-
+            var usuario = await _usuarioService.ObtenerPorIdConRolAsync(id);
             if (usuario == null)
             {
                 TempData["Error"] = "Usuario no encontrado.";
@@ -335,13 +269,13 @@ namespace AppWeb.Controllers
             }
 
             string correoLimpio = correo.Trim();
-            if (await _context.Usuarios.AnyAsync(u => u.correo == correoLimpio && u.id != id))
+            if (await _usuarioService.ExisteCorreoAsync(correoLimpio, id))
             {
                 ViewData["Error"] = "Ya existe otro usuario registrado con ese correo.";
                 return View(usuario);
             }
 
-            var rolDestino = await _context.Roles.FirstOrDefaultAsync(r => r.idRol == IDROL);
+            var rolDestino = await _usuarioService.ObtenerRolPorIdAsync(IDROL);
             if (rolDestino == null)
             {
                 ViewData["Error"] = "El rol seleccionado no es válido.";
@@ -363,10 +297,10 @@ namespace AppWeb.Controllers
 
             if (!string.IsNullOrWhiteSpace(nuevaPassword))
             {
-                usuario.password = _passwordHasher.HashPassword(usuario, nuevaPassword);
+                usuario.password = _usuarioService.HashearPassword(usuario, nuevaPassword);
             }
 
-            await _context.SaveChangesAsync();
+            await _usuarioService.ActualizarAsync(usuario);
 
             if (usuario.id.ToString() == currentUserId)
             {
@@ -387,10 +321,7 @@ namespace AppWeb.Controllers
                 return RedirectToAction(nameof(Login));
             }
 
-            var usuario = await _context.Usuarios
-                .Include(u => u.Rol)
-                .FirstOrDefaultAsync(u => u.id == idUsuario);
-
+            var usuario = await _usuarioService.ObtenerPorIdConRolAsync(idUsuario);
             if (usuario == null)
             {
                 return RedirectToAction(nameof(Login));
@@ -414,10 +345,7 @@ namespace AppWeb.Controllers
                 return RedirectToAction(nameof(Login));
             }
 
-            var usuario = await _context.Usuarios
-                .Include(u => u.Rol)
-                .FirstOrDefaultAsync(u => u.id == idUsuario);
-
+            var usuario = await _usuarioService.ObtenerPorIdConRolAsync(idUsuario);
             if (usuario == null)
             {
                 return RedirectToAction(nameof(Login));
@@ -448,33 +376,17 @@ namespace AppWeb.Controllers
                     return View(usuario);
                 }
 
-                bool actualValida = false;
-                try
-                {
-                    var res = _passwordHasher.VerifyHashedPassword(usuario, usuario.password, passwordActual);
-                    actualValida = res == PasswordVerificationResult.Success || res == PasswordVerificationResult.SuccessRehashNeeded;
-                }
-                catch (FormatException)
-                {
-                    // Contraseña heredada en texto plano
-                }
-
-                if (!actualValida && usuario.password == passwordActual)
-                {
-                    actualValida = true;
-                }
-
-                if (!actualValida)
+                if (!_usuarioService.VerificarPassword(usuario, passwordActual, out _))
                 {
                     ViewData["Error"] = "La contraseña actual es incorrecta.";
                     return View(usuario);
                 }
 
-                usuario.password = _passwordHasher.HashPassword(usuario, nuevaPassword);
+                usuario.password = _usuarioService.HashearPassword(usuario, nuevaPassword);
             }
 
             usuario.nombreUsuario = nombreUsuario.Trim();
-            await _context.SaveChangesAsync();
+            await _usuarioService.ActualizarAsync(usuario);
             await RefrescarSesionAsync(usuario);
 
             TempData["Mensaje"] = "Perfil actualizado correctamente.";

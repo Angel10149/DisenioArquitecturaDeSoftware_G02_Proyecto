@@ -1,8 +1,7 @@
-﻿using AppWeb.Data;
-using AppWeb.Models;
+﻿using AppWeb.Models;
+using AppWeb.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace AppWeb.Controllers
@@ -10,81 +9,33 @@ namespace AppWeb.Controllers
     [Authorize(Roles = "Administrador,Vendedor")]
     public class VentaController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IVentaService _ventaService;
 
-        public VentaController(AppDbContext context)
+        public VentaController(IVentaService ventaService)
         {
-            _context = context;
+            _ventaService = ventaService;
         }
 
         private async Task CargarDatosCrearAsync(int? idCotizacion)
         {
-            ViewBag.Clientes = await _context.Clientes
-                .Where(c => c.estado)
-                .OrderBy(c => c.nombres)
-                .ThenBy(c => c.razonSocial)
-                .ToListAsync();
-
-            ViewBag.Productos = await _context.Productos
-                .Where(p => p.estado)
-                .OrderBy(p => p.nombre)
-                .ToListAsync();
-
-            ViewBag.CotizacionesAprobadas = await _context.Cotizaciones
-                .Include(c => c.cliente)
-                .Where(c => c.estado == "Aprobada")
-                .OrderByDescending(c => c.idCotizacion)
-                .ToListAsync();
-
+            ViewBag.Clientes = await _ventaService.ListarClientesActivosAsync();
+            ViewBag.Productos = await _ventaService.ListarProductosActivosAsync();
+            ViewBag.CotizacionesAprobadas = await _ventaService.ListarCotizacionesAprobadasAsync();
             ViewBag.IdCotizacionSeleccionada = idCotizacion;
+
             if (idCotizacion.HasValue && idCotizacion.Value > 0)
             {
-                ViewBag.CotizacionSeleccionada = await _context.Cotizaciones
-                    .Include(c => c.cliente)
-                    .Include(c => c.DetalleCotizacions)
-                        .ThenInclude(d => d.producto)
-                    .FirstOrDefaultAsync(c => c.idCotizacion == idCotizacion.Value && c.estado == "Aprobada");
+                ViewBag.CotizacionSeleccionada = await _ventaService.ObtenerCotizacionAprobadaConDetalleAsync(idCotizacion.Value);
             }
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(string? buscar, string? estado)
         {
-            var query = _context.Ventas
-                .Include(v => v.cliente)
-                .Include(v => v.usuario)
-                .Include(v => v.cotizacion)
-                .Include(v => v.DetalleVentas)
-                .Include(v => v.Pagos)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(estado))
-            {
-                if (string.Equals(estado, "Pagada", StringComparison.OrdinalIgnoreCase))
-                {
-                    query = query.Where(v => v.estado == "Pagada" || v.estado == "Completada");
-                }
-                else
-                {
-                    query = query.Where(v => v.estado == estado);
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(buscar))
-            {
-                string filtro = buscar.Trim();
-                query = query.Where(v =>
-                    v.cliente!.nombres.Contains(filtro) ||
-                    v.cliente!.razonSocial.Contains(filtro) ||
-                    v.cliente!.numeroDocumento.Contains(filtro) ||
-                    v.usuario!.nombreUsuario.Contains(filtro) ||
-                    v.idVenta.ToString() == filtro);
-            }
-
             ViewBag.Buscar = buscar;
             ViewBag.Estado = estado;
 
-            var ventas = await query.OrderByDescending(v => v.idVenta).ToListAsync();
+            var ventas = await _ventaService.ListarAsync(buscar, estado);
             return View(ventas);
         }
 
@@ -152,96 +103,21 @@ namespace AppWeb.Controllers
                 return View();
             }
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
+            var resultado = await _ventaService.CrearVentaAsync(idCliente, idUsuario, idCotizacion, aplicarIgv, detalles);
+            if (!resultado.Ok)
             {
-                var cantidadesPorProducto = detalles
-                    .GroupBy(d => d.idproducto)
-                    .ToDictionary(g => g.Key, g => g.Sum(x => x.cantidad));
-
-                foreach (var kvp in cantidadesPorProducto)
-                {
-                    var producto = await _context.Productos.FindAsync(kvp.Key);
-                    if (producto == null || !producto.estado)
-                    {
-                        await transaction.RollbackAsync();
-                        ViewData["Error"] = "Uno de los productos seleccionados no existe o está inactivo.";
-                        return View();
-                    }
-
-                    if (producto.stockActual < kvp.Value)
-                    {
-                        await transaction.RollbackAsync();
-                        ViewData["Error"] = $"Stock insuficiente para '{producto.nombre}'. Disponible: {producto.stockActual}, solicitado: {kvp.Value}.";
-                        return View();
-                    }
-
-                    producto.stockActual -= kvp.Value;
-                    await _context.Stocks.AddAsync(new Stock
-                    {
-                        idProducto = producto.idProducto,
-                        cantidad = producto.stockActual,
-                        fecha_actualizacion = DateTime.Now
-                    });
-                }
-
-                if (idCotizacion.HasValue && idCotizacion.Value > 0)
-                {
-                    var cotizacion = await _context.Cotizaciones.FindAsync(idCotizacion.Value);
-                    if (cotizacion != null && cotizacion.estado == "Aprobada")
-                    {
-                        cotizacion.estado = "Convertida";
-                    }
-                }
-
-                var subtotalVenta = detalles.Sum(d => d.subtotal);
-                decimal totalVenta = subtotalVenta;
-                if (aplicarIgv)
-                {
-                    var cfg = await _context.ConfiguracionesEmpresa.FirstOrDefaultAsync();
-                    var igvPct = cfg?.igv ?? 18m;
-                    totalVenta = Math.Round(subtotalVenta * (1m + (igvPct / 100m)), 2);
-                }
-
-                var venta = new Venta
-                {
-                    fechaVenta = DateTime.Now,
-                    estado = "Pendiente",
-                    total = totalVenta,
-                    idCliente = idCliente,
-                    idUsuario = idUsuario,
-                    idCotizacion = (idCotizacion.HasValue && idCotizacion.Value > 0) ? idCotizacion.Value : null,
-                    DetalleVentas = detalles
-                };
-
-                await _context.Ventas.AddAsync(venta);
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                TempData["Mensaje"] = $"Venta #{venta.idVenta} registrada correctamente. Stock actualizado.";
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                ViewData["Error"] = "Ocurrió un error al registrar la venta.";
+                ViewData["Error"] = resultado.Error;
                 return View();
             }
+
+            TempData["Mensaje"] = $"Venta #{resultado.IdVenta} registrada correctamente. Stock actualizado.";
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
         public async Task<IActionResult> Detalle(int id)
         {
-            var venta = await _context.Ventas
-                .Include(v => v.cliente)
-                .Include(v => v.usuario)
-                .Include(v => v.cotizacion)
-                .Include(v => v.DetalleVentas)
-                    .ThenInclude(d => d.producto)
-                .Include(v => v.Pagos)
-                    .ThenInclude(p => p.Comprobantes)
-                .FirstOrDefaultAsync(v => v.idVenta == id);
-
+            var venta = await _ventaService.ObtenerPorIdAsync(id);
             if (venta == null)
             {
                 TempData["Error"] = "Venta no encontrada.";
@@ -255,50 +131,14 @@ namespace AppWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Anular(int id)
         {
-            var venta = await _context.Ventas
-                .Include(v => v.DetalleVentas)
-                .FirstOrDefaultAsync(v => v.idVenta == id);
-
-            if (venta == null)
+            var resultado = await _ventaService.AnularVentaAsync(id);
+            if (!resultado.Ok)
             {
-                TempData["Error"] = "Venta no encontrada.";
-                return RedirectToAction(nameof(Index));
+                TempData["Error"] = resultado.Error;
             }
-
-            if (venta.estado != "Pendiente")
+            else
             {
-                TempData["Error"] = $"Solo se pueden anular ventas en estado 'Pendiente'. Estado actual: '{venta.estado}'.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                foreach (var det in venta.DetalleVentas)
-                {
-                    var producto = await _context.Productos.FindAsync(det.idproducto);
-                    if (producto != null)
-                    {
-                        producto.stockActual += det.cantidad;
-                        await _context.Stocks.AddAsync(new Stock
-                        {
-                            idProducto = producto.idProducto,
-                            cantidad = producto.stockActual,
-                            fecha_actualizacion = DateTime.Now
-                        });
-                    }
-                }
-
-                venta.estado = "Anulada";
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                TempData["Mensaje"] = $"Venta #{venta.idVenta} anulada y stock restaurado.";
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                TempData["Error"] = "No se pudo anular la venta.";
+                TempData["Mensaje"] = $"Venta #{resultado.IdVenta} anulada y stock restaurado.";
             }
 
             return RedirectToAction(nameof(Index));

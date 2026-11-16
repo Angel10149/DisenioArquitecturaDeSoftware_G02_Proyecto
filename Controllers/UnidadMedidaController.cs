@@ -1,38 +1,25 @@
-﻿using AppWeb.Data;
-using AppWeb.Models;
+﻿using AppWeb.Models;
+using AppWeb.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AppWeb.Controllers
 {
     [Authorize(Roles = "Administrador,Encargado de Inventario")]
     public class UnidadMedidaController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IProductoService _productoService;
 
-        public UnidadMedidaController(AppDbContext context)
+        public UnidadMedidaController(IProductoService productoService)
         {
-            _context = context;
+            _productoService = productoService;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(string? buscar)
         {
-            var query = _context.UnidadesMedida
-                .Include(u => u.Productos)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(buscar))
-            {
-                string filtro = buscar.Trim();
-                query = query.Where(u =>
-                    u.nombre.Contains(filtro) ||
-                    u.abreviatura.Contains(filtro));
-            }
-
             ViewBag.Buscar = buscar;
-            var unidades = await query.OrderByDescending(u => u.idUnidadMedida).ToListAsync();
+            var unidades = await _productoService.ListarUnidadesAsync(buscar);
             return View(unidades);
         }
 
@@ -51,26 +38,18 @@ namespace AppWeb.Controllers
                 return View(unidad);
             }
 
-            string nombre = unidad.nombre.Trim();
-            string abreviatura = unidad.abreviatura.Trim().ToUpper();
-
-            if (await _context.UnidadesMedida.AnyAsync(u => u.nombre == nombre))
+            if (await _productoService.ExisteNombreUnidadAsync(unidad.nombre))
             {
                 ModelState.AddModelError(nameof(unidad.nombre), "Ya existe una unidad de medida con ese nombre.");
                 return View(unidad);
             }
-            if (await _context.UnidadesMedida.AnyAsync(u => u.abreviatura == abreviatura))
+            if (await _productoService.ExisteAbreviaturaUnidadAsync(unidad.abreviatura))
             {
                 ModelState.AddModelError(nameof(unidad.abreviatura), "Ya existe una unidad de medida con esa abreviatura.");
                 return View(unidad);
             }
 
-            unidad.nombre = nombre;
-            unidad.abreviatura = abreviatura;
-            unidad.estado = true;
-
-            await _context.UnidadesMedida.AddAsync(unidad);
-            await _context.SaveChangesAsync();
+            await _productoService.CrearUnidadAsync(unidad);
 
             TempData["Mensaje"] = $"Unidad de medida '{unidad.nombre}' ({unidad.abreviatura}) registrada correctamente.";
             return RedirectToAction(nameof(Index));
@@ -79,7 +58,7 @@ namespace AppWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> Editar(int id)
         {
-            var unidad = await _context.UnidadesMedida.FindAsync(id);
+            var unidad = await _productoService.ObtenerUnidadPorIdAsync(id);
             if (unidad == null)
             {
                 TempData["Error"] = "Unidad de medida no encontrada.";
@@ -103,33 +82,25 @@ namespace AppWeb.Controllers
                 return View(unidad);
             }
 
-            string nombre = unidad.nombre.Trim();
-            string abreviatura = unidad.abreviatura.Trim().ToUpper();
-
-            if (await _context.UnidadesMedida.AnyAsync(u => u.nombre == nombre && u.idUnidadMedida != id))
+            if (await _productoService.ExisteNombreUnidadAsync(unidad.nombre, id))
             {
                 ModelState.AddModelError(nameof(unidad.nombre), "Otra unidad de medida ya tiene ese nombre.");
                 return View(unidad);
             }
-            if (await _context.UnidadesMedida.AnyAsync(u => u.abreviatura == abreviatura && u.idUnidadMedida != id))
+            if (await _productoService.ExisteAbreviaturaUnidadAsync(unidad.abreviatura, id))
             {
                 ModelState.AddModelError(nameof(unidad.abreviatura), "Otra unidad de medida ya tiene esa abreviatura.");
                 return View(unidad);
             }
 
-            var unidadDb = await _context.UnidadesMedida.FindAsync(id);
-            if (unidadDb == null)
+            bool actualizado = await _productoService.ActualizarUnidadAsync(id, unidad);
+            if (!actualizado)
             {
                 TempData["Error"] = "Unidad de medida no encontrada.";
                 return RedirectToAction(nameof(Index));
             }
 
-            unidadDb.nombre = nombre;
-            unidadDb.abreviatura = abreviatura;
-
-            await _context.SaveChangesAsync();
-
-            TempData["Mensaje"] = $"Unidad de medida '{unidadDb.nombre}' actualizada correctamente.";
+            TempData["Mensaje"] = $"Unidad de medida '{unidad.nombre.Trim()}' actualizada correctamente.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -137,15 +108,12 @@ namespace AppWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CambiarEstado(int id)
         {
-            var unidad = await _context.UnidadesMedida.FindAsync(id);
+            var unidad = await _productoService.CambiarEstadoUnidadAsync(id);
             if (unidad == null)
             {
                 TempData["Error"] = "Unidad de medida no encontrada.";
                 return RedirectToAction(nameof(Index));
             }
-
-            unidad.estado = !unidad.estado;
-            await _context.SaveChangesAsync();
 
             TempData["Mensaje"] = unidad.estado
                 ? $"Unidad de medida '{unidad.nombre}' activada correctamente."

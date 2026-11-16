@@ -1,8 +1,7 @@
-﻿using AppWeb.Data;
-using AppWeb.Models;
+﻿using AppWeb.Models;
+using AppWeb.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace AppWeb.Controllers
@@ -10,47 +9,25 @@ namespace AppWeb.Controllers
     [Authorize(Roles = "Administrador,Encargado de Inventario,Encargado de Compras")]
     public class RequerimientoCompraController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly ICompraService _compraService;
 
-        public RequerimientoCompraController(AppDbContext context)
+        public RequerimientoCompraController(ICompraService compraService)
         {
-            _context = context;
+            _compraService = compraService;
         }
 
         private async Task CargarProductosAsync()
         {
-            ViewBag.Productos = await _context.Productos
-                .Where(p => p.estado)
-                .OrderBy(p => p.nombre)
-                .ToListAsync();
+            ViewBag.Productos = await _compraService.ListarProductosActivosAsync();
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(string? buscar, string? estado)
         {
-            var query = _context.RequerimientosCompra
-                .Include(r => r.producto)
-                .Include(r => r.usuario)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(estado))
-            {
-                query = query.Where(r => r.estado == estado);
-            }
-
-            if (!string.IsNullOrWhiteSpace(buscar))
-            {
-                string filtro = buscar.Trim();
-                query = query.Where(r =>
-                    r.producto!.nombre.Contains(filtro) ||
-                    (r.motivo != null && r.motivo.Contains(filtro)) ||
-                    r.usuario!.nombreUsuario.Contains(filtro));
-            }
-
             ViewBag.Buscar = buscar;
             ViewBag.Estado = estado;
 
-            var requerimientos = await query.OrderByDescending(r => r.idRequerimiento).ToListAsync();
+            var requerimientos = await _compraService.ListarRequerimientosFiltradosAsync(buscar, estado);
             return View(requerimientos);
         }
 
@@ -70,7 +47,7 @@ namespace AppWeb.Controllers
 
             if (idProducto.HasValue && idProducto.Value > 0)
             {
-                var prod = await _context.Productos.FindAsync(idProducto.Value);
+                var prod = await _compraService.ObtenerProductoPorIdAsync(idProducto.Value);
                 if (prod != null)
                 {
                     int sugerida = Math.Max(1, (prod.stockMinimo * 2) - prod.stockActual);
@@ -99,7 +76,7 @@ namespace AppWeb.Controllers
                 return View(requerimiento);
             }
 
-            var producto = await _context.Productos.FindAsync(requerimiento.idProducto);
+            var producto = await _compraService.ObtenerProductoPorIdAsync(requerimiento.idProducto);
             if (producto == null)
             {
                 ModelState.AddModelError(nameof(requerimiento.idProducto), "El producto seleccionado no existe.");
@@ -116,8 +93,7 @@ namespace AppWeb.Controllers
             requerimiento.fechaCreacion = DateTime.Now;
             requerimiento.motivo = requerimiento.motivo?.Trim() ?? string.Empty;
 
-            await _context.RequerimientosCompra.AddAsync(requerimiento);
-            await _context.SaveChangesAsync();
+            await _compraService.CrearRequerimientoAsync(requerimiento);
 
             TempData["Mensaje"] = $"Requerimiento #{requerimiento.idRequerimiento} para '{producto.nombre}' registrado correctamente.";
             return RedirectToAction(nameof(Index));
@@ -126,7 +102,7 @@ namespace AppWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> Editar(int id)
         {
-            var requerimiento = await _context.RequerimientosCompra.FindAsync(id);
+            var requerimiento = await _compraService.ObtenerRequerimientoPorIdAsync(id);
             if (requerimiento == null)
             {
                 TempData["Error"] = "Requerimiento no encontrado.";
@@ -159,29 +135,14 @@ namespace AppWeb.Controllers
                 return View(requerimiento);
             }
 
-            var reqDb = await _context.RequerimientosCompra.FindAsync(id);
-            if (reqDb == null)
+            var resultado = await _compraService.ActualizarRequerimientoAsync(id, requerimiento);
+            if (!resultado.Ok)
             {
-                TempData["Error"] = "Requerimiento no encontrado.";
+                TempData["Error"] = resultado.Error;
                 return RedirectToAction(nameof(Index));
             }
 
-            if (reqDb.estado != "Pendiente")
-            {
-                TempData["Error"] = "Solo se pueden editar requerimientos en estado Pendiente.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            reqDb.idProducto = requerimiento.idProducto;
-            reqDb.cantidadSugerida = requerimiento.cantidadSugerida;
-            reqDb.cantidadRequerida = requerimiento.cantidadRequerida;
-            reqDb.fechaRequerida = requerimiento.fechaRequerida;
-            reqDb.prioridad = requerimiento.prioridad;
-            reqDb.motivo = requerimiento.motivo?.Trim() ?? string.Empty;
-
-            await _context.SaveChangesAsync();
-
-            TempData["Mensaje"] = $"Requerimiento #{reqDb.idRequerimiento} actualizado correctamente.";
+            TempData["Mensaje"] = $"Requerimiento #{id} actualizado correctamente.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -189,24 +150,16 @@ namespace AppWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CambiarEstado(int id, string nuevoEstado)
         {
-            var estadosPermitidos = new[] { "Pendiente", "Aprobado", "Rechazado", "Atendido" };
-            if (!estadosPermitidos.Contains(nuevoEstado))
+            var resultado = await _compraService.CambiarEstadoRequerimientoAsync(id, nuevoEstado);
+            if (!resultado.Ok)
             {
-                TempData["Error"] = "Estado no válido.";
-                return RedirectToAction(nameof(Index));
+                TempData["Error"] = resultado.Error;
+            }
+            else
+            {
+                TempData["Mensaje"] = $"Requerimiento #{id} actualizado a estado '{nuevoEstado}'.";
             }
 
-            var reqDb = await _context.RequerimientosCompra.FindAsync(id);
-            if (reqDb == null)
-            {
-                TempData["Error"] = "Requerimiento no encontrado.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            reqDb.estado = nuevoEstado;
-            await _context.SaveChangesAsync();
-
-            TempData["Mensaje"] = $"Requerimiento #{reqDb.idRequerimiento} actualizado a estado '{nuevoEstado}'.";
             return RedirectToAction(nameof(Index));
         }
     }

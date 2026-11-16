@@ -1,58 +1,32 @@
-﻿using AppWeb.Data;
-using AppWeb.Models;
+﻿using AppWeb.Models;
+using AppWeb.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AppWeb.Controllers
 {
     [Authorize(Roles = "Administrador,Encargado de Compras")]
     public class IngresoMercaderiaController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly ICompraService _compraService;
 
-        public IngresoMercaderiaController(AppDbContext context)
+        public IngresoMercaderiaController(ICompraService compraService)
         {
-            _context = context;
+            _compraService = compraService;
         }
 
         private async Task CargarOrdenesAsync()
         {
-            ViewBag.OrdenesCompra = await _context.OrdenesCompra
-                .Include(o => o.proveedor)
-                .Where(o => o.estado == "Pendiente" || o.estado == "Emitida")
-                .OrderByDescending(o => o.idOrdenCompra)
-                .ToListAsync();
+            ViewBag.OrdenesCompra = await _compraService.ListarOrdenesPendientesOEmailAsync();
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(string? buscar, string? estado)
         {
-            var query = _context.IngresosMercaderia
-                .Include(i => i.ordenCompra)
-                .Include(i => i.proveedor)
-                .Include(i => i.DetalleIngresos)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(estado))
-            {
-                query = query.Where(i => i.estado == estado);
-            }
-
-            if (!string.IsNullOrWhiteSpace(buscar))
-            {
-                string filtro = buscar.Trim();
-                query = query.Where(i =>
-                    i.proveedor!.razonSocial.Contains(filtro) ||
-                    i.observaciones.Contains(filtro) ||
-                    i.idOrdenCompra.ToString() == filtro ||
-                    i.idIngresoMercaderia.ToString() == filtro);
-            }
-
             ViewBag.Buscar = buscar;
             ViewBag.Estado = estado;
 
-            var ingresos = await query.OrderByDescending(i => i.idIngresoMercaderia).ToListAsync();
+            var ingresos = await _compraService.ListarIngresosFiltradosAsync(buscar, estado);
             return View(ingresos);
         }
 
@@ -64,13 +38,7 @@ namespace AppWeb.Controllers
             ViewBag.IdOrdenSeleccionada = idOrdenCompra;
             if (idOrdenCompra.HasValue && idOrdenCompra.Value > 0)
             {
-                var orden = await _context.OrdenesCompra
-                    .Include(o => o.proveedor)
-                    .Include(o => o.DetalleOrdenCompras)
-                        .ThenInclude(d => d.producto)
-                    .FirstOrDefaultAsync(o => o.idOrdenCompra == idOrdenCompra.Value);
-
-                ViewBag.OrdenSeleccionada = orden;
+                ViewBag.OrdenSeleccionada = await _compraService.ObtenerOrdenParaIngresoAsync(idOrdenCompra.Value);
             }
 
             return View();
@@ -94,12 +62,7 @@ namespace AppWeb.Controllers
                 return View();
             }
 
-            var orden = await _context.OrdenesCompra
-                .Include(o => o.proveedor)
-                .Include(o => o.DetalleOrdenCompras)
-                    .ThenInclude(d => d.producto)
-                .FirstOrDefaultAsync(o => o.idOrdenCompra == idOrdenCompra);
-
+            var orden = await _compraService.ObtenerOrdenParaIngresoAsync(idOrdenCompra);
             if (orden == null)
             {
                 ViewData["Error"] = "La orden de compra seleccionada no existe.";
@@ -149,70 +112,21 @@ namespace AppWeb.Controllers
                 return View();
             }
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
+            var resultado = await _compraService.RegistrarIngresoAsync(orden, observaciones, detalles);
+            if (!resultado.Ok)
             {
-                var ingreso = new IngresoMercaderia
-                {
-                    fechaIngreso = DateTime.Now,
-                    estado = "Registrado",
-                    observaciones = observaciones?.Trim() ?? string.Empty,
-                    idOrdenCompra = orden.idOrdenCompra,
-                    idProveedor = orden.idProveedor,
-                    DetalleIngresos = detalles
-                };
-
-                await _context.IngresosMercaderia.AddAsync(ingreso);
-
-                foreach (var det in detalles)
-                {
-                    if (det.cantidadRecibida > 0)
-                    {
-                        var producto = await _context.Productos.FindAsync(det.idProducto);
-                        if (producto != null)
-                        {
-                            producto.stockActual += det.cantidadRecibida;
-                            if (det.costoUnitario > 0)
-                            {
-                                producto.precioCosto = det.costoUnitario;
-                            }
-
-                            await _context.Stocks.AddAsync(new Stock
-                            {
-                                idProducto = producto.idProducto,
-                                cantidad = producto.stockActual,
-                                fecha_actualizacion = DateTime.Now
-                            });
-                        }
-                    }
-                }
-
-                orden.estado = "Recibida";
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                TempData["Mensaje"] = $"Ingreso #{ingreso.idIngresoMercaderia} registrado correctamente. Stock actualizado.";
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                ViewData["Error"] = "Ocurrió un error al registrar el ingreso de mercadería.";
+                ViewData["Error"] = resultado.Error;
                 return View();
             }
+
+            TempData["Mensaje"] = $"Ingreso #{resultado.IdIngreso} registrado correctamente. Stock actualizado.";
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
         public async Task<IActionResult> Detalle(int id)
         {
-            var ingreso = await _context.IngresosMercaderia
-                .Include(i => i.ordenCompra)
-                .Include(i => i.proveedor)
-                .Include(i => i.DetalleIngresos)
-                    .ThenInclude(d => d.producto)
-                .FirstOrDefaultAsync(i => i.idIngresoMercaderia == id);
-
+            var ingreso = await _compraService.ObtenerIngresoDetalleAsync(id);
             if (ingreso == null)
             {
                 TempData["Error"] = "Ingreso de mercadería no encontrado.";

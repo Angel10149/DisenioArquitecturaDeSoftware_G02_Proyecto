@@ -1,8 +1,7 @@
-using AppWeb.Data;
 using AppWeb.Models;
+using AppWeb.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
 namespace AppWeb.Controllers
@@ -35,11 +34,11 @@ namespace AppWeb.Controllers
     [Authorize]
     public class HomeController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IReporteService _reporteService;
 
-        public HomeController(AppDbContext context)
+        public HomeController(IReporteService reporteService)
         {
-            _context = context;
+            _reporteService = reporteService;
         }
 
         public async Task<IActionResult> Index()
@@ -49,33 +48,15 @@ namespace AppWeb.Controllers
             var hace7Dias = hoy.AddDays(-6);
             var inicioMes = new DateTime(hoy.Year, hoy.Month, 1);
 
-            var ventasHoy = await _context.Ventas
-                .Where(v => v.estado != "Anulada" && v.fechaVenta >= hoy && v.fechaVenta < manana)
-                .SumAsync(v => (decimal?)v.total) ?? 0m;
-
-            var totalProductos = await _context.Productos.CountAsync(p => p.estado);
-
-            var pagosHoy = await _context.Pagos
-                .Include(p => p.venta)
-                .Where(p => p.fechaPago >= hoy && p.fechaPago < manana)
-                .ToListAsync();
-
+            var ventasHoy = await _reporteService.ObtenerTotalVentasRangoAsync(hoy, manana);
+            var totalProductos = await _reporteService.ContarProductosActivosAsync();
+            var pagosHoy = (await _reporteService.ListarPagosPorFechaAsync(hoy, manana)).ToList();
             var cajaHoy = pagosHoy.Sum(p => p.venta?.total ?? p.montoRecibido);
 
-            var stockBajoQuery = _context.Productos
-                .Include(p => p.unidadMedida)
-                .Where(p => p.estado && p.stockActual <= p.stockMinimo);
+            var alertasStockBajo = await _reporteService.ContarProductosStockBajoAsync();
+            var productosStockBajo = (await _reporteService.ListarTopProductosStockBajoAsync(5)).ToList();
 
-            var alertasStockBajo = await stockBajoQuery.CountAsync();
-            var productosStockBajo = await stockBajoQuery
-                .OrderBy(p => p.stockActual)
-                .Take(5)
-                .ToListAsync();
-
-            var ventas7DiasRaw = await _context.Ventas
-                .Where(v => v.estado != "Anulada" && v.fechaVenta >= hace7Dias && v.fechaVenta < manana)
-                .ToListAsync();
-
+            var ventas7DiasRaw = (await _reporteService.ListarVentasPorFechaAsync(hace7Dias, manana)).ToList();
             var ventas7Dias = Enumerable.Range(0, 7)
                 .Select(offset =>
                 {
@@ -88,13 +69,7 @@ namespace AppWeb.Controllers
                 })
                 .ToList();
 
-            var detallesMes = await _context.DetalleVentas
-                .Include(d => d.venta)
-                .Include(d => d.producto)
-                    .ThenInclude(p => p.categoria)
-                .Where(d => d.venta.estado != "Anulada" && d.venta.fechaVenta >= inicioMes && d.venta.fechaVenta < manana)
-                .ToListAsync();
-
+            var detallesMes = await _reporteService.ListarDetallesVentaMesAsync(inicioMes, manana);
             var ventasPorCategoria = detallesMes
                 .GroupBy(d => d.producto?.categoria?.nombre ?? "Otros")
                 .Select(g => new DashboardCategoriaVenta
@@ -106,16 +81,7 @@ namespace AppWeb.Controllers
                 .Take(5)
                 .ToList();
 
-            var topProductos = await _context.DetalleVentas
-                .Include(d => d.venta)
-                .Include(d => d.producto)
-                .Where(d => d.venta.estado != "Anulada")
-                .GroupBy(d => d.producto.nombre)
-                .Select(g => new { Nombre = g.Key, Cantidad = g.Sum(x => x.cantidad) })
-                .OrderByDescending(x => x.Cantidad)
-                .Take(5)
-                .Select(x => x.Nombre)
-                .ToListAsync();
+            var topProductos = (await _reporteService.ListarTopNombresProductosVendidosAsync(5)).ToList();
 
             var vm = new DashboardVM
             {
@@ -143,10 +109,7 @@ namespace AppWeb.Controllers
 
             string filtro = q.Trim();
 
-            var productos = await _context.Productos
-                .Where(p => p.estado && (p.nombre.Contains(filtro) || p.codigoBarras.Contains(filtro)))
-                .OrderBy(p => p.nombre)
-                .Take(4)
+            var productos = (await _reporteService.BuscarProductosRapidoAsync(filtro, 4))
                 .Select(p => new
                 {
                     tipo = "Producto",
@@ -154,13 +117,9 @@ namespace AppWeb.Controllers
                     titulo = p.nombre,
                     subtitulo = $"Stock: {p.stockActual} · S/ {p.precioVenta:N2}",
                     url = Url.Action("Index", "Producto", new { buscar = p.nombre })
-                })
-                .ToListAsync();
+                });
 
-            var clientes = await _context.Clientes
-                .Where(c => c.estado && (c.nombres.Contains(filtro) || c.razonSocial.Contains(filtro) || c.numeroDocumento.Contains(filtro)))
-                .OrderBy(c => c.nombres)
-                .Take(4)
+            var clientes = (await _reporteService.BuscarClientesRapidoAsync(filtro, 4))
                 .Select(c => new
                 {
                     tipo = "Cliente",
@@ -168,14 +127,9 @@ namespace AppWeb.Controllers
                     titulo = string.IsNullOrWhiteSpace(c.razonSocial) ? c.nombres : c.razonSocial,
                     subtitulo = $"{c.tipoDocumento}: {c.numeroDocumento}",
                     url = Url.Action("Index", "Cliente", new { buscar = c.numeroDocumento })
-                })
-                .ToListAsync();
+                });
 
-            var ventas = await _context.Ventas
-                .Include(v => v.cliente)
-                .Where(v => v.idVenta.ToString() == filtro || v.cliente!.nombres.Contains(filtro) || v.cliente!.razonSocial.Contains(filtro))
-                .OrderByDescending(v => v.idVenta)
-                .Take(3)
+            var ventas = (await _reporteService.BuscarVentasRapidoAsync(filtro, 3))
                 .Select(v => new
                 {
                     tipo = "Venta",
@@ -183,8 +137,7 @@ namespace AppWeb.Controllers
                     titulo = $"Venta #{v.idVenta}",
                     subtitulo = $"S/ {v.total:N2} · {v.estado}",
                     url = Url.Action("Detalle", "Venta", new { id = v.idVenta })
-                })
-                .ToListAsync();
+                });
 
             return Json(productos.Concat<object>(clientes).Concat(ventas));
         }
@@ -194,13 +147,7 @@ namespace AppWeb.Controllers
         {
             var items = new List<object>();
 
-            var stockBajo = await _context.Productos
-                .Include(p => p.unidadMedida)
-                .Where(p => p.estado && p.stockActual <= p.stockMinimo)
-                .OrderBy(p => p.stockActual)
-                .Take(3)
-                .ToListAsync();
-
+            var stockBajo = await _reporteService.ListarTopProductosStockBajoAsync(3);
             foreach (var p in stockBajo)
             {
                 items.Add(new
@@ -213,12 +160,7 @@ namespace AppWeb.Controllers
                 });
             }
 
-            var ultimasVentas = await _context.Ventas
-                .Where(v => v.estado != "Anulada")
-                .OrderByDescending(v => v.idVenta)
-                .Take(2)
-                .ToListAsync();
-
+            var ultimasVentas = await _reporteService.ListarUltimasVentasAsync(2);
             foreach (var v in ultimasVentas)
             {
                 items.Add(new

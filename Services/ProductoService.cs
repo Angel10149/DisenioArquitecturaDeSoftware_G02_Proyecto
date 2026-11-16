@@ -140,5 +140,116 @@ namespace AppWeb.Services
             await _productoRepo.SaveChangesAsync();
             return producto;
         }
+
+        public async Task<IEnumerable<Categoria>> ListarCategoriasAsync(string? buscar)
+        {
+            var query = _categoriaRepo.Query().Include(c => c.Productos).AsQueryable();
+            if (!string.IsNullOrWhiteSpace(buscar))
+            {
+                string filtro = buscar.Trim();
+                query = query.Where(c => c.nombre.Contains(filtro) || c.descripcion.Contains(filtro));
+            }
+            return await query.OrderByDescending(c => c.idCategoria).ToListAsync();
+        }
+
+        public async Task<Categoria?> ObtenerCategoriaPorIdAsync(int id) => await _categoriaRepo.GetByIdAsync(id);
+
+        public async Task<bool> ExisteNombreCategoriaAsync(string nombre, int? excluirId = null)
+        {
+            string norm = nombre.Trim();
+            return await _categoriaRepo.Query()
+                .AnyAsync(c => c.nombre == norm && (!excluirId.HasValue || c.idCategoria != excluirId.Value));
+        }
+
+        public async Task CrearCategoriaAsync(Categoria categoria)
+        {
+            categoria.nombre = categoria.nombre.Trim();
+            categoria.descripcion = categoria.descripcion.Trim();
+            categoria.estado = true;
+            await _categoriaRepo.AddAsync(categoria);
+            await _categoriaRepo.SaveChangesAsync();
+        }
+
+        public async Task<bool> ActualizarCategoriaAsync(int id, Categoria categoria)
+        {
+            var categoriaDb = await _categoriaRepo.GetByIdAsync(id);
+            if (categoriaDb == null) return false;
+
+            categoriaDb.nombre = categoria.nombre.Trim();
+            categoriaDb.descripcion = categoria.descripcion.Trim();
+            _categoriaRepo.Update(categoriaDb);
+            await _categoriaRepo.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<Categoria?> CambiarEstadoCategoriaAsync(int id)
+        {
+            var categoria = await _categoriaRepo.GetByIdAsync(id);
+            if (categoria == null) return null;
+
+            categoria.estado = !categoria.estado;
+            _categoriaRepo.Update(categoria);
+            await _categoriaRepo.SaveChangesAsync();
+            return categoria;
+        }
+
+        public async Task<IEnumerable<UnidadMedida>> ListarUnidadesAsync(string? buscar)
+        {
+            var query = _unidadRepo.Query().Include(u => u.Productos).AsQueryable();
+            if (!string.IsNullOrWhiteSpace(buscar))
+            {
+                string filtro = buscar.Trim();
+                query = query.Where(u => u.nombre.Contains(filtro) || u.abreviatura.Contains(filtro));
+            }
+            return await query.OrderByDescending(u => u.idUnidadMedida).ToListAsync();
+        }
+
+        public async Task<UnidadMedida?> ObtenerUnidadPorIdAsync(int id) => await _unidadRepo.GetByIdAsync(id);
+
+        public async Task<bool> ExisteNombreUnidadAsync(string nombre, int? excluirId = null)
+        {
+            string norm = nombre.Trim();
+            return await _unidadRepo.Query()
+                .AnyAsync(u => u.nombre == norm && (!excluirId.HasValue || u.idUnidadMedida != excluirId.Value));
+        }
+
+        public async Task<bool> ExisteAbreviaturaUnidadAsync(string abreviatura, int? excluirId = null)
+        {
+            string norm = abreviatura.Trim().ToUpper();
+            return await _unidadRepo.Query()
+                .AnyAsync(u => u.abreviatura == norm && (!excluirId.HasValue || u.idUnidadMedida != excluirId.Value));
+        }
+
+        public async Task CrearUnidadAsync(UnidadMedida unidad)
+        {
+            unidad.nombre = unidad.nombre.Trim();
+            unidad.abreviatura = unidad.abreviatura.Trim().ToUpper();
+            unidad.estado = true;
+            await _unidadRepo.AddAsync(unidad);
+            await _unidadRepo.SaveChangesAsync();
+        }
+
+        public async Task<bool> ActualizarUnidadAsync(int id, UnidadMedida unidad)
+        {
+            var unidadDb = await _unidadRepo.GetByIdAsync(id);
+            if (unidadDb == null) return false;
+
+            unidadDb.nombre = unidad.nombre.Trim();
+            unidadDb.abreviatura = unidad.abreviatura.Trim().ToUpper();
+            _unidadRepo.Update(unidadDb);
+            await _unidadRepo.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<UnidadMedida?> CambiarEstadoUnidadAsync(int id)
+        {
+            var unidad = await _unidadRepo.GetByIdAsync(id);
+            if (unidad == null) return null;
+
+            unidad.estado = !unidad.estado;
+            _unidadRepo.Update(unidad);
+            await _unidadRepo.SaveChangesAsync();
+            return unidad;
+        }
     }
 }
