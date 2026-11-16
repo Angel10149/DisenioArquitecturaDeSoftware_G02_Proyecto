@@ -8,7 +8,9 @@ namespace AppWeb.Services
         Task<Producto?> ObtenerPorIdAsync(int id);
         Task<IEnumerable<Categoria>> ListarCategoriasActivasAsync();
         Task<IEnumerable<UnidadMedida>> ListarUnidadesActivasAsync();
-        Task CrearAsync(Producto producto);
-        Task ActualizarAsync(Producto producto);
+        Task<bool> ExisteCodigoBarrasAsync(string codigoBarras, int? excluirId = null);
+        Task CrearConStockInicialAsync(Producto producto);
+        Task<bool> ActualizarConStockAsync(int id, Producto producto);
+        Task<Producto?> CambiarEstadoAsync(int id);
     }
 }

@@ -1,8 +1,7 @@
-﻿using AppWeb.Data;
-using AppWeb.Models;
+﻿using AppWeb.Models;
+using AppWeb.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 namespace AppWeb.Controllers
@@ -48,11 +47,11 @@ namespace AppWeb.Controllers
     [Authorize(Roles = "Administrador")]
     public class ReporteController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IReporteService _reporteService;
 
-        public ReporteController(AppDbContext context)
+        public ReporteController(IReporteService reporteService)
         {
-            _context = context;
+            _reporteService = reporteService;
         }
 
         [HttpGet]
@@ -63,37 +62,10 @@ namespace AppWeb.Controllers
             if (fin < inicio) fin = inicio;
             DateTime finInclusivo = fin.AddDays(1);
 
-            var ventas = await _context.Ventas
-                .Include(v => v.cliente)
-                .Include(v => v.usuario)
-                .Include(v => v.DetalleVentas)
-                    .ThenInclude(d => d.producto)
-                .Where(v => v.estado != "Anulada" && v.fechaVenta >= inicio && v.fechaVenta < finInclusivo)
-                .OrderByDescending(v => v.fechaVenta)
-                .ToListAsync();
-
-            var ingresos = await _context.IngresosMercaderia
-                .Include(i => i.proveedor)
-                .Include(i => i.ordenCompra)
-                .Include(i => i.DetalleIngresos)
-                .Where(i => i.fechaIngreso >= inicio && i.fechaIngreso < finInclusivo)
-                .OrderByDescending(i => i.fechaIngreso)
-                .ToListAsync();
-
-            var pagos = await _context.Pagos
-                .Include(p => p.venta)
-                    .ThenInclude(v => v!.cliente)
-                .Include(p => p.usuario)
-                .Where(p => p.fechaPago >= inicio && p.fechaPago < finInclusivo)
-                .OrderByDescending(p => p.fechaPago)
-                .ToListAsync();
-
-            var stockBajo = await _context.Productos
-                .Include(p => p.categoria)
-                .Include(p => p.unidadMedida)
-                .Where(p => p.estado && p.stockActual <= p.stockMinimo)
-                .OrderBy(p => p.stockActual)
-                .ToListAsync();
+            var ventas = (await _reporteService.ListarVentasPorFechaAsync(inicio, finInclusivo)).ToList();
+            var ingresos = (await _reporteService.ListarIngresosPorFechaAsync(inicio, finInclusivo)).ToList();
+            var pagos = (await _reporteService.ListarPagosPorFechaAsync(inicio, finInclusivo)).ToList();
+            var stockBajo = (await _reporteService.ListarProductosStockBajoAsync()).ToList();
 
             var topProductos = ventas
                 .SelectMany(v => v.DetalleVentas)
@@ -114,12 +86,7 @@ namespace AppWeb.Controllers
                 .Take(10)
                 .ToList();
 
-            var productosActivos = await _context.Productos
-                .Include(p => p.categoria)
-                .Include(p => p.unidadMedida)
-                .Where(p => p.estado)
-                .OrderBy(p => p.nombre)
-                .ToListAsync();
+            var productosActivos = (await _reporteService.ListarProductosActivosAsync()).ToList();
 
             var comprasPorProd = ingresos
                 .SelectMany(i => i.DetalleIngresos)
@@ -185,12 +152,7 @@ namespace AppWeb.Controllers
             if (fin < inicio) fin = inicio;
             DateTime finInclusivo = fin.AddDays(1);
 
-            var ventas = await _context.Ventas
-                .Include(v => v.cliente)
-                .Include(v => v.usuario)
-                .Where(v => v.estado != "Anulada" && v.fechaVenta >= inicio && v.fechaVenta < finInclusivo)
-                .OrderByDescending(v => v.fechaVenta)
-                .ToListAsync();
+            var ventas = await _reporteService.ListarVentasPorFechaAsync(inicio, finInclusivo);
 
             var sb = new StringBuilder();
             sb.AppendLine("IdVenta;Fecha;Cliente;Documento;Vendedor;Estado;Total");
@@ -214,13 +176,7 @@ namespace AppWeb.Controllers
             if (fin < inicio) fin = inicio;
             DateTime finInclusivo = fin.AddDays(1);
 
-            var ingresos = await _context.IngresosMercaderia
-                .Include(i => i.proveedor)
-                .Include(i => i.ordenCompra)
-                .Include(i => i.DetalleIngresos)
-                .Where(i => i.fechaIngreso >= inicio && i.fechaIngreso < finInclusivo)
-                .OrderByDescending(i => i.fechaIngreso)
-                .ToListAsync();
+            var ingresos = await _reporteService.ListarIngresosPorFechaAsync(inicio, finInclusivo);
 
             var sb = new StringBuilder();
             sb.AppendLine("IdIngreso;Fecha;Proveedor;RUC;OrdenCompra;Items;Estado;Total");
@@ -241,12 +197,7 @@ namespace AppWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportarInventarioCsv()
         {
-            var productos = await _context.Productos
-                .Include(p => p.categoria)
-                .Include(p => p.unidadMedida)
-                .Where(p => p.estado)
-                .OrderBy(p => p.nombre)
-                .ToListAsync();
+            var productos = await _reporteService.ListarProductosActivosAsync();
 
             var sb = new StringBuilder();
             sb.AppendLine("IdProducto;CodigoBarras;Producto;Categoria;Unidad;StockActual;StockMinimo;EstadoStock;PrecioCosto;PrecioVenta");
@@ -270,13 +221,7 @@ namespace AppWeb.Controllers
             if (fin < inicio) fin = inicio;
             DateTime finInclusivo = fin.AddDays(1);
 
-            var pagos = await _context.Pagos
-                .Include(p => p.venta)
-                    .ThenInclude(v => v!.cliente)
-                .Include(p => p.usuario)
-                .Where(p => p.fechaPago >= inicio && p.fechaPago < finInclusivo)
-                .OrderByDescending(p => p.fechaPago)
-                .ToListAsync();
+            var pagos = await _reporteService.ListarPagosPorFechaAsync(inicio, finInclusivo);
 
             var sb = new StringBuilder();
             sb.AppendLine("IdPago;Fecha;IdVenta;Cliente;MetodoPago;Cajero;MontoRecibido;TotalVenta");
@@ -302,39 +247,11 @@ namespace AppWeb.Controllers
             if (fin < inicio) fin = inicio;
             DateTime finInclusivo = fin.AddDays(1);
 
-            var productosActivos = await _context.Productos
-                .Include(p => p.categoria)
-                .Include(p => p.unidadMedida)
-                .Where(p => p.estado)
-                .OrderBy(p => p.nombre)
-                .ToListAsync();
+            var productosActivos = await _reporteService.ListarProductosActivosAsync();
 
-            var comprasPorProd = await _context.DetalleIngresos
-                .Where(d => d.ingresoMercaderia != null &&
-                            d.ingresoMercaderia.fechaIngreso >= inicio &&
-                            d.ingresoMercaderia.fechaIngreso < finInclusivo)
-                .GroupBy(d => d.idProducto)
-                .Select(g => new
-                {
-                    IdProducto = g.Key,
-                    Cantidad = g.Sum(x => x.cantidadRecibida),
-                    Total = g.Sum(x => x.subtotal)
-                })
-                .ToDictionaryAsync(x => x.IdProducto);
+            var comprasPorProd = await _reporteService.ObtenerResumenComprasPorProductoAsync(inicio, finInclusivo);
 
-            var ventasPorProd = await _context.DetalleVentas
-                .Where(d => d.venta != null &&
-                            d.venta.estado != "Anulada" &&
-                            d.venta.fechaVenta >= inicio &&
-                            d.venta.fechaVenta < finInclusivo)
-                .GroupBy(d => d.idproducto)
-                .Select(g => new
-                {
-                    IdProducto = g.Key,
-                    Cantidad = g.Sum(x => x.cantidad),
-                    Total = g.Sum(x => x.subtotal)
-                })
-                .ToDictionaryAsync(x => x.IdProducto);
+            var ventasPorProd = await _reporteService.ObtenerResumenVentasPorProductoAsync(inicio, finInclusivo);
 
             var sb = new StringBuilder();
             sb.AppendLine("IdProducto;CodigoBarras;Producto;Categoria;Unidad;CantComprada;TotalComprado;CantVendida;TotalVendido;StockActual;StockMinimo");

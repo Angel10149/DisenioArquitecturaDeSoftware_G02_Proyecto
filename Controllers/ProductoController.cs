@@ -1,66 +1,34 @@
-﻿using AppWeb.Data;
-using AppWeb.Models;
+﻿using AppWeb.Models;
+using AppWeb.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AppWeb.Controllers
 {
     [Authorize(Roles = "Administrador,Encargado de Inventario")]
     public class ProductoController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IProductoService _productoService;
 
-        public ProductoController(AppDbContext context)
+        public ProductoController(IProductoService productoService)
         {
-            _context = context;
+            _productoService = productoService;
         }
 
         private async Task CargarCatalogosAsync()
         {
-            ViewBag.Categorias = await _context.Categorias
-                .Where(c => c.estado)
-                .OrderBy(c => c.nombre)
-                .ToListAsync();
-
-            ViewBag.UnidadesMedida = await _context.UnidadesMedida
-                .Where(u => u.estado)
-                .OrderBy(u => u.nombre)
-                .ToListAsync();
+            ViewBag.Categorias = await _productoService.ListarCategoriasActivasAsync();
+            ViewBag.UnidadesMedida = await _productoService.ListarUnidadesActivasAsync();
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(string? buscar, int? idCategoria)
         {
-            ViewBag.Categorias = await _context.Categorias
-                .Where(c => c.estado)
-                .OrderBy(c => c.nombre)
-                .ToListAsync();
-
-            var query = _context.Productos
-                .Include(p => p.categoria)
-                .Include(p => p.unidadMedida)
-                .AsQueryable();
-
-            if (idCategoria.HasValue && idCategoria.Value > 0)
-            {
-                query = query.Where(p => p.idCategoria == idCategoria.Value);
-            }
-
-            if (!string.IsNullOrWhiteSpace(buscar))
-            {
-                string filtro = buscar.Trim();
-                query = query.Where(p =>
-                    p.nombre.Contains(filtro) ||
-                    p.codigoBarras.Contains(filtro) ||
-                    (p.descripcion != null && p.descripcion.Contains(filtro)) ||
-                    p.categoria!.nombre.Contains(filtro));
-            }
-
+            ViewBag.Categorias = await _productoService.ListarCategoriasActivasAsync();
             ViewBag.Buscar = buscar;
             ViewBag.IdCategoria = idCategoria;
 
-            var productos = await query.OrderByDescending(p => p.idProducto).ToListAsync();
+            var productos = await _productoService.ListarAsync(buscar, idCategoria);
             return View(productos);
         }
 
@@ -93,29 +61,13 @@ namespace AppWeb.Controllers
                 return View(producto);
             }
 
-            string codigo = producto.codigoBarras.Trim();
-            if (await _context.Productos.AnyAsync(p => p.codigoBarras == codigo))
+            if (await _productoService.ExisteCodigoBarrasAsync(producto.codigoBarras))
             {
                 ModelState.AddModelError(nameof(producto.codigoBarras), "Ya existe un producto registrado con ese código.");
                 return View(producto);
             }
 
-            producto.codigoBarras = codigo;
-            producto.nombre = producto.nombre.Trim();
-            producto.descripcion = producto.descripcion?.Trim() ?? string.Empty;
-            producto.estado = true;
-
-            await _context.Productos.AddAsync(producto);
-            await _context.SaveChangesAsync();
-
-            // Registrar stock inicial en la tabla Stocks
-            await _context.Stocks.AddAsync(new Stock
-            {
-                idProducto = producto.idProducto,
-                cantidad = producto.stockActual,
-                fecha_actualizacion = DateTime.Now
-            });
-            await _context.SaveChangesAsync();
+            await _productoService.CrearConStockInicialAsync(producto);
 
             TempData["Mensaje"] = $"Producto '{producto.nombre}' registrado correctamente.";
             return RedirectToAction(nameof(Index));
@@ -124,7 +76,7 @@ namespace AppWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> Editar(int id)
         {
-            var producto = await _context.Productos.FindAsync(id);
+            var producto = await _productoService.ObtenerPorIdAsync(id);
             if (producto == null)
             {
                 TempData["Error"] = "Producto no encontrado.";
@@ -162,45 +114,20 @@ namespace AppWeb.Controllers
                 return View(producto);
             }
 
-            string codigo = producto.codigoBarras.Trim();
-            if (await _context.Productos.AnyAsync(p => p.codigoBarras == codigo && p.idProducto != id))
+            if (await _productoService.ExisteCodigoBarrasAsync(producto.codigoBarras, id))
             {
                 ModelState.AddModelError(nameof(producto.codigoBarras), "Otro producto ya tiene registrado ese código.");
                 return View(producto);
             }
 
-            var productoDb = await _context.Productos.FindAsync(id);
-            if (productoDb == null)
+            bool actualizado = await _productoService.ActualizarConStockAsync(id, producto);
+            if (!actualizado)
             {
                 TempData["Error"] = "Producto no encontrado.";
                 return RedirectToAction(nameof(Index));
             }
 
-            bool cambioStock = productoDb.stockActual != producto.stockActual;
-
-            productoDb.codigoBarras = codigo;
-            productoDb.nombre = producto.nombre.Trim();
-            productoDb.descripcion = producto.descripcion?.Trim() ?? string.Empty;
-            productoDb.stockActual = producto.stockActual;
-            productoDb.stockMinimo = producto.stockMinimo;
-            productoDb.precioCosto = producto.precioCosto;
-            productoDb.precioVenta = producto.precioVenta;
-            productoDb.idCategoria = producto.idCategoria;
-            productoDb.idUnidadMedida = producto.idUnidadMedida;
-
-            if (cambioStock)
-            {
-                await _context.Stocks.AddAsync(new Stock
-                {
-                    idProducto = productoDb.idProducto,
-                    cantidad = productoDb.stockActual,
-                    fecha_actualizacion = DateTime.Now
-                });
-            }
-
-            await _context.SaveChangesAsync();
-
-            TempData["Mensaje"] = $"Producto '{productoDb.nombre}' actualizado correctamente.";
+            TempData["Mensaje"] = $"Producto '{producto.nombre.Trim()}' actualizado correctamente.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -208,15 +135,12 @@ namespace AppWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CambiarEstado(int id)
         {
-            var producto = await _context.Productos.FindAsync(id);
+            var producto = await _productoService.CambiarEstadoAsync(id);
             if (producto == null)
             {
                 TempData["Error"] = "Producto no encontrado.";
                 return RedirectToAction(nameof(Index));
             }
-
-            producto.estado = !producto.estado;
-            await _context.SaveChangesAsync();
 
             TempData["Mensaje"] = producto.estado
                 ? $"Producto '{producto.nombre}' activado correctamente."

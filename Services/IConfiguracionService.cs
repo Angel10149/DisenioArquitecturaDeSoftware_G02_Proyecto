@@ -2,9 +2,12 @@
 
 namespace AppWeb.Services
 {
+    public record ResumenSistemaDto(int TotalRoles, int TotalUsuarios, int TotalProductos, int TotalClientes, int TotalProveedores);
+
     public interface IConfiguracionService
     {
-        Task<ConfiguracionEmpresa?> ObtenerActualAsync();
-        Task GuardarAsync(ConfiguracionEmpresa configuracion);
+        Task<ConfiguracionEmpresa> ObtenerOCrearActualAsync();
+        Task GuardarAsync(ConfiguracionEmpresa model);
+        Task<ResumenSistemaDto> ObtenerResumenSistemaAsync();
     }
 }

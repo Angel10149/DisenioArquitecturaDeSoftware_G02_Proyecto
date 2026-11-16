@@ -9,15 +9,18 @@ namespace AppWeb.Services
         private readonly IRepository<Producto> _productoRepo;
         private readonly IRepository<Categoria> _categoriaRepo;
         private readonly IRepository<UnidadMedida> _unidadRepo;
+        private readonly IRepository<Stock> _stockRepo;
 
         public ProductoService(
             IRepository<Producto> productoRepo,
             IRepository<Categoria> categoriaRepo,
-            IRepository<UnidadMedida> unidadRepo)
+            IRepository<UnidadMedida> unidadRepo,
+            IRepository<Stock> stockRepo)
         {
             _productoRepo = productoRepo;
             _categoriaRepo = categoriaRepo;
             _unidadRepo = unidadRepo;
+            _stockRepo = stockRepo;
         }
 
         public async Task<IEnumerable<Producto>> ListarAsync(string? buscar, int? idCategoria)
@@ -69,16 +72,73 @@ namespace AppWeb.Services
                 .ToListAsync();
         }
 
-        public async Task CrearAsync(Producto producto)
+        public async Task<bool> ExisteCodigoBarrasAsync(string codigoBarras, int? excluirId = null)
         {
-            await _productoRepo.AddAsync(producto);
-            await _productoRepo.SaveChangesAsync();
+            string codigo = codigoBarras.Trim();
+            return await _productoRepo.Query()
+                .AnyAsync(p => p.codigoBarras == codigo && (!excluirId.HasValue || p.idProducto != excluirId.Value));
         }
 
-        public async Task ActualizarAsync(Producto producto)
+        public async Task CrearConStockInicialAsync(Producto producto)
         {
+            producto.codigoBarras = producto.codigoBarras.Trim();
+            producto.nombre = producto.nombre.Trim();
+            producto.descripcion = producto.descripcion?.Trim() ?? string.Empty;
+            producto.estado = true;
+
+            await _productoRepo.AddAsync(producto);
+            await _productoRepo.SaveChangesAsync();
+
+            await _stockRepo.AddAsync(new Stock
+            {
+                idProducto = producto.idProducto,
+                cantidad = producto.stockActual,
+                fecha_actualizacion = DateTime.Now
+            });
+            await _stockRepo.SaveChangesAsync();
+        }
+
+        public async Task<bool> ActualizarConStockAsync(int id, Producto producto)
+        {
+            var productoDb = await _productoRepo.GetByIdAsync(id);
+            if (productoDb == null) return false;
+
+            bool cambioStock = productoDb.stockActual != producto.stockActual;
+
+            productoDb.codigoBarras = producto.codigoBarras.Trim();
+            productoDb.nombre = producto.nombre.Trim();
+            productoDb.descripcion = producto.descripcion?.Trim() ?? string.Empty;
+            productoDb.stockActual = producto.stockActual;
+            productoDb.stockMinimo = producto.stockMinimo;
+            productoDb.precioCosto = producto.precioCosto;
+            productoDb.precioVenta = producto.precioVenta;
+            productoDb.idCategoria = producto.idCategoria;
+            productoDb.idUnidadMedida = producto.idUnidadMedida;
+
+            if (cambioStock)
+            {
+                await _stockRepo.AddAsync(new Stock
+                {
+                    idProducto = productoDb.idProducto,
+                    cantidad = productoDb.stockActual,
+                    fecha_actualizacion = DateTime.Now
+                });
+            }
+
+            _productoRepo.Update(productoDb);
+            await _productoRepo.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<Producto?> CambiarEstadoAsync(int id)
+        {
+            var producto = await _productoRepo.GetByIdAsync(id);
+            if (producto == null) return null;
+
+            producto.estado = !producto.estado;
             _productoRepo.Update(producto);
             await _productoRepo.SaveChangesAsync();
+            return producto;
         }
     }
 }
