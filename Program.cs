@@ -1,6 +1,7 @@
 using AppWeb.Data;
 using AppWeb.Models;
 using AppWeb.Repositories;
+using AppWeb.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<IProductoService, ProductoService>();
+builder.Services.AddScoped<ICompraService, CompraService>();
+builder.Services.AddScoped<IVentaService, VentaService>();
+builder.Services.AddScoped<ICajaService, CajaService>();
+builder.Services.AddScoped<IReporteService, ReporteService>();
+builder.Services.AddScoped<IConfiguracionService, ConfiguracionService>();
 
 //SESIONES
 builder.Services.AddDistributedMemoryCache();
