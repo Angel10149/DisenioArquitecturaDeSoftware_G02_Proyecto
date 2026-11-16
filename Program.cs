@@ -1,5 +1,6 @@
 using AppWeb.Data;
 using AppWeb.Models;
+using AppWeb.Repositories;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("CadenaSQL"));
 });
+
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 //SESIONES
 builder.Services.AddDistributedMemoryCache();
