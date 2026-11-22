@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace AppWeb.Controllers
@@ -50,54 +49,54 @@ namespace AppWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Registro(UsuarioVM usuarioVM)
         {
-            var accesoDenegado = await ValidarAccesoRegistroAsync();
-            if (accesoDenegado != null) return accesoDenegado;
-
-            await CargarRolesAsync();
-            if (!ModelState.IsValid)
-            {
-                return View(usuarioVM);
-            }
-
-            var rolesPermitidos = (IEnumerable<Rol>)ViewBag.Roles;
-            if (!rolesPermitidos.Any(r => r.idRol == usuarioVM.IDROL))
-            {
-                ModelState.AddModelError(nameof(usuarioVM.IDROL), "El rol seleccionado no es válido");
-                return View(usuarioVM);
-            }
-
-            string correo = usuarioVM.correo.Trim();
-            if (await _usuarioService.ExisteCorreoAsync(correo))
-            {
-                ModelState.AddModelError(nameof(usuarioVM.correo), "Ya existe un usuario registrado con ese correo");
-                return View(usuarioVM);
-            }
-
-            Usuario usuario = new Usuario()
-            {
-                nombreUsuario = usuarioVM.nombreUsuario.Trim(),
-                telefono = usuarioVM.telefono.Trim(),
-                correo = correo,
-                estado = true,
-                IDROL = usuarioVM.IDROL
-            };
-
             try
             {
+                var accesoDenegado = await ValidarAccesoRegistroAsync();
+                if (accesoDenegado != null) return accesoDenegado;
+
+                await CargarRolesAsync();
+                if (!ModelState.IsValid)
+                {
+                    return View(usuarioVM);
+                }
+
+                var rolesPermitidos = (IEnumerable<Rol>)ViewBag.Roles;
+                if (!rolesPermitidos.Any(r => r.idRol == usuarioVM.IDROL))
+                {
+                    ModelState.AddModelError(nameof(usuarioVM.IDROL), "El rol seleccionado no es válido");
+                    return View(usuarioVM);
+                }
+
+                string correo = usuarioVM.correo.Trim();
+                if (await _usuarioService.ExisteCorreoAsync(correo))
+                {
+                    ModelState.AddModelError(nameof(usuarioVM.correo), "Ya existe un usuario registrado con ese correo");
+                    return View(usuarioVM);
+                }
+
+                Usuario usuario = new Usuario()
+                {
+                    nombreUsuario = usuarioVM.nombreUsuario.Trim(),
+                    telefono = usuarioVM.telefono.Trim(),
+                    correo = correo,
+                    estado = true,
+                    IDROL = usuarioVM.IDROL
+                };
                 await _usuarioService.RegistrarAsync(usuario, usuarioVM.password);
+
+                if (User.Identity?.IsAuthenticated == true && User.IsInRole(RolAdministrador))
+                {
+                    TempData["Mensaje"] = $"Usuario '{usuario.nombreUsuario}' registrado correctamente.";
+                    return RedirectToAction(nameof(Index));
+                }
+                return RedirectToAction("Login", "Usuario");
+
             }
-            catch (DbUpdateException)
+            catch (Exception ex)
             {
-                ViewData["Mensaje"] = "El usuario no pudo ser registrado";
+                ViewData["Mensaje"] = DbExceptionHelper.Traducir(ex);
                 return View(usuarioVM);
             }
-
-            if (User.Identity?.IsAuthenticated == true && User.IsInRole(RolAdministrador))
-            {
-                TempData["Mensaje"] = $"Usuario '{usuario.nombreUsuario}' registrado correctamente.";
-                return RedirectToAction(nameof(Index));
-            }
-            return RedirectToAction("Login", "Usuario");
         }
 
         [HttpGet]
@@ -114,43 +113,51 @@ namespace AppWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginVM loginVM, string? returnUrl = null)
         {
-            if (!ModelState.IsValid)
+            try
             {
+                if (!ModelState.IsValid)
+                {
+                    return View(loginVM);
+                }
+
+                Usuario? usuario = await _usuarioService.ObtenerPorCorreoAsync(loginVM.correo);
+                if (usuario == null || usuario.Rol == null)
+                {
+                    ViewData["Mensaje"] = "No se encontraron usuarios";
+                    return View(loginVM);
+                }
+
+                if (!_usuarioService.VerificarPassword(usuario, loginVM.password, out bool requiereRehash))
+                {
+                    ViewData["Mensaje"] = "No se encontraron usuarios";
+                    return View(loginVM);
+                }
+
+                if (!usuario.estado || !usuario.Rol.estado)
+                {
+                    ViewData["Mensaje"] = "El usuario se encuentra inactivo. Contacte al administrador.";
+                    return View(loginVM);
+                }
+
+                if (requiereRehash)
+                {
+                    usuario.password = _usuarioService.HashearPassword(usuario, loginVM.password);
+                    await _usuarioService.ActualizarAsync(usuario);
+                }
+
+                await RefrescarSesionAsync(usuario);
+
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return LocalRedirect(returnUrl);
+                }
+                return RedirectToAction("Index", "Home");
+            }
+            catch (Exception ex)
+            {
+                ViewData["Mensaje"] = DbExceptionHelper.Traducir(ex);
                 return View(loginVM);
             }
-
-            Usuario? usuario = await _usuarioService.ObtenerPorCorreoAsync(loginVM.correo);
-            if (usuario == null || usuario.Rol == null)
-            {
-                ViewData["Mensaje"] = "No se encontraron usuarios";
-                return View(loginVM);
-            }
-
-            if (!_usuarioService.VerificarPassword(usuario, loginVM.password, out bool requiereRehash))
-            {
-                ViewData["Mensaje"] = "No se encontraron usuarios";
-                return View(loginVM);
-            }
-
-            if (!usuario.estado || !usuario.Rol.estado)
-            {
-                ViewData["Mensaje"] = "El usuario se encuentra inactivo. Contacte al administrador.";
-                return View(loginVM);
-            }
-
-            if (requiereRehash)
-            {
-                usuario.password = _usuarioService.HashearPassword(usuario, loginVM.password);
-                await _usuarioService.ActualizarAsync(usuario);
-            }
-
-            await RefrescarSesionAsync(usuario);
-
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            {
-                return LocalRedirect(returnUrl);
-            }
-            return RedirectToAction("Index", "Home");
         }
 
         [HttpPost]
@@ -181,25 +188,35 @@ namespace AppWeb.Controllers
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> CambiarEstado(int id)
         {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (id.ToString() == currentUserId)
+            try
             {
-                TempData["Error"] = "No puede desactivar su propia cuenta de administrador.";
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (id.ToString() == currentUserId)
+                {
+                    TempData["Error"] = "No puede desactivar su propia cuenta de administrador.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var usuario = await _usuarioService.CambiarEstadoAsync(id);
+                if (usuario == null)
+                {
+                    TempData["Error"] = "Usuario no encontrado.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                TempData["Mensaje"] = usuario.estado
+                    ? $"Usuario '{usuario.nombreUsuario}' activado correctamente."
+                    : $"Usuario '{usuario.nombreUsuario}' desactivado correctamente.";
+
+                return RedirectToAction(nameof(Index));
+
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = DbExceptionHelper.Traducir(ex);
                 return RedirectToAction(nameof(Index));
             }
 
-            var usuario = await _usuarioService.CambiarEstadoAsync(id);
-            if (usuario == null)
-            {
-                TempData["Error"] = "Usuario no encontrado.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            TempData["Mensaje"] = usuario.estado
-                ? $"Usuario '{usuario.nombreUsuario}' activado correctamente."
-                : $"Usuario '{usuario.nombreUsuario}' desactivado correctamente.";
-
-            return RedirectToAction(nameof(Index));
         }
 
         private async Task CargarRolesEdicionAsync(int idRolActual)
@@ -253,62 +270,76 @@ namespace AppWeb.Controllers
             int IDROL,
             string? nuevaPassword)
         {
-            var usuario = await _usuarioService.ObtenerPorIdConRolAsync(id);
-            if (usuario == null)
+            Usuario? usuario = null;
+            try
             {
-                TempData["Error"] = "Usuario no encontrado.";
+                usuario = await _usuarioService.ObtenerPorIdConRolAsync(id);
+                if (usuario == null)
+                {
+                    TempData["Error"] = "Usuario no encontrado.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                await CargarRolesEdicionAsync(usuario.IDROL);
+
+                if (string.IsNullOrWhiteSpace(nombreUsuario) || string.IsNullOrWhiteSpace(correo) || string.IsNullOrWhiteSpace(telefono))
+                {
+                    ViewData["Error"] = "Nombre, correo y teléfono son obligatorios.";
+                    return View(usuario);
+                }
+
+                string correoLimpio = correo.Trim();
+                if (await _usuarioService.ExisteCorreoAsync(correoLimpio, id))
+                {
+                    ViewData["Error"] = "Ya existe otro usuario registrado con ese correo.";
+                    return View(usuario);
+                }
+
+                var rolDestino = await _usuarioService.ObtenerRolPorIdAsync(IDROL);
+                if (rolDestino == null)
+                {
+                    ViewData["Error"] = "El rol seleccionado no es válido.";
+                    return View(usuario);
+                }
+
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (usuario.id.ToString() == currentUserId && rolDestino.nameRol != RolAdministrador)
+                {
+                    ViewData["Error"] = "No puede cambiar su propio rol de Administrador.";
+                    return View(usuario);
+                }
+
+                usuario.nombreUsuario = nombreUsuario.Trim();
+                usuario.correo = correoLimpio;
+                usuario.telefono = telefono.Trim();
+                usuario.IDROL = IDROL;
+                usuario.Rol = rolDestino;
+
+                if (!string.IsNullOrWhiteSpace(nuevaPassword))
+                {
+                    usuario.password = _usuarioService.HashearPassword(usuario, nuevaPassword);
+                }
+
+                await _usuarioService.ActualizarAsync(usuario);
+
+                if (usuario.id.ToString() == currentUserId)
+                {
+                    await RefrescarSesionAsync(usuario);
+                }
+
+                TempData["Mensaje"] = $"Usuario '{usuario.nombreUsuario}' actualizado correctamente.";
                 return RedirectToAction(nameof(Index));
             }
-
-            await CargarRolesEdicionAsync(usuario.IDROL);
-
-            if (string.IsNullOrWhiteSpace(nombreUsuario) || string.IsNullOrWhiteSpace(correo) || string.IsNullOrWhiteSpace(telefono))
+            catch (Exception ex)
             {
-                ViewData["Error"] = "Nombre, correo y teléfono son obligatorios.";
-                return View(usuario);
+                if (usuario != null)
+                {
+                    ViewData["Error"] = DbExceptionHelper.Traducir(ex);
+                    return View(usuario);
+                }
+                TempData["Error"] = DbExceptionHelper.Traducir(ex);
+                return RedirectToAction(nameof(Index));
             }
-
-            string correoLimpio = correo.Trim();
-            if (await _usuarioService.ExisteCorreoAsync(correoLimpio, id))
-            {
-                ViewData["Error"] = "Ya existe otro usuario registrado con ese correo.";
-                return View(usuario);
-            }
-
-            var rolDestino = await _usuarioService.ObtenerRolPorIdAsync(IDROL);
-            if (rolDestino == null)
-            {
-                ViewData["Error"] = "El rol seleccionado no es válido.";
-                return View(usuario);
-            }
-
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (usuario.id.ToString() == currentUserId && rolDestino.nameRol != RolAdministrador)
-            {
-                ViewData["Error"] = "No puede cambiar su propio rol de Administrador.";
-                return View(usuario);
-            }
-
-            usuario.nombreUsuario = nombreUsuario.Trim();
-            usuario.correo = correoLimpio;
-            usuario.telefono = telefono.Trim();
-            usuario.IDROL = IDROL;
-            usuario.Rol = rolDestino;
-
-            if (!string.IsNullOrWhiteSpace(nuevaPassword))
-            {
-                usuario.password = _usuarioService.HashearPassword(usuario, nuevaPassword);
-            }
-
-            await _usuarioService.ActualizarAsync(usuario);
-
-            if (usuario.id.ToString() == currentUserId)
-            {
-                await RefrescarSesionAsync(usuario);
-            }
-
-            TempData["Mensaje"] = $"Usuario '{usuario.nombreUsuario}' actualizado correctamente.";
-            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
@@ -339,58 +370,71 @@ namespace AppWeb.Controllers
             string? nuevaPassword,
             string? confirmarPassword)
         {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(currentUserId, out int idUsuario))
+            Usuario? usuario = null;
+            try
             {
-                return RedirectToAction(nameof(Login));
-            }
-
-            var usuario = await _usuarioService.ObtenerPorIdConRolAsync(idUsuario);
-            if (usuario == null)
-            {
-                return RedirectToAction(nameof(Login));
-            }
-
-            if (string.IsNullOrWhiteSpace(nombreUsuario))
-            {
-                ViewData["Error"] = "El nombre de usuario es obligatorio.";
-                return View(usuario);
-            }
-
-            bool quiereCambiarPassword =
-                !string.IsNullOrWhiteSpace(passwordActual) ||
-                !string.IsNullOrWhiteSpace(nuevaPassword) ||
-                !string.IsNullOrWhiteSpace(confirmarPassword);
-
-            if (quiereCambiarPassword)
-            {
-                if (string.IsNullOrWhiteSpace(passwordActual) || string.IsNullOrWhiteSpace(nuevaPassword))
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(currentUserId, out int idUsuario))
                 {
-                    ViewData["Error"] = "Debe ingresar su contraseña actual y la nueva contraseña.";
+                    return RedirectToAction(nameof(Login));
+                }
+
+                usuario = await _usuarioService.ObtenerPorIdConRolAsync(idUsuario);
+                if (usuario == null)
+                {
+                    return RedirectToAction(nameof(Login));
+                }
+
+                if (string.IsNullOrWhiteSpace(nombreUsuario))
+                {
+                    ViewData["Error"] = "El nombre de usuario es obligatorio.";
                     return View(usuario);
                 }
 
-                if (nuevaPassword != confirmarPassword)
+                bool quiereCambiarPassword =
+                    !string.IsNullOrWhiteSpace(passwordActual) ||
+                    !string.IsNullOrWhiteSpace(nuevaPassword) ||
+                    !string.IsNullOrWhiteSpace(confirmarPassword);
+
+                if (quiereCambiarPassword)
                 {
-                    ViewData["Error"] = "La nueva contraseña y su confirmación no coinciden.";
-                    return View(usuario);
+                    if (string.IsNullOrWhiteSpace(passwordActual) || string.IsNullOrWhiteSpace(nuevaPassword))
+                    {
+                        ViewData["Error"] = "Debe ingresar su contraseña actual y la nueva contraseña.";
+                        return View(usuario);
+                    }
+
+                    if (nuevaPassword != confirmarPassword)
+                    {
+                        ViewData["Error"] = "La nueva contraseña y su confirmación no coinciden.";
+                        return View(usuario);
+                    }
+
+                    if (!_usuarioService.VerificarPassword(usuario, passwordActual, out _))
+                    {
+                        ViewData["Error"] = "La contraseña actual es incorrecta.";
+                        return View(usuario);
+                    }
+
+                    usuario.password = _usuarioService.HashearPassword(usuario, nuevaPassword);
                 }
 
-                if (!_usuarioService.VerificarPassword(usuario, passwordActual, out _))
-                {
-                    ViewData["Error"] = "La contraseña actual es incorrecta.";
-                    return View(usuario);
-                }
+                usuario.nombreUsuario = nombreUsuario.Trim();
+                await _usuarioService.ActualizarAsync(usuario);
+                await RefrescarSesionAsync(usuario);
 
-                usuario.password = _usuarioService.HashearPassword(usuario, nuevaPassword);
+                TempData["Mensaje"] = "Perfil actualizado correctamente.";
+                return RedirectToAction(nameof(Perfil));
             }
-
-            usuario.nombreUsuario = nombreUsuario.Trim();
-            await _usuarioService.ActualizarAsync(usuario);
-            await RefrescarSesionAsync(usuario);
-
-            TempData["Mensaje"] = "Perfil actualizado correctamente.";
-            return RedirectToAction(nameof(Perfil));
+            catch (Exception ex)
+            {
+                if (usuario != null)
+                {
+                    ViewData["Error"] = DbExceptionHelper.Traducir(ex);
+                    return View(usuario);
+                }
+                return RedirectToAction(nameof(Perfil));
+            }
         }
     }
 }
