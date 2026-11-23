@@ -47,9 +47,17 @@ namespace AppWeb.Controllers
             {
                 await CargarCatalogosAsync();
 
-                if (margenGanancia.HasValue && margenGanancia.Value >= 0 && margenGanancia.Value < 100)
+                if (margenGanancia.HasValue)
                 {
-                    producto.precioVenta = Math.Round(producto.precioCosto / (1m - (margenGanancia.Value / 100m)), 2);
+                    if (margenGanancia.Value < 0 || margenGanancia.Value >= 100)
+                    {
+                        ModelState.AddModelError(string.Empty, "El margen de ganancia debe ser mayor o igual a 0% y menor a 100%.");
+                        return View(producto);
+                    }
+                    else
+                    {
+                        producto.precioVenta = Math.Round(producto.precioCosto / (1m - (margenGanancia.Value / 100m)), 2);
+                    }
                 }
 
                 if (!ModelState.IsValid)
@@ -108,9 +116,17 @@ namespace AppWeb.Controllers
 
                 await CargarCatalogosAsync();
 
-                if (margenGanancia.HasValue && margenGanancia.Value >= 0 && margenGanancia.Value < 100)
+                if (margenGanancia.HasValue)
                 {
-                    producto.precioVenta = Math.Round(producto.precioCosto / (1m - (margenGanancia.Value / 100m)), 2);
+                    if (margenGanancia.Value < 0 || margenGanancia.Value >= 100)
+                    {
+                        ModelState.AddModelError(string.Empty, "El margen de ganancia debe ser mayor o igual a 0% y menor a 100%.");
+                        return View(producto);
+                    }
+                    else
+                    {
+                        producto.precioVenta = Math.Round(producto.precioCosto / (1m - (margenGanancia.Value / 100m)), 2);
+                    }
                 }
 
                 if (!ModelState.IsValid)
@@ -171,7 +187,7 @@ namespace AppWeb.Controllers
                 TempData["Error"] = DbExceptionHelper.Traducir(ex);
                 return RedirectToAction(nameof(Index));
             }
-            
+
         }
     }
 }

@@ -81,21 +81,36 @@ namespace AppWeb.Controllers
                     {
                         int idProd = idProductos[i];
                         int cant = cantidades[i];
-                        decimal precio = Math.Max(0, preciosUnitarios[i]);
-                        decimal desc = (descuentos != null && i < descuentos.Count) ? Math.Max(0, descuentos[i]) : 0;
+                        decimal precio = preciosUnitarios[i];
+                        decimal desc = (descuentos != null && i < descuentos.Count) ? descuentos[i] : 0m;
+                        if (idProd <= 0) continue;
 
-                        if (idProd > 0 && cant > 0)
+                        if (cant <= 0)
                         {
-                            decimal subtotal = Math.Max(0, (cant * precio) - desc);
-                            detalles.Add(new DetalleVenta
-                            {
-                                idproducto = idProd,
-                                cantidad = cant,
-                                precioUnitario = precio,
-                                descuento = desc,
-                                subtotal = subtotal
-                            });
+                            ViewData["Error"] = $"La cantidad para el producto seleccionado debe ser mayor a 0.";
+                            return View();
                         }
+                        if (precio < 0 || desc < 0)
+                        {
+                            ViewData["Error"] = $"El precio unitario y el descuento no pueden ser negativos.";
+                            return View();
+                        }
+
+                        decimal bruto = cant * precio;
+
+                        if (desc > bruto)
+                        {
+                            ViewData["Error"] = $"El descuento no puede ser mayor al subtotal del producto ";
+                            return View();
+                        }
+                        detalles.Add(new DetalleVenta
+                        {
+                            idproducto = idProd,
+                            cantidad = cant,
+                            precioUnitario = precio,
+                            descuento = desc,
+                            subtotal = bruto - desc
+                        });
                     }
                 }
 

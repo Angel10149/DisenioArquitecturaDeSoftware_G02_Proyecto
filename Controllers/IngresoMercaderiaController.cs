@@ -90,11 +90,19 @@ namespace AppWeb.Controllers
                     for (int i = 0; i < count; i++)
                     {
                         int idProd = idProductos[i];
-                        int rec = Math.Max(0, cantidadesRecibidas[i]);
-                        int rech = Math.Max(0, cantidadesRechazadas[i]);
-                        decimal costo = Math.Max(0, costosUnitarios[i]);
+                        int rec = cantidadesRecibidas[i];
+                        int rech = cantidadesRechazadas[i];
+                        decimal costo = costosUnitarios[i];
 
-                        if (idProd > 0 && (rec > 0 || rech > 0))
+                        if (idProd <= 0) continue;
+
+                        if (rec < 0 || rech < 0 || costo < 0)
+                        {
+                            ViewData["Error"] = "Las cantidades recibidas, rechazadas y el costo unitario no pueden ser negativos.";
+                            return View();
+                        }
+
+                        if (rec > 0 || rech > 0)
                         {
                             detalles.Add(new DetalleIngreso
                             {
