@@ -33,26 +33,34 @@ namespace AppWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Crear(UnidadMedida unidad)
         {
-            if (!ModelState.IsValid)
+            try
             {
+                if (!ModelState.IsValid)
+                {
+                    return View(unidad);
+                }
+
+                if (await _productoService.ExisteNombreUnidadAsync(unidad.nombre))
+                {
+                    ModelState.AddModelError(nameof(unidad.nombre), "Ya existe una unidad de medida con ese nombre.");
+                    return View(unidad);
+                }
+                if (await _productoService.ExisteAbreviaturaUnidadAsync(unidad.abreviatura))
+                {
+                    ModelState.AddModelError(nameof(unidad.abreviatura), "Ya existe una unidad de medida con esa abreviatura.");
+                    return View(unidad);
+                }
+
+                await _productoService.CrearUnidadAsync(unidad);
+
+                TempData["Mensaje"] = $"Unidad de medida '{unidad.nombre}' ({unidad.abreviatura}) registrada correctamente.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, DbExceptionHelper.Traducir(ex));
                 return View(unidad);
             }
-
-            if (await _productoService.ExisteNombreUnidadAsync(unidad.nombre))
-            {
-                ModelState.AddModelError(nameof(unidad.nombre), "Ya existe una unidad de medida con ese nombre.");
-                return View(unidad);
-            }
-            if (await _productoService.ExisteAbreviaturaUnidadAsync(unidad.abreviatura))
-            {
-                ModelState.AddModelError(nameof(unidad.abreviatura), "Ya existe una unidad de medida con esa abreviatura.");
-                return View(unidad);
-            }
-
-            await _productoService.CrearUnidadAsync(unidad);
-
-            TempData["Mensaje"] = $"Unidad de medida '{unidad.nombre}' ({unidad.abreviatura}) registrada correctamente.";
-            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
@@ -72,54 +80,70 @@ namespace AppWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Editar(int id, UnidadMedida unidad)
         {
-            if (id != unidad.idUnidadMedida)
+            try
             {
-                return BadRequest();
-            }
+                if (id != unidad.idUnidadMedida)
+                {
+                    return BadRequest();
+                }
 
-            if (!ModelState.IsValid)
-            {
-                return View(unidad);
-            }
+                if (!ModelState.IsValid)
+                {
+                    return View(unidad);
+                }
 
-            if (await _productoService.ExisteNombreUnidadAsync(unidad.nombre, id))
-            {
-                ModelState.AddModelError(nameof(unidad.nombre), "Otra unidad de medida ya tiene ese nombre.");
-                return View(unidad);
-            }
-            if (await _productoService.ExisteAbreviaturaUnidadAsync(unidad.abreviatura, id))
-            {
-                ModelState.AddModelError(nameof(unidad.abreviatura), "Otra unidad de medida ya tiene esa abreviatura.");
-                return View(unidad);
-            }
+                if (await _productoService.ExisteNombreUnidadAsync(unidad.nombre, id))
+                {
+                    ModelState.AddModelError(nameof(unidad.nombre), "Otra unidad de medida ya tiene ese nombre.");
+                    return View(unidad);
+                }
+                if (await _productoService.ExisteAbreviaturaUnidadAsync(unidad.abreviatura, id))
+                {
+                    ModelState.AddModelError(nameof(unidad.abreviatura), "Otra unidad de medida ya tiene esa abreviatura.");
+                    return View(unidad);
+                }
 
-            bool actualizado = await _productoService.ActualizarUnidadAsync(id, unidad);
-            if (!actualizado)
-            {
-                TempData["Error"] = "Unidad de medida no encontrada.";
+                bool actualizado = await _productoService.ActualizarUnidadAsync(id, unidad);
+                if (!actualizado)
+                {
+                    TempData["Error"] = "Unidad de medida no encontrada.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                TempData["Mensaje"] = $"Unidad de medida '{unidad.nombre.Trim()}' actualizada correctamente.";
                 return RedirectToAction(nameof(Index));
             }
-
-            TempData["Mensaje"] = $"Unidad de medida '{unidad.nombre.Trim()}' actualizada correctamente.";
-            return RedirectToAction(nameof(Index));
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, DbExceptionHelper.Traducir(ex));
+                return View(unidad);
+            }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CambiarEstado(int id)
         {
-            var unidad = await _productoService.CambiarEstadoUnidadAsync(id);
-            if (unidad == null)
+            try
             {
-                TempData["Error"] = "Unidad de medida no encontrada.";
+                var unidad = await _productoService.CambiarEstadoUnidadAsync(id);
+                if (unidad == null)
+                {
+                    TempData["Error"] = "Unidad de medida no encontrada.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                TempData["Mensaje"] = unidad.estado
+                    ? $"Unidad de medida '{unidad.nombre}' activada correctamente."
+                    : $"Unidad de medida '{unidad.nombre}' desactivada correctamente.";
+
                 return RedirectToAction(nameof(Index));
             }
-
-            TempData["Mensaje"] = unidad.estado
-                ? $"Unidad de medida '{unidad.nombre}' activada correctamente."
-                : $"Unidad de medida '{unidad.nombre}' desactivada correctamente.";
-
-            return RedirectToAction(nameof(Index));
+            catch (Exception ex)
+            {
+                TempData["Error"] = DbExceptionHelper.Traducir(ex);
+                return RedirectToAction(nameof(Index));
+            }
         }
     }
 }

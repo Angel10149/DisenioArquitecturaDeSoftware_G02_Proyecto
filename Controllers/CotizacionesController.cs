@@ -49,67 +49,75 @@ namespace AppWeb.Controllers
             List<decimal> preciosUnitarios,
             List<decimal> descuentos)
         {
-            await CargarDatosCrearAsync();
-
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdClaim, out int idUsuario))
+            try
             {
-                return RedirectToAction("Login", "Usuario");
-            }
+                await CargarDatosCrearAsync();
 
-            if (idCliente <= 0)
-            {
-                ViewData["Error"] = "Debe seleccionar un cliente válido.";
-                return View();
-            }
-
-            var detalles = new List<DetalleCotizacion>();
-            if (idProductos != null && cantidades != null && preciosUnitarios != null)
-            {
-                int count = Math.Min(idProductos.Count, Math.Min(cantidades.Count, preciosUnitarios.Count));
-                for (int i = 0; i < count; i++)
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(userIdClaim, out int idUsuario))
                 {
-                    int idProd = idProductos[i];
-                    int cant = cantidades[i];
-                    decimal precio = Math.Max(0, preciosUnitarios[i]);
-                    decimal desc = (descuentos != null && i < descuentos.Count) ? Math.Max(0, descuentos[i]) : 0;
+                    return RedirectToAction("Login", "Usuario");
+                }
 
-                    if (idProd > 0 && cant > 0)
+                if (idCliente <= 0)
+                {
+                    ViewData["Error"] = "Debe seleccionar un cliente válido.";
+                    return View();
+                }
+
+                var detalles = new List<DetalleCotizacion>();
+                if (idProductos != null && cantidades != null && preciosUnitarios != null)
+                {
+                    int count = Math.Min(idProductos.Count, Math.Min(cantidades.Count, preciosUnitarios.Count));
+                    for (int i = 0; i < count; i++)
                     {
-                        decimal subtotal = Math.Max(0, (cant * precio) - desc);
-                        detalles.Add(new DetalleCotizacion
+                        int idProd = idProductos[i];
+                        int cant = cantidades[i];
+                        decimal precio = Math.Max(0, preciosUnitarios[i]);
+                        decimal desc = (descuentos != null && i < descuentos.Count) ? Math.Max(0, descuentos[i]) : 0;
+
+                        if (idProd > 0 && cant > 0)
                         {
-                            idProducto = idProd,
-                            cantidad = cant,
-                            precioUnitario = precio,
-                            descuento = desc,
-                            subtotal = subtotal
-                        });
+                            decimal subtotal = Math.Max(0, (cant * precio) - desc);
+                            detalles.Add(new DetalleCotizacion
+                            {
+                                idProducto = idProd,
+                                cantidad = cant,
+                                precioUnitario = precio,
+                                descuento = desc,
+                                subtotal = subtotal
+                            });
+                        }
                     }
                 }
-            }
 
-            if (!detalles.Any())
+                if (!detalles.Any())
+                {
+                    ViewData["Error"] = "Debe agregar al menos un producto con cantidad mayor a 0.";
+                    return View();
+                }
+
+                var cotizacion = new Cotizacion
+                {
+                    fechaEmision = DateTime.Now,
+                    estado = "Pendiente",
+                    observaciones = observaciones?.Trim() ?? string.Empty,
+                    total = detalles.Sum(d => d.subtotal),
+                    idCliente = idCliente,
+                    idUsuario = idUsuario,
+                    DetalleCotizacions = detalles
+                };
+
+                await _ventaService.CrearCotizacionAsync(cotizacion);
+
+                TempData["Mensaje"] = $"Cotización #{cotizacion.idCotizacion} registrada correctamente.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
             {
-                ViewData["Error"] = "Debe agregar al menos un producto con cantidad mayor a 0.";
+                ViewData["Error"] = DbExceptionHelper.Traducir(ex);
                 return View();
             }
-
-            var cotizacion = new Cotizacion
-            {
-                fechaEmision = DateTime.Now,
-                estado = "Pendiente",
-                observaciones = observaciones?.Trim() ?? string.Empty,
-                total = detalles.Sum(d => d.subtotal),
-                idCliente = idCliente,
-                idUsuario = idUsuario,
-                DetalleCotizacions = detalles
-            };
-
-            await _ventaService.CrearCotizacionAsync(cotizacion);
-
-            TempData["Mensaje"] = $"Cotización #{cotizacion.idCotizacion} registrada correctamente.";
-            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
@@ -129,17 +137,25 @@ namespace AppWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CambiarEstado(int id, string nuevoEstado)
         {
-            var resultado = await _ventaService.CambiarEstadoCotizacionAsync(id, nuevoEstado);
-            if (!resultado.Ok)
+            try
             {
-                TempData["Error"] = resultado.Error;
-            }
-            else
-            {
-                TempData["Mensaje"] = $"Cotización #{resultado.IdVenta} actualizada a '{nuevoEstado}'.";
-            }
+                var resultado = await _ventaService.CambiarEstadoCotizacionAsync(id, nuevoEstado);
+                if (!resultado.Ok)
+                {
+                    TempData["Error"] = resultado.Error;
+                }
+                else
+                {
+                    TempData["Mensaje"] = $"Cotización #{resultado.IdVenta} actualizada a '{nuevoEstado}'.";
+                }
 
-            return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = DbExceptionHelper.Traducir(ex);
+                return RedirectToAction(nameof(Index));
+            }
         }
     }
 }

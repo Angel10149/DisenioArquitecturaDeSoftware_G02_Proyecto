@@ -27,15 +27,24 @@ namespace AppWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(ConfiguracionEmpresa model)
         {
-            if (!ModelState.IsValid)
+            try
             {
+                if (!ModelState.IsValid)
+                {
+                    await CargarResumenSistemaAsync();
+                    return View(model);
+                }
+
+                await _configuracionService.GuardarAsync(model);
+                TempData["MensajeExito"] = "Configuración de la empresa guardada correctamente.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, DbExceptionHelper.Traducir(ex));
                 await CargarResumenSistemaAsync();
                 return View(model);
             }
-
-            await _configuracionService.GuardarAsync(model);
-            TempData["MensajeExito"] = "Configuración de la empresa guardada correctamente.";
-            return RedirectToAction(nameof(Index));
         }
 
         private async Task CargarResumenSistemaAsync()

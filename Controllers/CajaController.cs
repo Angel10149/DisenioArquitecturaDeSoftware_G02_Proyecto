@@ -51,23 +51,31 @@ namespace AppWeb.Controllers
             decimal montoRecibido,
             string tipoComprobante)
         {
-            await CargarVentasPendientesAsync(idVenta);
-
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdClaim, out int idUsuario))
+            try
             {
-                return RedirectToAction("Login", "Usuario");
+                await CargarVentasPendientesAsync(idVenta);
+
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(userIdClaim, out int idUsuario))
+                {
+                    return RedirectToAction("Login", "Usuario");
+                }
+
+                var resultado = await _cajaService.RegistrarCobroAsync(idVenta, idUsuario, metodoPago, montoRecibido, tipoComprobante);
+                if (!resultado.Ok)
+                {
+                    ViewData["Error"] = resultado.Error;
+                    return View();
+                }
+
+                TempData["Mensaje"] = $"Pago #{resultado.IdPago} registrado. Comprobante {resultado.SerieNumero} emitido.";
+                return RedirectToAction(nameof(Comprobante), new { id = resultado.IdPago });
             }
-
-            var resultado = await _cajaService.RegistrarCobroAsync(idVenta, idUsuario, metodoPago, montoRecibido, tipoComprobante);
-            if (!resultado.Ok)
+            catch (Exception ex)
             {
-                ViewData["Error"] = resultado.Error;
+                ViewData["Error"] = DbExceptionHelper.Traducir(ex);
                 return View();
             }
-
-            TempData["Mensaje"] = $"Pago #{resultado.IdPago} registrado. Comprobante {resultado.SerieNumero} emitido.";
-            return RedirectToAction(nameof(Comprobante), new { id = resultado.IdPago });
         }
 
         [HttpGet]

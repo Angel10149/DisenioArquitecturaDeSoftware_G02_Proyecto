@@ -56,55 +56,63 @@ namespace AppWeb.Controllers
             List<int> cantidades,
             List<decimal> preciosUnitarios)
         {
-            await CargarListasAsync();
-
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdStr, out int idUsuario))
+            try
             {
-                return RedirectToAction("Login", "Usuario");
-            }
+                await CargarListasAsync();
 
-            if (idProveedor <= 0)
-            {
-                ViewData["Error"] = "Debe seleccionar un proveedor válido.";
-                return View();
-            }
-
-            if (idRequerimiento <= 0)
-            {
-                ViewData["Error"] = "Debe seleccionar un requerimiento aprobado.";
-                return View();
-            }
-
-            var detalles = new List<DetalleOrdenCompra>();
-            if (idProductos != null && cantidades != null && preciosUnitarios != null)
-            {
-                int count = Math.Min(idProductos.Count, Math.Min(cantidades.Count, preciosUnitarios.Count));
-                for (int i = 0; i < count; i++)
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(userIdStr, out int idUsuario))
                 {
-                    if (idProductos[i] > 0 && cantidades[i] > 0 && preciosUnitarios[i] >= 0)
+                    return RedirectToAction("Login", "Usuario");
+                }
+
+                if (idProveedor <= 0)
+                {
+                    ViewData["Error"] = "Debe seleccionar un proveedor válido.";
+                    return View();
+                }
+
+                if (idRequerimiento <= 0)
+                {
+                    ViewData["Error"] = "Debe seleccionar un requerimiento aprobado.";
+                    return View();
+                }
+
+                var detalles = new List<DetalleOrdenCompra>();
+                if (idProductos != null && cantidades != null && preciosUnitarios != null)
+                {
+                    int count = Math.Min(idProductos.Count, Math.Min(cantidades.Count, preciosUnitarios.Count));
+                    for (int i = 0; i < count; i++)
                     {
-                        decimal subtotal = cantidades[i] * preciosUnitarios[i];
-                        detalles.Add(new DetalleOrdenCompra
+                        if (idProductos[i] > 0 && cantidades[i] > 0 && preciosUnitarios[i] >= 0)
                         {
-                            idProducto = idProductos[i],
-                            cantidad = cantidades[i],
-                            precioUnitario = preciosUnitarios[i],
-                            subtotal = subtotal
-                        });
+                            decimal subtotal = cantidades[i] * preciosUnitarios[i];
+                            detalles.Add(new DetalleOrdenCompra
+                            {
+                                idProducto = idProductos[i],
+                                cantidad = cantidades[i],
+                                precioUnitario = preciosUnitarios[i],
+                                subtotal = subtotal
+                            });
+                        }
                     }
                 }
-            }
 
-            if (!detalles.Any())
+                if (!detalles.Any())
+                {
+                    ViewData["Error"] = "Debe agregar al menos un producto con cantidad mayor a 0.";
+                    return View();
+                }
+
+                var resultado = await _compraService.CrearOrdenCompraAsync(idProveedor, idRequerimiento, idUsuario, detalles);
+                TempData["Mensaje"] = $"Orden de Compra #{resultado.Orden!.idOrdenCompra} generada correctamente por S/ {resultado.Orden.total:N2}.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
             {
-                ViewData["Error"] = "Debe agregar al menos un producto con cantidad mayor a 0.";
+                ViewData["Error"] = DbExceptionHelper.Traducir(ex);
                 return View();
             }
-
-            var resultado = await _compraService.CrearOrdenCompraAsync(idProveedor, idRequerimiento, idUsuario, detalles);
-            TempData["Mensaje"] = $"Orden de Compra #{resultado.Orden!.idOrdenCompra} generada correctamente por S/ {resultado.Orden.total:N2}.";
-            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
@@ -124,17 +132,25 @@ namespace AppWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CambiarEstado(int id, string nuevoEstado)
         {
-            var resultado = await _compraService.CambiarEstadoOrdenCompraAsync(id, nuevoEstado);
-            if (!resultado.Ok)
+            try
             {
-                TempData["Error"] = resultado.Error;
-            }
-            else
-            {
-                TempData["Mensaje"] = $"Orden de Compra #{id} actualizada a '{nuevoEstado}'.";
-            }
+                var resultado = await _compraService.CambiarEstadoOrdenCompraAsync(id, nuevoEstado);
+                if (!resultado.Ok)
+                {
+                    TempData["Error"] = resultado.Error;
+                }
+                else
+                {
+                    TempData["Mensaje"] = $"Orden de Compra #{id} actualizada a '{nuevoEstado}'.";
+                }
 
-            return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = DbExceptionHelper.Traducir(ex);
+                return RedirectToAction(nameof(Index));
+            }
         }
     }
 }

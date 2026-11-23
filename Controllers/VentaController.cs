@@ -57,61 +57,69 @@ namespace AppWeb.Controllers
             List<decimal> preciosUnitarios,
             List<decimal> descuentos)
         {
-            await CargarDatosCrearAsync(idCotizacion);
-
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdClaim, out int idUsuario))
+            try
             {
-                return RedirectToAction("Login", "Usuario");
-            }
+                await CargarDatosCrearAsync(idCotizacion);
 
-            if (idCliente <= 0)
-            {
-                ViewData["Error"] = "Debe seleccionar un cliente válido.";
-                return View();
-            }
-
-            var detalles = new List<DetalleVenta>();
-            if (idProductos != null && cantidades != null && preciosUnitarios != null)
-            {
-                int count = Math.Min(idProductos.Count, Math.Min(cantidades.Count, preciosUnitarios.Count));
-                for (int i = 0; i < count; i++)
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(userIdClaim, out int idUsuario))
                 {
-                    int idProd = idProductos[i];
-                    int cant = cantidades[i];
-                    decimal precio = Math.Max(0, preciosUnitarios[i]);
-                    decimal desc = (descuentos != null && i < descuentos.Count) ? Math.Max(0, descuentos[i]) : 0;
+                    return RedirectToAction("Login", "Usuario");
+                }
 
-                    if (idProd > 0 && cant > 0)
+                if (idCliente <= 0)
+                {
+                    ViewData["Error"] = "Debe seleccionar un cliente válido.";
+                    return View();
+                }
+
+                var detalles = new List<DetalleVenta>();
+                if (idProductos != null && cantidades != null && preciosUnitarios != null)
+                {
+                    int count = Math.Min(idProductos.Count, Math.Min(cantidades.Count, preciosUnitarios.Count));
+                    for (int i = 0; i < count; i++)
                     {
-                        decimal subtotal = Math.Max(0, (cant * precio) - desc);
-                        detalles.Add(new DetalleVenta
+                        int idProd = idProductos[i];
+                        int cant = cantidades[i];
+                        decimal precio = Math.Max(0, preciosUnitarios[i]);
+                        decimal desc = (descuentos != null && i < descuentos.Count) ? Math.Max(0, descuentos[i]) : 0;
+
+                        if (idProd > 0 && cant > 0)
                         {
-                            idproducto = idProd,
-                            cantidad = cant,
-                            precioUnitario = precio,
-                            descuento = desc,
-                            subtotal = subtotal
-                        });
+                            decimal subtotal = Math.Max(0, (cant * precio) - desc);
+                            detalles.Add(new DetalleVenta
+                            {
+                                idproducto = idProd,
+                                cantidad = cant,
+                                precioUnitario = precio,
+                                descuento = desc,
+                                subtotal = subtotal
+                            });
+                        }
                     }
                 }
-            }
 
-            if (!detalles.Any())
+                if (!detalles.Any())
+                {
+                    ViewData["Error"] = "Debe agregar al menos un producto con cantidad mayor a 0.";
+                    return View();
+                }
+
+                var resultado = await _ventaService.CrearVentaAsync(idCliente, idUsuario, idCotizacion, aplicarIgv, detalles);
+                if (!resultado.Ok)
+                {
+                    ViewData["Error"] = resultado.Error;
+                    return View();
+                }
+
+                TempData["Mensaje"] = $"Venta #{resultado.IdVenta} registrada correctamente. Stock actualizado.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
             {
-                ViewData["Error"] = "Debe agregar al menos un producto con cantidad mayor a 0.";
+                ViewData["Error"] = DbExceptionHelper.Traducir(ex);
                 return View();
             }
-
-            var resultado = await _ventaService.CrearVentaAsync(idCliente, idUsuario, idCotizacion, aplicarIgv, detalles);
-            if (!resultado.Ok)
-            {
-                ViewData["Error"] = resultado.Error;
-                return View();
-            }
-
-            TempData["Mensaje"] = $"Venta #{resultado.IdVenta} registrada correctamente. Stock actualizado.";
-            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
@@ -131,17 +139,25 @@ namespace AppWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Anular(int id)
         {
-            var resultado = await _ventaService.AnularVentaAsync(id);
-            if (!resultado.Ok)
+            try
             {
-                TempData["Error"] = resultado.Error;
-            }
-            else
-            {
-                TempData["Mensaje"] = $"Venta #{resultado.IdVenta} anulada y stock restaurado.";
-            }
+                var resultado = await _ventaService.AnularVentaAsync(id);
+                if (!resultado.Ok)
+                {
+                    TempData["Error"] = resultado.Error;
+                }
+                else
+                {
+                    TempData["Mensaje"] = $"Venta #{resultado.IdVenta} anulada y stock restaurado.";
+                }
 
-            return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = DbExceptionHelper.Traducir(ex);
+                return RedirectToAction(nameof(Index));
+            }
         }
     }
 }

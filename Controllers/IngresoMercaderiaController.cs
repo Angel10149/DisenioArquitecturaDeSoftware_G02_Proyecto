@@ -54,73 +54,81 @@ namespace AppWeb.Controllers
             List<int> cantidadesRechazadas,
             List<decimal> costosUnitarios)
         {
-            await CargarOrdenesAsync();
-
-            if (idOrdenCompra <= 0)
+            try
             {
-                ViewData["Error"] = "Debe seleccionar una orden de compra válida.";
-                return View();
-            }
+                await CargarOrdenesAsync();
 
-            var orden = await _compraService.ObtenerOrdenParaIngresoAsync(idOrdenCompra);
-            if (orden == null)
-            {
-                ViewData["Error"] = "La orden de compra seleccionada no existe.";
-                return View();
-            }
-
-            if (orden.estado == "Recibida" || orden.estado == "Anulada")
-            {
-                ViewData["Error"] = $"La orden #{orden.idOrdenCompra} ya se encuentra en estado '{orden.estado}'.";
-                return View();
-            }
-
-            ViewBag.IdOrdenSeleccionada = idOrdenCompra;
-            ViewBag.OrdenSeleccionada = orden;
-
-            var detalles = new List<DetalleIngreso>();
-            if (idProductos != null && cantidadesRecibidas != null && cantidadesRechazadas != null && costosUnitarios != null)
-            {
-                int count = Math.Min(idProductos.Count,
-                    Math.Min(cantidadesRecibidas.Count,
-                    Math.Min(cantidadesRechazadas.Count, costosUnitarios.Count)));
-
-                for (int i = 0; i < count; i++)
+                if (idOrdenCompra <= 0)
                 {
-                    int idProd = idProductos[i];
-                    int rec = Math.Max(0, cantidadesRecibidas[i]);
-                    int rech = Math.Max(0, cantidadesRechazadas[i]);
-                    decimal costo = Math.Max(0, costosUnitarios[i]);
+                    ViewData["Error"] = "Debe seleccionar una orden de compra válida.";
+                    return View();
+                }
 
-                    if (idProd > 0 && (rec > 0 || rech > 0))
+                var orden = await _compraService.ObtenerOrdenParaIngresoAsync(idOrdenCompra);
+                if (orden == null)
+                {
+                    ViewData["Error"] = "La orden de compra seleccionada no existe.";
+                    return View();
+                }
+
+                if (orden.estado == "Recibida" || orden.estado == "Anulada")
+                {
+                    ViewData["Error"] = $"La orden #{orden.idOrdenCompra} ya se encuentra en estado '{orden.estado}'.";
+                    return View();
+                }
+
+                ViewBag.IdOrdenSeleccionada = idOrdenCompra;
+                ViewBag.OrdenSeleccionada = orden;
+
+                var detalles = new List<DetalleIngreso>();
+                if (idProductos != null && cantidadesRecibidas != null && cantidadesRechazadas != null && costosUnitarios != null)
+                {
+                    int count = Math.Min(idProductos.Count,
+                        Math.Min(cantidadesRecibidas.Count,
+                        Math.Min(cantidadesRechazadas.Count, costosUnitarios.Count)));
+
+                    for (int i = 0; i < count; i++)
                     {
-                        detalles.Add(new DetalleIngreso
+                        int idProd = idProductos[i];
+                        int rec = Math.Max(0, cantidadesRecibidas[i]);
+                        int rech = Math.Max(0, cantidadesRechazadas[i]);
+                        decimal costo = Math.Max(0, costosUnitarios[i]);
+
+                        if (idProd > 0 && (rec > 0 || rech > 0))
                         {
-                            idProducto = idProd,
-                            cantidadRecibida = rec,
-                            cantidadRechazada = rech,
-                            costoUnitario = costo,
-                            subtotal = rec * costo
-                        });
+                            detalles.Add(new DetalleIngreso
+                            {
+                                idProducto = idProd,
+                                cantidadRecibida = rec,
+                                cantidadRechazada = rech,
+                                costoUnitario = costo,
+                                subtotal = rec * costo
+                            });
+                        }
                     }
                 }
-            }
 
-            if (!detalles.Any())
+                if (!detalles.Any())
+                {
+                    ViewData["Error"] = "Debe ingresar al menos una cantidad recibida o rechazada mayor a 0.";
+                    return View();
+                }
+
+                var resultado = await _compraService.RegistrarIngresoAsync(orden, observaciones, detalles);
+                if (!resultado.Ok)
+                {
+                    ViewData["Error"] = resultado.Error;
+                    return View();
+                }
+
+                TempData["Mensaje"] = $"Ingreso #{resultado.IdIngreso} registrado correctamente. Stock actualizado.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
             {
-                ViewData["Error"] = "Debe ingresar al menos una cantidad recibida o rechazada mayor a 0.";
+                ViewData["Error"] = DbExceptionHelper.Traducir(ex);
                 return View();
             }
-
-            var resultado = await _compraService.RegistrarIngresoAsync(orden, observaciones, detalles);
-            if (!resultado.Ok)
-            {
-                ViewData["Error"] = resultado.Error;
-                return View();
-            }
-
-            TempData["Mensaje"] = $"Ingreso #{resultado.IdIngreso} registrado correctamente. Stock actualizado.";
-            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
