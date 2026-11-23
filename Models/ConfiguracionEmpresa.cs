@@ -9,34 +9,38 @@ namespace AppWeb.Models
         public int idConfiguracion { get; set; }
 
         [Required(ErrorMessage = "La razón social es obligatoria."), StringLength(150)]
-        public string razonSocial { get; set; } = "MKG Importaciones S.A.C.";
+        public string razonSocial { get; set; } = String.Empty;
 
         [Required(ErrorMessage = "El RUC es obligatorio."), StringLength(11)]
-        public string ruc { get; set; } = "20601234567";
+        [RegularExpression(@"^[0-9]{11}$", ErrorMessage = "El RUC debe contener exactamente 11 dígitos")]
+        public string ruc { get; set; } = String.Empty;
 
         [StringLength(200)]
-        public string? direccion { get; set; } = "Cajamarca, Perú";
+        public string? direccion { get; set; } = String.Empty;
 
         [StringLength(20)]
-        public string? telefono { get; set; } = "076-555-0100";
+        [Phone(ErrorMessage = "El número de teléfono no es válido")]
+        public string? telefono { get; set; } = String.Empty;
 
         [StringLength(500)]
-        public string? logoUrl { get; set; } = "https://i.postimg.cc/FRcSYwJ6/Logo-MKG.webp";
+        public string? logoUrl { get; set; } = String.Empty;
 
         [Required, StringLength(10)]
-        public string moneda { get; set; } = "PEN";
+        [RegularExpression(@"^[A-Z]{3}$", ErrorMessage = "La moneda debe contener exactamente 3 letras mayúsculas")]
+        public string moneda { get; set; } = String.Empty;
 
         [Column(TypeName = "decimal(5,2)")]
-        [Range(0, 30, ErrorMessage = "El IGV debe estar entre 0% y 30%.")]
+        [Range(0, 30, ErrorMessage = "El IGV debe estar entre 0% y 30%")]
         public decimal igv { get; set; } = 18m;
 
         [Required, StringLength(10)]
-        public string serieBoleta { get; set; } = "B001";
+        public string serieBoleta { get; set; } = String.Empty;
 
         [Required, StringLength(10)]
-        public string serieFactura { get; set; } = "F001";
+        public string serieFactura { get; set; } = String.Empty;
 
         [StringLength(120)]
+        [EmailAddress(ErrorMessage = "El correo electrónico no es válido")]
         public string? correo { get; set; }
 
         [StringLength(250)]

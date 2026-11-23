@@ -7,18 +7,28 @@ namespace AppWeb.Models
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int idProveedor { get; set; }
-        [Required, StringLength(20)]
-        public string ruc { get; set; }
+
+        [Required, StringLength(11)]
+        [RegularExpression(@"^[0-9]{11}$", ErrorMessage = "El RUC debe contener exactamente 11 dígitos.")]
+        public string ruc { get; set; } = String.Empty;
+
         [Required, StringLength(150)]
-        public string razonSocial { get; set; }
+        public string razonSocial { get; set; } = String.Empty;
+
         [Required, StringLength(100)]
-        public string contacto { get; set; }
+        public string contacto { get; set; } = String.Empty;
+
         [Required, StringLength(20)]
-        public string telefono { get; set; }
+        [Phone(ErrorMessage = "El número de teléfono no es válido")]
+        public string telefono { get; set; } = String.Empty;
+
         [Required, StringLength(255)]
-        public string direccion { get; set; }
+        public string direccion { get; set; } = String.Empty;
+
         [Required, StringLength(100)]
-        public string email { get; set; }
+        [EmailAddress(ErrorMessage = "El correo electrónico no es válido")]
+        public string email { get; set; } = String.Empty;
+
         [Required]
         public bool estado { get; set; } = true;
 

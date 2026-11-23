@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace AppWeb.Controllers
@@ -287,25 +288,46 @@ namespace AppWeb.Controllers
                     ViewData["Error"] = "Nombre, correo y teléfono son obligatorios.";
                     return View(usuario);
                 }
-
+                string nombreUsuarioLimpio = nombreUsuario.Trim();
                 string correoLimpio = correo.Trim();
+                string telefonoLimpio = telefono.Trim();
+                if (nombreUsuarioLimpio.Length > 50)
+                {
+                    ViewData["Error"] = "El nombre de usuario no puede exceder los 50 caracteres";
+                    return View(usuario);
+                }
+                if (correoLimpio.Length > 100 || !new EmailAddressAttribute().IsValid(correoLimpio))
+                {
+                    ViewData["Error"] = "Ingrese un correo válido y no mayor a 100 caracteres";
+                    return View(usuario);
+                }
+                if (telefonoLimpio.Length > 15 || !new PhoneAttribute().IsValid(telefonoLimpio))
+                {
+                    ViewData["Error"] = "Ingrese un teléfono válido (máximo 15 caracteres)";
+                    return View(usuario);
+                }
+                if (!string.IsNullOrWhiteSpace(nuevaPassword) && (nuevaPassword.Length < 6 || nuevaPassword.Length > 100))
+                {
+                    ViewData["Error"] = "La nueva contraseña debe tener al menos 6 caracteres y no exceder los 100 caracteres";
+                    return View(usuario);
+                }
                 if (await _usuarioService.ExisteCorreoAsync(correoLimpio, id))
                 {
-                    ViewData["Error"] = "Ya existe otro usuario registrado con ese correo.";
+                    ViewData["Error"] = "Ya existe otro usuario registrado con ese correo";
                     return View(usuario);
                 }
 
                 var rolDestino = await _usuarioService.ObtenerRolPorIdAsync(IDROL);
                 if (rolDestino == null)
                 {
-                    ViewData["Error"] = "El rol seleccionado no es válido.";
+                    ViewData["Error"] = "El rol seleccionado no es válido";
                     return View(usuario);
                 }
 
                 var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (usuario.id.ToString() == currentUserId && rolDestino.nameRol != RolAdministrador)
                 {
-                    ViewData["Error"] = "No puede cambiar su propio rol de Administrador.";
+                    ViewData["Error"] = "No puede cambiar su propio rol de Administrador";
                     return View(usuario);
                 }
 
@@ -327,7 +349,7 @@ namespace AppWeb.Controllers
                     await RefrescarSesionAsync(usuario);
                 }
 
-                TempData["Mensaje"] = $"Usuario '{usuario.nombreUsuario}' actualizado correctamente.";
+                TempData["Mensaje"] = $"Usuario '{usuario.nombreUsuario}' actualizado correctamente";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
@@ -387,10 +409,15 @@ namespace AppWeb.Controllers
 
                 if (string.IsNullOrWhiteSpace(nombreUsuario))
                 {
-                    ViewData["Error"] = "El nombre de usuario es obligatorio.";
+                    ViewData["Error"] = "El nombre de usuario es obligatorio";
                     return View(usuario);
                 }
-
+                string nombreLimpio = nombreUsuario.Trim();
+                if (nombreLimpio.Length > 50)
+                {
+                    ViewData["Error"] = "El nombre de usuario no puede exceder los 50 caracteres";
+                    return View(usuario);
+                }
                 bool quiereCambiarPassword =
                     !string.IsNullOrWhiteSpace(passwordActual) ||
                     !string.IsNullOrWhiteSpace(nuevaPassword) ||
@@ -398,21 +425,27 @@ namespace AppWeb.Controllers
 
                 if (quiereCambiarPassword)
                 {
+
                     if (string.IsNullOrWhiteSpace(passwordActual) || string.IsNullOrWhiteSpace(nuevaPassword))
                     {
-                        ViewData["Error"] = "Debe ingresar su contraseña actual y la nueva contraseña.";
+                        ViewData["Error"] = "Debe ingresar su contraseña actual y la nueva contraseña";
+                        return View(usuario);
+                    }
+                    if (nuevaPassword.Length < 6 || nuevaPassword.Length > 100)
+                    {
+                        ViewData["Error"] = "La nueva contraseña debe tener entre 6 y 100 caracteres";
                         return View(usuario);
                     }
 
                     if (nuevaPassword != confirmarPassword)
                     {
-                        ViewData["Error"] = "La nueva contraseña y su confirmación no coinciden.";
+                        ViewData["Error"] = "La nueva contraseña y su confirmación no coinciden";
                         return View(usuario);
                     }
 
                     if (!_usuarioService.VerificarPassword(usuario, passwordActual, out _))
                     {
-                        ViewData["Error"] = "La contraseña actual es incorrecta.";
+                        ViewData["Error"] = "La contraseña actual es incorrecta";
                         return View(usuario);
                     }
 
@@ -423,7 +456,7 @@ namespace AppWeb.Controllers
                 await _usuarioService.ActualizarAsync(usuario);
                 await RefrescarSesionAsync(usuario);
 
-                TempData["Mensaje"] = "Perfil actualizado correctamente.";
+                TempData["Mensaje"] = "Perfil actualizado correctamente";
                 return RedirectToAction(nameof(Perfil));
             }
             catch (Exception ex)
