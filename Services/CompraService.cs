@@ -408,10 +408,10 @@ namespace AppWeb.Services
 
                 return (true, null, ingreso.idIngresoMercaderia);
             }
-            catch
+            catch(Exception ex)
             {
                 await transaction.RollbackAsync();
-                return (false, "Ocurrió un error al registrar el ingreso de mercadería.", null);
+                return (false, DbExceptionHelper.Traducir(ex), null);
             }
         }
     }

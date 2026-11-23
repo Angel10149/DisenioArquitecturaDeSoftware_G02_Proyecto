@@ -154,10 +154,10 @@ namespace AppWeb.Services
 
                 return new CobroResultado(true, null, pago.idPago, $"{serie}-{numero}");
             }
-            catch
+            catch(Exception ex)
             {
                 await transaction.RollbackAsync();
-                return new CobroResultado(false, "Ocurrió un error al registrar el pago y emitir el comprobante.", null, null);
+                return new CobroResultado(false, DbExceptionHelper.Traducir(ex), null, null);
             }
         }
     }

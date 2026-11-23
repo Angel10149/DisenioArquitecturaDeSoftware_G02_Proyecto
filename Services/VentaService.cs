@@ -187,10 +187,10 @@ namespace AppWeb.Services
 
                 return new VentaOperacionResultado(true, null, venta.idVenta);
             }
-            catch
+            catch(Exception ex)
             {
                 await transaction.RollbackAsync();
-                return new VentaOperacionResultado(false, "Ocurrió un error al registrar la venta.", null);
+                return new VentaOperacionResultado(false, DbExceptionHelper.Traducir(ex), null);
             }
         }
 
@@ -232,10 +232,10 @@ namespace AppWeb.Services
 
                 return new VentaOperacionResultado(true, null, venta.idVenta);
             }
-            catch
+            catch(Exception ex)
             {
                 await transaction.RollbackAsync();
-                return new VentaOperacionResultado(false, "No se pudo anular la venta.", null);
+                return new VentaOperacionResultado(false, DbExceptionHelper.Traducir(ex), null);
             }
         }
 
