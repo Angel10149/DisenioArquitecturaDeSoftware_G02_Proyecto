@@ -100,11 +100,16 @@ namespace AppWeb.Controllers
 
                 if (!detalles.Any())
                 {
-                    ViewData["Error"] = "Debe agregar al menos un producto con cantidad mayor a 0.";
+                    ViewData["Error"] = "Debe agregar al menos un producto con cantidad mayor a 0";
                     return View();
                 }
 
                 var resultado = await _compraService.CrearOrdenCompraAsync(idProveedor, idRequerimiento, idUsuario, detalles);
+                if (!resultado.Ok || resultado.Orden == null)
+                {
+                    ViewData["Error"] = resultado.Error?? "No se pudo crear la orden de compra";
+                    return View();
+                }
                 TempData["Mensaje"] = $"Orden de Compra #{resultado.Orden!.idOrdenCompra} generada correctamente por S/ {resultado.Orden.total:N2}.";
                 return RedirectToAction(nameof(Index));
             }
