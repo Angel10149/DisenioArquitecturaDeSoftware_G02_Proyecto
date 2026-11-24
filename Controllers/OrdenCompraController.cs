@@ -84,17 +84,31 @@ namespace AppWeb.Controllers
                     int count = Math.Min(idProductos.Count, Math.Min(cantidades.Count, preciosUnitarios.Count));
                     for (int i = 0; i < count; i++)
                     {
-                        if (idProductos[i] > 0 && cantidades[i] > 0 && preciosUnitarios[i] >= 0)
+                        int idProd = idProductos[i];
+                        int cant = cantidades[i];
+                        decimal precio = preciosUnitarios[i];
+
+                        if (idProd <= 0) continue;
+
+                        if (cant <= 0)
                         {
-                            decimal subtotal = cantidades[i] * preciosUnitarios[i];
-                            detalles.Add(new DetalleOrdenCompra
-                            {
-                                idProducto = idProductos[i],
-                                cantidad = cantidades[i],
-                                precioUnitario = preciosUnitarios[i],
-                                subtotal = subtotal
-                            });
+                            ViewData["Error"] = "La cantidad de cada producto debe ser mayor a 0";
+                            return View();
                         }
+
+                        if (precio < 0)
+                        {
+                            ViewData["Error"] = "El precio unitario no puede ser negativo";
+                            return View();
+                        }
+
+                        detalles.Add(new DetalleOrdenCompra
+                        {
+                            idProducto = idProd,
+                            cantidad = cant,
+                            precioUnitario = precio,
+                            subtotal = cant * precio
+                        });
                     }
                 }
 
@@ -107,7 +121,7 @@ namespace AppWeb.Controllers
                 var resultado = await _compraService.CrearOrdenCompraAsync(idProveedor, idRequerimiento, idUsuario, detalles);
                 if (!resultado.Ok || resultado.Orden == null)
                 {
-                    ViewData["Error"] = resultado.Error?? "No se pudo crear la orden de compra";
+                    ViewData["Error"] = resultado.Error ?? "No se pudo crear la orden de compra";
                     return View();
                 }
                 TempData["Mensaje"] = $"Orden de Compra #{resultado.Orden!.idOrdenCompra} generada correctamente por S/ {resultado.Orden.total:N2}.";
