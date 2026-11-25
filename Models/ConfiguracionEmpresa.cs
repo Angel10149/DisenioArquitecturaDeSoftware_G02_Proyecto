@@ -23,6 +23,7 @@ namespace AppWeb.Models
         public string? telefono { get; set; } = String.Empty;
 
         [StringLength(500)]
+        [Url(ErrorMessage = "Ingrese una URL válida para el logo")]
         public string? logoUrl { get; set; } = String.Empty;
 
         [Required, StringLength(10)]
@@ -34,10 +35,12 @@ namespace AppWeb.Models
         public decimal igv { get; set; } = 18m;
 
         [Required, StringLength(10)]
-        public string serieBoleta { get; set; } = String.Empty;
+        [RegularExpression(@"^B[0-9]{3}$", ErrorMessage = "La serie de boleta debe tener formato B001")]
+        public string serieBoleta { get; set; } = string.Empty;
 
         [Required, StringLength(10)]
-        public string serieFactura { get; set; } = String.Empty;
+        [RegularExpression(@"^F[0-9]{3}$", ErrorMessage = "La serie de factura debe tener formato F001")]
+        public string serieFactura { get; set; } = string.Empty;
 
         [StringLength(120)]
         [EmailAddress(ErrorMessage = "El correo electrónico no es válido")]

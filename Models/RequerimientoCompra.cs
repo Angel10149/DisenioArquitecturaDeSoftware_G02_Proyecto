@@ -7,20 +7,28 @@ namespace AppWeb.Models
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int idRequerimiento { get; set; }
+
         [Required]
         [Range(0, int.MaxValue, ErrorMessage = "La cantidad sugerida no puede ser negativa")]
         public int cantidadSugerida { get; set; }
+
         [Required]
         [Range(1, int.MaxValue, ErrorMessage = "La cantidad requerida debe ser mayor a 0")]
         public int cantidadRequerida { get; set; }
+
         [Required]
         public DateOnly fechaRequerida { get; set; }
+
         [Required, StringLength(20)]
+        [RegularExpression(@"^(Baja|Media|Alta)$", ErrorMessage = "La prioridad debe ser Baja, Media o Alta")]
         public string prioridad { get; set; } = "Media";
+
         [Required, StringLength(30)]
         public string estado { get; set; } = "Pendiente";
+
         [StringLength(255)]
         public string? motivo { get; set; }
+
         [Required]
         public DateTime fechaCreacion { get; set; }
 

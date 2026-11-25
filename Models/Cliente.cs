@@ -8,6 +8,7 @@ namespace AppWeb.Models
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int idCliente { get; set; }
+
         [Required, StringLength(20)]
         [RegularExpression(@"^(DNI|RUC|CE|Pasaporte)$", ErrorMessage = "El tipo de documento debe ser DNI, RUC, CE o Pasaporte.")]
         public String tipoDocumento { get; set; } = String.Empty;
@@ -16,17 +17,24 @@ namespace AppWeb.Models
         public String numeroDocumento { get; set; } = String.Empty;
 
         [Required, StringLength(100)]
+        [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\.]+$", ErrorMessage = "Solo se permiten letras y espacios")]
         public String nombres { get; set; } = String.Empty;
+
         [Required, StringLength(150)]
-        public String razonSocial { get; set; } = String.Empty;
+        [RegularExpression(@"^(?=.*[a-zA-ZáéíóúÁÉÍÓÚñÑ])[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\.\-&]+$", ErrorMessage = "La razón social debe contener letras")] public String razonSocial { get; set; } = String.Empty;
+
         [Required, StringLength(20)]
         [Phone(ErrorMessage = "El formato del teléfono no es válido")]
+        [RegularExpression(@"^\+?(?=(?:.*\d){7,15}$)[0-9\-\s]+$", ErrorMessage = "Ingrese un teléfono válido (7 a 15 dígitos, ej. +51 956521578)")]
         public string telefono { get; set; } = String.Empty;
+
         [Required, StringLength(255)]
         public String direccion { get; set; } = String.Empty;
+
         [Required, StringLength(100)]
         [EmailAddress(ErrorMessage = "El correo electrónico no es válido")]
         public String email { get; set; } = String.Empty;
+
         [Required]
         public bool estado { get; set; } = true;
 
