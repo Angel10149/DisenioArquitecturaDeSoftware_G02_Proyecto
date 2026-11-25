@@ -578,8 +578,8 @@ namespace AppWeb.Migrations
 
                     b.Property<string>("ruc")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(11)
+                        .HasColumnType("nvarchar(11)");
 
                     b.Property<string>("telefono")
                         .IsRequired()

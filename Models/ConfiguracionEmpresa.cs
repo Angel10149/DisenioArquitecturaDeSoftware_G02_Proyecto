@@ -23,8 +23,8 @@ namespace AppWeb.Models
         public string? telefono { get; set; } = String.Empty;
 
         [StringLength(500)]
-        [Url(ErrorMessage = "Ingrese una URL válida para el logo")]
-        public string? logoUrl { get; set; } = String.Empty;
+        public string? logoUrl { get; set; }
+
 
         [Required, StringLength(10)]
         [RegularExpression(@"^[A-Z]{3}$", ErrorMessage = "La moneda debe contener exactamente 3 letras mayúsculas")]
