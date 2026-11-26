@@ -8,7 +8,8 @@ namespace AppWeb.Models
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int idConfiguracion { get; set; }
 
-        [Required(ErrorMessage = "La razón social es obligatoria."), StringLength(150)]
+        [Required(ErrorMessage = "La razón social es obligatoria"), StringLength(150)]
+        [RegularExpression(@"^(?=.*[a-zA-ZáéíóúÁÉÍÓÚñÑ])[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\.\-&]+$", ErrorMessage = "La razón social debe contener letras")]
         public string razonSocial { get; set; } = String.Empty;
 
         [Required(ErrorMessage = "El RUC es obligatorio."), StringLength(11)]
@@ -20,9 +21,11 @@ namespace AppWeb.Models
 
         [StringLength(20)]
         [Phone(ErrorMessage = "El número de teléfono no es válido")]
+        [RegularExpression(@"^\+?(?=(?:.*\d){7,15}$)[0-9\-\s]+$", ErrorMessage = "Ingrese un teléfono válido (7 a 15 dígitos, ej. +51 956521578)")]
         public string? telefono { get; set; } = String.Empty;
 
         [StringLength(500)]
+        [RegularExpression(@"^(https?://.+|/pictures/.+)$", ErrorMessage = "Ingrese una URL válida (http/https) o una ruta local en /pictures/")]
         public string? logoUrl { get; set; }
 
 
