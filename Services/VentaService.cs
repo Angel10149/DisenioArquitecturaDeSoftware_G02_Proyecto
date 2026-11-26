@@ -154,11 +154,18 @@ namespace AppWeb.Services
                 if (idCotizacion.HasValue && idCotizacion.Value > 0)
                 {
                     var cotizacion = await _cotizacionRepo.GetByIdAsync(idCotizacion.Value);
-                    if (cotizacion != null && cotizacion.estado == "Aprobada")
+                    if (cotizacion == null)
                     {
-                        cotizacion.estado = "Convertida";
-                        _cotizacionRepo.Update(cotizacion);
+                        await transaction.RollbackAsync();
+                        return new VentaOperacionResultado(false, "La cotización seleccionada no existe", null);
                     }
+                    if (cotizacion.estado != "Aprobada")
+                    {
+                        await transaction.RollbackAsync();
+                        return new VentaOperacionResultado(false, $"La cotización #{cotizacion.idCotizacion} no puede convertirse a venta porque su estado es '{cotizacion.estado}'", null);
+                    }
+                    cotizacion.estado = "Convertida";
+                    _cotizacionRepo.Update(cotizacion);
                 }
 
                 var subtotalVenta = detalles.Sum(d => d.subtotal);
@@ -201,10 +208,10 @@ namespace AppWeb.Services
                 .FirstOrDefaultAsync(v => v.idVenta == idVenta);
 
             if (venta == null)
-                return new VentaOperacionResultado(false, "Venta no encontrada.", null);
+                return new VentaOperacionResultado(false, "Venta no encontrada", null);
 
             if (venta.estado != "Pendiente")
-                return new VentaOperacionResultado(false, $"Solo se pueden anular ventas en estado 'Pendiente'. Estado actual: '{venta.estado}'.", null);
+                return new VentaOperacionResultado(false, $"Solo se pueden anular ventas en estado 'Pendiente'. Estado actual: '{venta.estado}'", null);
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -352,13 +359,13 @@ namespace AppWeb.Services
         {
             var cotizacion = await _cotizacionRepo.GetByIdAsync(id);
             if (cotizacion == null)
-                return new VentaOperacionResultado(false, "Cotización no encontrada.", null);
+                return new VentaOperacionResultado(false, "Cotización no encontrada", null);
 
             if (cotizacion.estado == "Convertida" || cotizacion.estado == "Anulada")
-                return new VentaOperacionResultado(false, $"La cotización #{cotizacion.idCotizacion} ya está en estado '{cotizacion.estado}' y no puede modificarse.", id);
+                return new VentaOperacionResultado(false, $"La cotización #{cotizacion.idCotizacion} ya está en estado '{cotizacion.estado}' y no puede modificarse", id);
 
             if (nuevoEstado != "Aprobada" && nuevoEstado != "Anulada")
-                return new VentaOperacionResultado(false, "Estado no válido.", id);
+                return new VentaOperacionResultado(false, "Estado no válido", id);
 
             cotizacion.estado = nuevoEstado;
             _cotizacionRepo.Update(cotizacion);

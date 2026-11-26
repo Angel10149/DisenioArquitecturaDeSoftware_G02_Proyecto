@@ -1,4 +1,5 @@
-﻿using AppWeb.Data;
+﻿using System.Data;
+using AppWeb.Data;
 using AppWeb.Models;
 using AppWeb.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -86,6 +87,12 @@ namespace AppWeb.Services
                 .FirstOrDefaultAsync(p => p.idPago == idPago);
         }
 
+        private static readonly string[] MetodosPagoPermitidos =
+            { "Efectivo", "Tarjeta", "Transferencia", "Yape / Plin" };
+
+        private static readonly string[] TiposComprobantePermitidos =
+            { "Boleta", "Factura", "Ticket" };
+
         public async Task<CobroResultado> RegistrarCobroAsync(int idVenta, int idUsuario, string metodoPago, decimal montoRecibido, string tipoComprobante)
         {
             var venta = await _ventaRepo.Query()
@@ -93,22 +100,32 @@ namespace AppWeb.Services
                 .FirstOrDefaultAsync(v => v.idVenta == idVenta);
 
             if (venta == null)
-                return new CobroResultado(false, "La venta seleccionada no existe.", null, null);
+                return new CobroResultado(false, "La venta seleccionada no existe", null, null);
 
             if (venta.estado != "Pendiente")
-                return new CobroResultado(false, $"La venta #{venta.idVenta} no está pendiente de pago (estado: '{venta.estado}').", null, null);
+                return new CobroResultado(false, $"La venta #{venta.idVenta} no está pendiente de pago (estado: '{venta.estado}')", null, null);
 
             if (string.IsNullOrWhiteSpace(metodoPago))
-                return new CobroResultado(false, "Debe seleccionar un método de pago.", null, null);
+                return new CobroResultado(false, "Debe seleccionar un método de pago", null, null);
+
+            var metodoNormalizado = MetodosPagoPermitidos.FirstOrDefault(
+                m => string.Equals(m, metodoPago.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (metodoNormalizado == null)
+                return new CobroResultado(false, $"El método de pago '{metodoPago.Trim()}' no es válido. Métodos permitidos: {string.Join(", ", MetodosPagoPermitidos)}", null, null);
 
             if (montoRecibido < venta.total)
-                return new CobroResultado(false, $"El monto recibido (S/ {montoRecibido:N2}) no puede ser menor al total de la venta (S/ {venta.total:N2}).", null, null);
+                return new CobroResultado(false, $"El monto recibido (S/ {montoRecibido:N2}) no puede ser menor al total de la venta (S/ {venta.total:N2})", null, null);
+
+            string tipoSolicitado = string.IsNullOrWhiteSpace(tipoComprobante) ? "Boleta" : tipoComprobante.Trim();
+            var tipoComp = TiposComprobantePermitidos.FirstOrDefault(
+                t => string.Equals(t, tipoSolicitado, StringComparison.OrdinalIgnoreCase));
+            if (tipoComp == null)
+                return new CobroResultado(false, $"El tipo de comprobante '{tipoSolicitado}' no es válido. Valores permitidos: {string.Join(", ", TiposComprobantePermitidos)}", null, null);
 
             var cfg = await _configRepo.Query().FirstOrDefaultAsync();
             var serieBoleta = !string.IsNullOrWhiteSpace(cfg?.serieBoleta) ? cfg.serieBoleta : "B001";
             var serieFactura = !string.IsNullOrWhiteSpace(cfg?.serieFactura) ? cfg.serieFactura : "F001";
 
-            string tipoComp = string.IsNullOrWhiteSpace(tipoComprobante) ? "Boleta" : tipoComprobante.Trim();
             string serie = tipoComp switch
             {
                 "Factura" => serieFactura,
@@ -116,7 +133,7 @@ namespace AppWeb.Services
                 _ => serieBoleta
             };
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
             try
             {
                 int correlativo = await _comprobanteRepo.Query().CountAsync(c => c.serie == serie) + 1;
@@ -125,7 +142,7 @@ namespace AppWeb.Services
                 var pago = new Pago
                 {
                     fechaPago = DateTime.Now,
-                    metodoPago = metodoPago.Trim(),
+                    metodoPago = metodoNormalizado,
                     montoRecibido = montoRecibido,
                     estado = "Registrado",
                     idVenta = venta.idVenta,
