@@ -17,7 +17,7 @@ namespace AppWeb.Models
         public string razonSocial { get; set; } = String.Empty;
 
         [Required, StringLength(100)]
-
+        [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\.]+$", ErrorMessage = "El contacto solo puede contener letras y espacios")]
         public string contacto { get; set; } = String.Empty;
 
         [Required, StringLength(20)]

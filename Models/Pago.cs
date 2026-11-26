@@ -10,22 +10,22 @@ namespace AppWeb.Models
         [Required]
         public DateTime fechaPago { get; set; }
         [Required, StringLength(50)]
-        public string metodoPago { get; set; }
+        public string metodoPago { get; set; } = string.Empty;
         [Required, Column(TypeName = "decimal(18, 2)")]
         public decimal montoRecibido { get; set; }
         [Required, StringLength(30)]
-        public string estado { get; set; }
+        public string estado { get; set; } = string.Empty;
 
         //Relacion de M : 1 con Venta
         public int idVenta { get; set; }
-        public Venta venta { get; set; }
+        public Venta? venta { get; set; }
 
         //Relacion de M : 1 con Usuario
         public int idUsuario { get; set; }
-        public Usuario usuario { get; set; }
+        public Usuario? usuario { get; set; }
 
         //Relaciones 1 : M con Comprobante
-        public ICollection<Comprobante> Comprobantes { get; set; }
+        public ICollection<Comprobante> Comprobantes { get; set; } = new List<Comprobante>();
 
     }
 }
