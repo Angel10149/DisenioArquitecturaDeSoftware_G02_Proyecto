@@ -139,8 +139,8 @@ namespace AppWeb.Services
             return await _detalleVentaRepo.Query()
                 .Include(d => d.venta)
                 .Include(d => d.producto)
-                    .ThenInclude(p => p.categoria)
-                .Where(d => d.venta.estado != "Anulada" && d.venta.fechaVenta >= inicioMes && d.venta.fechaVenta < finExclusivo)
+                    .ThenInclude(p => p!.categoria)
+                .Where(d => d.venta!.estado != "Anulada" && d.venta.fechaVenta >= inicioMes && d.venta.fechaVenta < finExclusivo)
                 .ToListAsync();
         }
 
@@ -149,8 +149,8 @@ namespace AppWeb.Services
             return await _detalleVentaRepo.Query()
                 .Include(d => d.venta)
                 .Include(d => d.producto)
-                .Where(d => d.venta.estado != "Anulada")
-                .GroupBy(d => d.producto.nombre)
+                .Where(d => d.venta!.estado != "Anulada")
+                .GroupBy(d => d.producto!.nombre)
                 .Select(g => new { Nombre = g.Key, Cantidad = g.Sum(x => x.cantidad) })
                 .OrderByDescending(x => x.Cantidad)
                 .Take(cantidad)

@@ -329,10 +329,10 @@ namespace AppWeb.Services
             {
                 string filtro = buscar.Trim();
                 query = query.Where(c =>
-                    c.cliente.nombres.Contains(filtro) ||
-                    c.cliente.razonSocial.Contains(filtro) ||
-                    c.cliente.numeroDocumento.Contains(filtro) ||
-                    c.usuario.nombreUsuario.Contains(filtro) ||
+                    c.cliente!.nombres.Contains(filtro) ||
+                    c.cliente!.razonSocial.Contains(filtro) ||
+                    c.cliente!.numeroDocumento.Contains(filtro) ||
+                    c.usuario!.nombreUsuario.Contains(filtro) ||
                     c.idCotizacion.ToString() == filtro);
             }
 
