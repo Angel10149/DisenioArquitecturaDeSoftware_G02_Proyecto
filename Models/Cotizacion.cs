@@ -7,27 +7,32 @@ namespace AppWeb.Models
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int idCotizacion { get; set; }
+
         [Required]
         public DateTime fechaEmision { get; set; }
+
         [Required, StringLength(30)]
-        public string estado { get; set; }
+        public string estado { get; set; } = "Pendiente";
+
         [StringLength(255)]
-        public string observaciones { get; set; }
-        [Required, Column(TypeName = "decimal(18, 2)]")]
+        public string observaciones { get; set; } = "Sin observaciones";
+
+        [Required, Column(TypeName = "decimal(18, 2)")]
+        [Range(0, (double)decimal.MaxValue, ErrorMessage = "El total debe ser mayor a 0")]
         public decimal total { get; set; }
 
         //Relacion de M : 1 con Cliente
         public int idCliente { get; set; }
-        public Cliente cliente { get; set; }
+        public Cliente? cliente { get; set; }
 
         //Relacion de M : 1 con Usuario
         public int idUsuario { get; set; }
-        public Usuario usuario { get; set; }
+        public Usuario? usuario { get; set; }
 
         //Relaciones 1 : M con DetalleCotizacion
-        public ICollection<DetalleCotizacion> DetalleCotizacions { get; set; }
+        public ICollection<DetalleCotizacion> DetalleCotizacions { get; set; } = new List<DetalleCotizacion>();
 
         //Relaciones 1 : M con Venta
-        public ICollection<Venta> Ventas { get; set; }
+        public ICollection<Venta> Ventas { get; set; } = new List<Venta>();
     }
 }
