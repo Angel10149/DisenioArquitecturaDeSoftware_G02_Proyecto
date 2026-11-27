@@ -9,10 +9,12 @@ namespace AppWeb.Controllers
     public class ConfiguracionController : Controller
     {
         private readonly IConfiguracionService _configuracionService;
+        private readonly IWebHostEnvironment _env;
 
-        public ConfiguracionController(IConfiguracionService configuracionService)
+        public ConfiguracionController(IConfiguracionService configuracionService, IWebHostEnvironment env)
         {
             _configuracionService = configuracionService;
+            _env = env;
         }
 
         [HttpGet]
@@ -25,14 +27,46 @@ namespace AppWeb.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Index(ConfiguracionEmpresa model)
+        public async Task<IActionResult> Index(ConfiguracionEmpresa model, IFormFile? logoArchivo)
         {
+            if (logoArchivo != null && logoArchivo.Length > 0)
+            {
+                var extensionesPermitidas = new[] { ".png", ".jpg", ".jpeg", ".webp" };
+                var ext = Path.GetExtension(logoArchivo.FileName).ToLowerInvariant();
+
+                if (!extensionesPermitidas.Contains(ext))
+                {
+                    ModelState.AddModelError(string.Empty, "El logo debe ser una imagen en formato PNG, JPG, JPEG o WEBP.");
+                }
+                else if (logoArchivo.Length > 2 * 1024 * 1024)
+                {
+                    ModelState.AddModelError(string.Empty, "La imagen del logo no puede superar los 2 MB.");
+                }
+            }
+
+            if (!ModelState.IsValid)
+            {
+                await CargarResumenSistemaAsync();
+                return View(model);
+            }
+
             try
             {
-                if (!ModelState.IsValid)
+                if (logoArchivo != null && logoArchivo.Length > 0)
                 {
-                    await CargarResumenSistemaAsync();
-                    return View(model);
+                    var ext = Path.GetExtension(logoArchivo.FileName).ToLowerInvariant();
+                    var carpetaPictures = Path.Combine(_env.WebRootPath, "pictures");
+                    Directory.CreateDirectory(carpetaPictures);
+
+                    var nombreArchivo = $"logo-empresa{ext}";
+                    var rutaFisica = Path.Combine(carpetaPictures, nombreArchivo);
+
+                    using (var stream = new FileStream(rutaFisica, FileMode.Create))
+                    {
+                        await logoArchivo.CopyToAsync(stream);
+                    }
+
+                    model.logoUrl = $"/pictures/{nombreArchivo}?v={DateTime.Now.Ticks}";
                 }
 
                 await _configuracionService.GuardarAsync(model);
