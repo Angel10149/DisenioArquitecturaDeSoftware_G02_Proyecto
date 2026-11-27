@@ -6,6 +6,7 @@ namespace AppWeb.ViewModels
     {
         [Required(ErrorMessage = "El nombre del usuario es obligatorio")]
         [StringLength(50, ErrorMessage = "El nombre del usuario no puede exceder los 50 caracteres")]
+        [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$", ErrorMessage = "El nombre solo puede contener letras y espacios")]
         public string nombreUsuario { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "La contraseña es obligatoria")]
@@ -24,6 +25,7 @@ namespace AppWeb.ViewModels
         [Required(ErrorMessage = "El teléfono es obligatorio")]
         [Phone(ErrorMessage = "El formato del teléfono no es válido")]
         [StringLength(15, ErrorMessage = "El teléfono no puede exceder los 15 caracteres")]
+        [RegularExpression(@"^\+?(?=(?:.*\d){7,15}$)[0-9\-\s]+$", ErrorMessage = "Ingrese un teléfono válido entre 7 y 15 dígitos (ej. +51 956521578)")]
         public string telefono { get; set; } = string.Empty;
         /*
         public bool estado { get; set; }*/
