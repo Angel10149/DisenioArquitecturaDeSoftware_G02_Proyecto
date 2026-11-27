@@ -8,7 +8,8 @@ namespace AppWeb.Models
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int idConfiguracion { get; set; }
 
-        [Required(ErrorMessage = "La razón social es obligatoria."), StringLength(150)]
+        [Required(ErrorMessage = "La razón social es obligatoria"), StringLength(150)]
+        [RegularExpression(@"^(?=.*[a-zA-ZáéíóúÁÉÍÓÚñÑ])[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\.\-&]+$", ErrorMessage = "La razón social debe contener letras")]
         public string razonSocial { get; set; } = String.Empty;
 
         [Required(ErrorMessage = "El RUC es obligatorio."), StringLength(11)]
@@ -20,10 +21,13 @@ namespace AppWeb.Models
 
         [StringLength(20)]
         [Phone(ErrorMessage = "El número de teléfono no es válido")]
+        [RegularExpression(@"^\+?(?=(?:.*\d){7,15}$)[0-9\-\s]+$", ErrorMessage = "Ingrese un teléfono válido (7 a 15 dígitos, ej. +51 956521578)")]
         public string? telefono { get; set; } = String.Empty;
 
         [StringLength(500)]
-        public string? logoUrl { get; set; } = String.Empty;
+        [RegularExpression(@"^(https?://.+|/pictures/.+)$", ErrorMessage = "Ingrese una URL válida (http/https) o una ruta local en /pictures/")]
+        public string? logoUrl { get; set; }
+
 
         [Required, StringLength(10)]
         [RegularExpression(@"^[A-Z]{3}$", ErrorMessage = "La moneda debe contener exactamente 3 letras mayúsculas")]
@@ -34,10 +38,12 @@ namespace AppWeb.Models
         public decimal igv { get; set; } = 18m;
 
         [Required, StringLength(10)]
-        public string serieBoleta { get; set; } = String.Empty;
+        [RegularExpression(@"^B[0-9]{3}$", ErrorMessage = "La serie de boleta debe tener formato B001")]
+        public string serieBoleta { get; set; } = string.Empty;
 
         [Required, StringLength(10)]
-        public string serieFactura { get; set; } = String.Empty;
+        [RegularExpression(@"^F[0-9]{3}$", ErrorMessage = "La serie de factura debe tener formato F001")]
+        public string serieFactura { get; set; } = string.Empty;
 
         [StringLength(120)]
         [EmailAddress(ErrorMessage = "El correo electrónico no es válido")]
