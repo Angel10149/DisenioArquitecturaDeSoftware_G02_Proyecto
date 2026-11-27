@@ -7,11 +7,17 @@ namespace AppWeb.Models
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int idDetalleOrden { get; set; }
+
         [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0")]
         public int cantidad { get; set; }
-        [Required, Column(TypeName = "decimal(18, 2)]")]
+
+        [Required, Column(TypeName = "decimal(18, 2)")]
+        [Range(0, (double)decimal.MaxValue, ErrorMessage = "El precio unitario debe ser mayor a 0")]
         public decimal precioUnitario { get; set; }
-        [Required, Column(TypeName = "decimal(18, 2)]")]
+
+        [Required, Column(TypeName = "decimal(18, 2)")]
+        [Range(0, (double)decimal.MaxValue, ErrorMessage = "El subtotal debe ser mayor a 0")]
         public decimal subtotal { get; set; }
 
         //Relacion de M : 1 con OrdenCompra
