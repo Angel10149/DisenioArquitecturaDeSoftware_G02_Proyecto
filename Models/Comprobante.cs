@@ -9,18 +9,23 @@ namespace AppWeb.Models
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int idComprobante { get; set; }
+
         [Required, StringLength(30)]
-        public string tipoComprobante { get; set; }
+        public string tipoComprobante { get; set; } = string.Empty;
+
         [Required, StringLength(10)]
-        public string serie { get; set; }
+        public string serie { get; set; } = string.Empty;
+
         [Required, StringLength(20)]
-        public string numero { get; set; }
+        public string numero { get; set; } = string.Empty;
+
         [Required, StringLength(255)]
-        public string archivoPdf { get; set; }
+        public string archivoPdf { get; set; } = string.Empty;
+
         [Required]
         public bool estado { get; set; }
-      
-        public int idPago {  get; set; }
-        public Pago pago { get; set; }
+
+        public int idPago { get; set; }
+        public Pago? pago { get; set; }
     }
 }
