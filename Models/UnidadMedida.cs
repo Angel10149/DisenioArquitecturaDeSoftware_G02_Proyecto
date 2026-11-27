@@ -7,10 +7,14 @@ namespace AppWeb.Models
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int idUnidadMedida { get; set; }
-        [ Required, StringLength (50)]
-        public string nombre { get; set; }
+        [Required, StringLength(50)]
+        [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$", ErrorMessage = "El nombre solo puede contener letras y espacios")]
+        public string nombre { get; set; } = string.Empty;
+
         [Required, StringLength(10)]
-        public string abreviatura { get; set; }
+        [RegularExpression(@"^(?=.*[a-zA-Z])[a-zA-Z0-9]{1,10}$", ErrorMessage = "La abreviatura debe incluir letras y solo puede contener letras o números (ej. UNI, KG, M2)")]
+        public string abreviatura { get; set; } = string.Empty;
+
         [Required]
         public bool estado { get; set; } = true;
 
