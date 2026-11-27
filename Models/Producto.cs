@@ -7,12 +7,18 @@ namespace AppWeb.Models
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int idProducto { get; set; }
+
         [Required, StringLength(50)]
-        public string codigoBarras { get; set; }
+        [RegularExpression(@"^[a-zA-Z0-9\-_]+$", ErrorMessage = "El código solo puede contener letras, números o guiones")]
+        public string codigoBarras { get; set; } = string.Empty;
+
         [Required, StringLength(100)]
-        public string nombre { get; set; }
+        [RegularExpression(@"^(?=.*[a-zA-ZáéíóúÁÉÍÓÚñÑ]).+$", ErrorMessage = "El nombre del producto debe incluir letras")]
+        public string nombre { get; set; } = string.Empty;
+
         [StringLength(255)]
         public string? descripcion { get; set; }
+
         [Required]
         [Range(0, int.MaxValue, ErrorMessage = "El stock actual no puede ser negativo")]
         public int stockActual { get; set; }
