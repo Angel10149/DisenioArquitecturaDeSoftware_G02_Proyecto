@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace AppWeb.Controllers
@@ -87,7 +86,7 @@ namespace AppWeb.Controllers
 
                 if (User.Identity?.IsAuthenticated == true && User.IsInRole(RolAdministrador))
                 {
-                    TempData["Mensaje"] = $"Usuario '{usuario.nombreUsuario}' registrado correctamente.";
+                    TempData["Mensaje"] = $"Usuario '{usuario.nombreUsuario}' registrado correctamente";
                     return RedirectToAction(nameof(Index));
                 }
                 return RedirectToAction("Login", "Usuario");
@@ -136,7 +135,7 @@ namespace AppWeb.Controllers
 
                 if (!usuario.estado || !usuario.Rol.estado)
                 {
-                    ViewData["Mensaje"] = "El usuario se encuentra inactivo. Contacte al administrador.";
+                    ViewData["Mensaje"] = "El usuario se encuentra inactivo. Contacte al administrador";
                     return View(loginVM);
                 }
 
@@ -194,20 +193,20 @@ namespace AppWeb.Controllers
                 var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (id.ToString() == currentUserId)
                 {
-                    TempData["Error"] = "No puede desactivar su propia cuenta de administrador.";
+                    TempData["Error"] = "No puede desactivar su propia cuenta de administrador";
                     return RedirectToAction(nameof(Index));
                 }
 
                 var usuario = await _usuarioService.CambiarEstadoAsync(id);
                 if (usuario == null)
                 {
-                    TempData["Error"] = "Usuario no encontrado.";
+                    TempData["Error"] = "Usuario no encontrado";
                     return RedirectToAction(nameof(Index));
                 }
 
                 TempData["Mensaje"] = usuario.estado
-                    ? $"Usuario '{usuario.nombreUsuario}' activado correctamente."
-                    : $"Usuario '{usuario.nombreUsuario}' desactivado correctamente.";
+                    ? $"Usuario '{usuario.nombreUsuario}' activado correctamente"
+                    : $"Usuario '{usuario.nombreUsuario}' desactivado correctamente";
 
                 return RedirectToAction(nameof(Index));
 
@@ -252,7 +251,7 @@ namespace AppWeb.Controllers
             var usuario = await _usuarioService.ObtenerPorIdConRolAsync(id);
             if (usuario == null)
             {
-                TempData["Error"] = "Usuario no encontrado.";
+                TempData["Error"] = "Usuario no encontrado";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -263,61 +262,39 @@ namespace AppWeb.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> Editar(
-            int id,
-            string nombreUsuario,
-            string correo,
-            string telefono,
-            int IDROL,
-            string? nuevaPassword)
+        public async Task<IActionResult> Editar(EditarUsuarioVM model)
         {
             Usuario? usuario = null;
             try
             {
-                usuario = await _usuarioService.ObtenerPorIdConRolAsync(id);
+                usuario = await _usuarioService.ObtenerPorIdConRolAsync(model.id);
                 if (usuario == null)
                 {
-                    TempData["Error"] = "Usuario no encontrado.";
+                    TempData["Error"] = "Usuario no encontrado";
                     return RedirectToAction(nameof(Index));
                 }
 
                 await CargarRolesEdicionAsync(usuario.IDROL);
 
-                if (string.IsNullOrWhiteSpace(nombreUsuario) || string.IsNullOrWhiteSpace(correo) || string.IsNullOrWhiteSpace(telefono))
+                if (!ModelState.IsValid)
                 {
-                    ViewData["Error"] = "Nombre, correo y teléfono son obligatorios.";
+                    ViewData["Error"] = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .FirstOrDefault()?.ErrorMessage ?? "Verifique los datos ingresados";
                     return View(usuario);
                 }
-                string nombreUsuarioLimpio = nombreUsuario.Trim();
-                string correoLimpio = correo.Trim();
-                string telefonoLimpio = telefono.Trim();
-                if (nombreUsuarioLimpio.Length > 50)
-                {
-                    ViewData["Error"] = "El nombre de usuario no puede exceder los 50 caracteres";
-                    return View(usuario);
-                }
-                if (correoLimpio.Length > 100 || !new EmailAddressAttribute().IsValid(correoLimpio))
-                {
-                    ViewData["Error"] = "Ingrese un correo válido y no mayor a 100 caracteres";
-                    return View(usuario);
-                }
-                if (telefonoLimpio.Length > 15 || !new PhoneAttribute().IsValid(telefonoLimpio))
-                {
-                    ViewData["Error"] = "Ingrese un teléfono válido (máximo 15 caracteres)";
-                    return View(usuario);
-                }
-                if (!string.IsNullOrWhiteSpace(nuevaPassword) && (nuevaPassword.Length < 6 || nuevaPassword.Length > 100))
-                {
-                    ViewData["Error"] = "La nueva contraseña debe tener al menos 6 caracteres y no exceder los 100 caracteres";
-                    return View(usuario);
-                }
-                if (await _usuarioService.ExisteCorreoAsync(correoLimpio, id))
+
+                string nombreLimpio = model.nombreUsuario.Trim();
+                string correoLimpio = model.correo.Trim();
+                string telefonoLimpio = model.telefono.Trim();
+
+                if (await _usuarioService.ExisteCorreoAsync(correoLimpio, model.id))
                 {
                     ViewData["Error"] = "Ya existe otro usuario registrado con ese correo";
                     return View(usuario);
                 }
 
-                var rolDestino = await _usuarioService.ObtenerRolPorIdAsync(IDROL);
+                var rolDestino = await _usuarioService.ObtenerRolPorIdAsync(model.IDROL);
                 if (rolDestino == null)
                 {
                     ViewData["Error"] = "El rol seleccionado no es válido";
@@ -331,15 +308,15 @@ namespace AppWeb.Controllers
                     return View(usuario);
                 }
 
-                usuario.nombreUsuario = nombreUsuario.Trim();
+                usuario.nombreUsuario = nombreLimpio;
                 usuario.correo = correoLimpio;
-                usuario.telefono = telefono.Trim();
-                usuario.IDROL = IDROL;
+                usuario.telefono = telefonoLimpio;
+                usuario.IDROL = model.IDROL;
                 usuario.Rol = rolDestino;
 
-                if (!string.IsNullOrWhiteSpace(nuevaPassword))
+                if (!string.IsNullOrWhiteSpace(model.nuevaPassword))
                 {
-                    usuario.password = _usuarioService.HashearPassword(usuario, nuevaPassword);
+                    usuario.password = _usuarioService.HashearPassword(usuario, model.nuevaPassword);
                 }
 
                 await _usuarioService.ActualizarAsync(usuario);
@@ -386,11 +363,7 @@ namespace AppWeb.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize]
-        public async Task<IActionResult> Perfil(
-            string nombreUsuario,
-            string? passwordActual,
-            string? nuevaPassword,
-            string? confirmarPassword)
+        public async Task<IActionResult> Perfil(PerfilUsuarioVM model)
         {
             Usuario? usuario = null;
             try
@@ -407,52 +380,37 @@ namespace AppWeb.Controllers
                     return RedirectToAction(nameof(Login));
                 }
 
-                if (string.IsNullOrWhiteSpace(nombreUsuario))
+                if (!ModelState.IsValid)
                 {
-                    ViewData["Error"] = "El nombre de usuario es obligatorio";
+                    ViewData["Error"] = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .FirstOrDefault()?.ErrorMessage ?? "Verifique los datos ingresados";
                     return View(usuario);
                 }
-                string nombreLimpio = nombreUsuario.Trim();
-                if (nombreLimpio.Length > 50)
-                {
-                    ViewData["Error"] = "El nombre de usuario no puede exceder los 50 caracteres";
-                    return View(usuario);
-                }
+
                 bool quiereCambiarPassword =
-                    !string.IsNullOrWhiteSpace(passwordActual) ||
-                    !string.IsNullOrWhiteSpace(nuevaPassword) ||
-                    !string.IsNullOrWhiteSpace(confirmarPassword);
+                    !string.IsNullOrWhiteSpace(model.passwordActual) ||
+                    !string.IsNullOrWhiteSpace(model.nuevaPassword) ||
+                    !string.IsNullOrWhiteSpace(model.confirmarPassword);
 
                 if (quiereCambiarPassword)
                 {
-
-                    if (string.IsNullOrWhiteSpace(passwordActual) || string.IsNullOrWhiteSpace(nuevaPassword))
+                    if (string.IsNullOrWhiteSpace(model.passwordActual) || string.IsNullOrWhiteSpace(model.nuevaPassword))
                     {
                         ViewData["Error"] = "Debe ingresar su contraseña actual y la nueva contraseña";
                         return View(usuario);
                     }
-                    if (nuevaPassword.Length < 6 || nuevaPassword.Length > 100)
-                    {
-                        ViewData["Error"] = "La nueva contraseña debe tener entre 6 y 100 caracteres";
-                        return View(usuario);
-                    }
 
-                    if (nuevaPassword != confirmarPassword)
-                    {
-                        ViewData["Error"] = "La nueva contraseña y su confirmación no coinciden";
-                        return View(usuario);
-                    }
-
-                    if (!_usuarioService.VerificarPassword(usuario, passwordActual, out _))
+                    if (!_usuarioService.VerificarPassword(usuario, model.passwordActual, out _))
                     {
                         ViewData["Error"] = "La contraseña actual es incorrecta";
                         return View(usuario);
                     }
 
-                    usuario.password = _usuarioService.HashearPassword(usuario, nuevaPassword);
+                    usuario.password = _usuarioService.HashearPassword(usuario, model.nuevaPassword);
                 }
 
-                usuario.nombreUsuario = nombreUsuario.Trim();
+                usuario.nombreUsuario = model.nombreUsuario.Trim();
                 await _usuarioService.ActualizarAsync(usuario);
                 await RefrescarSesionAsync(usuario);
 
