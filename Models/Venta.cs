@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using AppWeb.Validations;
 
 namespace AppWeb.Models
 {
@@ -12,25 +13,25 @@ namespace AppWeb.Models
         [Display(Name = "Fecha de Venta")]
         public DateTime fechaVenta { get; set; }
 
-        [Required(ErrorMessage = "El estado de la venta es obligatorio")]
+        [CampoObligatorio(ErrorMessage = "El estado de la venta es obligatorio")]
         [StringLength(50, ErrorMessage = "El estado no puede exceder los 50 caracteres")]
         public string estado { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El total de la venta es obligatorio")]
         [Column(TypeName = "decimal(18, 2)")]
-        [Range(0.00, (double)decimal.MaxValue, ErrorMessage = "El total de la venta no puede ser negativo")]
+        [NumeroNoNegativo(ErrorMessage = "El total de la venta no puede ser negativo")]
         [Display(Name = "Total")]
         public decimal total { get; set; }
 
         // Relacion de M : 1 con Cliente
         [Required(ErrorMessage = "El cliente es obligatorio")]
-        [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un cliente válido")]
+        [NumeroPositivo(ErrorMessage = "Debe seleccionar un cliente válido")]
         public int idCliente { get; set; }
         public Cliente? cliente { get; set; }
 
         // Relacion de M : 1 con Usuario
         [Required(ErrorMessage = "El usuario vendedor es obligatorio")]
-        [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un usuario responsable")]
+        [NumeroPositivo(ErrorMessage = "Debe seleccionar un usuario responsable")]
         public int idUsuario { get; set; }
         public Usuario? usuario { get; set; }
 

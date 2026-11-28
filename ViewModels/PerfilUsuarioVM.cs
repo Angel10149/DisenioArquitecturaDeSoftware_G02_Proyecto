@@ -1,12 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using AppWeb.Validations;
 
 namespace AppWeb.ViewModels
 {
     public class PerfilUsuarioVM
     {
-        [Required(ErrorMessage = "El nombre de usuario es obligatorio.")]
+        [CampoObligatorio(ErrorMessage = "El nombre de usuario es obligatorio.")]
         [StringLength(50, ErrorMessage = "El nombre de usuario no puede exceder los 50 caracteres")]
-        [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$", ErrorMessage = "El nombre solo puede contener letras y espacios")]
+        [SoloLetras(ErrorMessage = "El nombre solo puede contener letras y espacios")]
         public string nombreUsuario { get; set; } = string.Empty;
 
         [StringLength(100, ErrorMessage = "La contraseña actual no puede exceder los 100 caracteres")]

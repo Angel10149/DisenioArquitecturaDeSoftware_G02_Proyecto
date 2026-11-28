@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using AppWeb.Validations;
 
 namespace AppWeb.Models
 {
@@ -11,14 +12,14 @@ namespace AppWeb.Models
         [Required]
         public DateTime fechaPago { get; set; }
 
-        [Required, StringLength(50)]
+        [CampoObligatorio, StringLength(50)]
         public string metodoPago { get; set; } = string.Empty;
 
         [Required, Column(TypeName = "decimal(18, 2)")]
-        [Range(0, (double)decimal.MaxValue, ErrorMessage = "El monto recibido debe ser mayor a 0")]
+        [NumeroNoNegativo(ErrorMessage = "El monto recibido no puede ser negativo")]
         public decimal montoRecibido { get; set; }
 
-        [Required, StringLength(30)]
+        [CampoObligatorio, StringLength(30)]
         public string estado { get; set; } = string.Empty;
 
         //Relacion de M : 1 con Venta
@@ -31,6 +32,5 @@ namespace AppWeb.Models
 
         //Relaciones 1 : M con Comprobante
         public ICollection<Comprobante> Comprobantes { get; set; } = new List<Comprobante>();
-
     }
 }

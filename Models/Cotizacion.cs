@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using AppWeb.Validations;
 
 namespace AppWeb.Models
 {
@@ -11,14 +12,14 @@ namespace AppWeb.Models
         [Required]
         public DateTime fechaEmision { get; set; }
 
-        [Required, StringLength(30)]
+        [CampoObligatorio, StringLength(30)]
         public string estado { get; set; } = "Pendiente";
 
         [StringLength(255)]
         public string observaciones { get; set; } = "Sin observaciones";
 
         [Required, Column(TypeName = "decimal(18, 2)")]
-        [Range(0, (double)decimal.MaxValue, ErrorMessage = "El total debe ser mayor a 0")]
+        [NumeroNoNegativo(ErrorMessage = "El total no puede ser negativo")]
         public decimal total { get; set; }
 
         //Relacion de M : 1 con Cliente

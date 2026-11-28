@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using AppWeb.Validations;
 
 namespace AppWeb.Models
 {
@@ -12,7 +13,7 @@ namespace AppWeb.Models
         [Display(Name = "Fecha de Ingreso")]
         public DateTime fechaIngreso { get; set; }
 
-        [Required(ErrorMessage = "El estado del ingreso es obligatorio")]
+        [CampoObligatorio(ErrorMessage = "El estado del ingreso es obligatorio")]
         [StringLength(50, ErrorMessage = "El estado no puede exceder los 50 caracteres")]
         public string estado { get; set; } = string.Empty;
 
@@ -21,13 +22,13 @@ namespace AppWeb.Models
 
         // Relacion de M : 1 con OrdenCompra
         [Required(ErrorMessage = "La orden de compra es obligatoria")]
-        [Range(1, int.MaxValue, ErrorMessage = "Debe asociar una orden de compra válida")]
+        [NumeroPositivo(ErrorMessage = "Debe asociar una orden de compra válida")]
         public int idOrdenCompra { get; set; }
         public OrdenCompra? ordenCompra { get; set; }
 
         // Relacion de M : 1 con Proveedor
         [Required(ErrorMessage = "El proveedor es obligatorio")]
-        [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un proveedor válido")]
+        [NumeroPositivo(ErrorMessage = "Debe seleccionar un proveedor válido")]
         public int idProveedor { get; set; }
         public Proveedor? proveedor { get; set; }
 

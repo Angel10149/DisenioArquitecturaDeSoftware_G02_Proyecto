@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using AppWeb.Validations;
 
 namespace AppWeb.Models
 {
@@ -9,21 +10,21 @@ namespace AppWeb.Models
         public int idRequerimiento { get; set; }
 
         [Required]
-        [Range(0, int.MaxValue, ErrorMessage = "La cantidad sugerida no puede ser negativa")]
+        [NumeroNoNegativo(ErrorMessage = "La cantidad sugerida no puede ser negativa")]
         public int cantidadSugerida { get; set; }
 
         [Required]
-        [Range(1, int.MaxValue, ErrorMessage = "La cantidad requerida debe ser mayor a 0")]
+        [NumeroPositivo(ErrorMessage = "La cantidad requerida debe ser mayor a 0")]
         public int cantidadRequerida { get; set; }
 
         [Required]
         public DateOnly fechaRequerida { get; set; }
 
-        [Required, StringLength(20)]
-        [RegularExpression(@"^(Baja|Media|Alta)$", ErrorMessage = "La prioridad debe ser Baja, Media o Alta")]
+        [CampoObligatorio, StringLength(20)]
+        [RegularExpression(ValidationPatterns.PrioridadRequerimiento, ErrorMessage = "La prioridad debe ser Baja, Media o Alta")]
         public string prioridad { get; set; } = "Media";
 
-        [Required, StringLength(30)]
+        [CampoObligatorio, StringLength(30)]
         public string estado { get; set; } = "Pendiente";
 
         [StringLength(255)]
@@ -33,7 +34,7 @@ namespace AppWeb.Models
         public DateTime fechaCreacion { get; set; }
 
         //Relacion de M : 1 con Producto
-        [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un producto válido")]
+        [NumeroPositivo(ErrorMessage = "Debe seleccionar un producto válido")]
         public int idProducto { get; set; }
         public Producto? producto { get; set; }
 

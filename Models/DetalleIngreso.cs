@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using AppWeb.Validations;
 
 namespace AppWeb.Models
 {
@@ -9,21 +10,20 @@ namespace AppWeb.Models
         public int idDetalleIngreso { get; set; }
 
         [Required]
-        [Range(0, int.MaxValue, ErrorMessage = "La cantidad recibida debe ser mayor a 0")]
+        [NumeroNoNegativo(ErrorMessage = "La cantidad recibida no puede ser negativa")]
         public int cantidadRecibida { get; set; }
 
         [Required]
-        [Range(0, int.MaxValue, ErrorMessage = "La cantidad rechazada no puede ser negativa")]
+        [NumeroNoNegativo(ErrorMessage = "La cantidad rechazada no puede ser negativa")]
         public int cantidadRechazada { get; set; }
 
         [Required, Column(TypeName = "decimal(18, 2)")]
-        [Range(0,(double)decimal.MaxValue, ErrorMessage = "El costo unitario debe ser mayor a 0")]
+        [NumeroNoNegativo(ErrorMessage = "El costo unitario no puede ser negativo")]
         public decimal costoUnitario { get; set; }
 
         [Required, Column(TypeName = "decimal(18, 2)")]
-        [Range(0, (double)decimal.MaxValue, ErrorMessage = "El subtotal debe ser mayor a 0")]
+        [NumeroNoNegativo(ErrorMessage = "El subtotal no puede ser negativo")]
         public decimal subtotal { get; set; }
-
 
         //Relacion de M : 1 con IngresoMercaderia
         public int idIngresoMercaderia { get; set; }

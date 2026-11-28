@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using AppWeb.Validations;
 
 namespace AppWeb.Models
 {
@@ -8,39 +9,43 @@ namespace AppWeb.Models
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int idProducto { get; set; }
 
-        [Required, StringLength(50)]
-        [RegularExpression(@"^[a-zA-Z0-9\-_]+$", ErrorMessage = "El código solo puede contener letras, números o guiones")]
+        [CampoObligatorio, StringLength(50)]
+        [RegularExpression(ValidationPatterns.CodigoBarras, ErrorMessage = "El código solo puede contener letras, números o guiones")]
         public string codigoBarras { get; set; } = string.Empty;
 
-        [Required, StringLength(100)]
-        [RegularExpression(@"^(?=.*[a-zA-ZáéíóúÁÉÍÓÚñÑ]).+$", ErrorMessage = "El nombre del producto debe incluir letras")]
+        [CampoObligatorio, StringLength(100)]
+        [RegularExpression(ValidationPatterns.NombreProducto, ErrorMessage = "El nombre del producto debe incluir letras")]
         public string nombre { get; set; } = string.Empty;
 
         [StringLength(255)]
         public string? descripcion { get; set; }
 
         [Required]
-        [Range(0, int.MaxValue, ErrorMessage = "El stock actual no puede ser negativo")]
+        [NumeroNoNegativo(ErrorMessage = "El stock actual no puede ser negativo")]
         public int stockActual { get; set; }
+
         [Required]
-        [Range(0, int.MaxValue, ErrorMessage = "El stock mínimo no puede ser negativo")]
+        [NumeroNoNegativo(ErrorMessage = "El stock mínimo no puede ser negativo")]
         public int stockMinimo { get; set; }
+
         [Required, Column(TypeName = "decimal(18, 2)")]
-        [Range(0, (double)decimal.MaxValue, ErrorMessage = "El precio de costo no puede ser negativo")]
+        [NumeroNoNegativo(ErrorMessage = "El precio de costo no puede ser negativo")]
         public decimal precioCosto { get; set; }
+
         [Required, Column(TypeName = "decimal(18, 2)")]
-        [Range(0, (double)decimal.MaxValue, ErrorMessage = "El precio de venta no puede ser negativo")]
+        [NumeroNoNegativo(ErrorMessage = "El precio de venta no puede ser negativo")]
         public decimal precioVenta { get; set; }
+
         [Required]
         public bool estado { get; set; } = true;
 
         //Relacion de M : 1 con Categoria
-        [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar una categoría válida")]
+        [NumeroPositivo(ErrorMessage = "Debe seleccionar una categoría válida")]
         public int idCategoria { get; set; }
         public Categoria? categoria { get; set; }
 
         //Relacion de M : 1 con UnidadMedida
-        [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar una unidad de medida válida")]
+        [NumeroPositivo(ErrorMessage = "Debe seleccionar una unidad de medida válida")]
         public int idUnidadMedida { get; set; }
         public UnidadMedida? unidadMedida { get; set; }
 

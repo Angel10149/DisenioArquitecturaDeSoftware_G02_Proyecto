@@ -11,7 +11,7 @@ namespace AppWeb.Models
         public int idCliente { get; set; }
 
         [CampoObligatorio, StringLength(20)]
-        [RegularExpression(ValidationPatterns.TipoDocumentoCliente, ErrorMessage = "El tipo de documento debe ser DNI, RUC, CE o Pasaporte.")]
+        [RegularExpression(ValidationPatterns.TipoDocumentoCliente, ErrorMessage = "El tipo de documento debe ser DNI, RUC, CE o Pasaporte")]
         public String tipoDocumento { get; set; } = String.Empty;
 
         [CampoObligatorio, StringLength(20)]
@@ -50,19 +50,19 @@ namespace AppWeb.Models
             if (tipoDocumento == "DNI" && !Regex.IsMatch(doc, ValidationPatterns.Dni))
             {
                 yield return new ValidationResult(
-                    "El DNI debe contener exactamente 8 dígitos numéricos.",
+                    "El DNI debe contener exactamente 8 dígitos numéricos",
                     new[] { nameof(numeroDocumento) });
             }
             else if (tipoDocumento == "RUC" && !Regex.IsMatch(doc, ValidationPatterns.Ruc))
             {
                 yield return new ValidationResult(
-                    "El RUC debe contener exactamente 11 dígitos numéricos.",
+                    "El RUC debe contener exactamente 11 dígitos numéricos",
                     new[] { nameof(numeroDocumento) });
             }
             else if ((tipoDocumento == "CE" || tipoDocumento == "Pasaporte") && !Regex.IsMatch(doc, ValidationPatterns.CeOPasaporte))
             {
                 yield return new ValidationResult(
-                    $"El {tipoDocumento} debe tener entre 6 y 20 caracteres alfanuméricos.",
+                    $"El {tipoDocumento} debe tener entre 6 y 20 caracteres alfanuméricos",
                     new[] { nameof(numeroDocumento) });
             }
         }
