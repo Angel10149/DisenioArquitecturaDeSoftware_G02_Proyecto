@@ -15,7 +15,7 @@
         public const string CeOPasaporte = @"^[A-Za-z0-9]{6,20}$";
 
         /// <summary>Teléfono con 7 a 15 dígitos, opcional '+' al inicio, espacios o guiones (ej. +51 956521578)</summary>
-        public const string Telefono = @"^\+?(?=(?:.*\d){7,15}$)[0-9\-\s]+$";
+        public const string Telefono = @"^\+?(?=(?:[^\d]*\d){7,15}[^\d]*$)[0-9\-\s]+$";
 
         /// <summary>Solo letras (incluyendo acentos y ñ) y espacios</summary>
         public const string SoloLetras = @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$";
