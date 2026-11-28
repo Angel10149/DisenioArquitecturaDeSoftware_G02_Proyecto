@@ -7,7 +7,7 @@ namespace AppWeb.Models
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 
-        public int idCategoria { get; set; }
+        public int idCategoria {  get; set; }
 
         [Required, StringLength(50)]
         [RegularExpression(@"^(?=.*[a-zA-ZáéíóúÁÉÍÓÚñÑ])[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\-]+$",

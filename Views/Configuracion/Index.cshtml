@@ -186,7 +186,7 @@
             logoImg.src = url || fallback;
         });
 
-        logoFileInput?.addEventListener("change", function() {
+        logoFileInput?.addEventListener("change", function () {
             const file = logoFileInput.files && logoFileInput.files[0];
             if (file) {
                 logoImg.src = URL.createObjectURL(file);

@@ -17,7 +17,7 @@ namespace AppWeb.Models
         public int cantidadRechazada { get; set; }
 
         [Required, Column(TypeName = "decimal(18, 2)")]
-        [Range(0, (double)decimal.MaxValue, ErrorMessage = "El costo unitario debe ser mayor a 0")]
+        [Range(0,(double)decimal.MaxValue, ErrorMessage = "El costo unitario debe ser mayor a 0")]
         public decimal costoUnitario { get; set; }
 
         [Required, Column(TypeName = "decimal(18, 2)")]
