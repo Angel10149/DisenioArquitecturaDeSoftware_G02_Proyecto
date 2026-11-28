@@ -1,3 +1,4 @@
+using AppWeb.Validations;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.RegularExpressions;
@@ -9,30 +10,26 @@ namespace AppWeb.Models
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int idCliente { get; set; }
 
-        [Required, StringLength(20)]
-        [RegularExpression(@"^(DNI|RUC|CE|Pasaporte)$", ErrorMessage = "El tipo de documento debe ser DNI, RUC, CE o Pasaporte.")]
+        [CampoObligatorio, StringLength(20)]
+        [RegularExpression(ValidationPatterns.TipoDocumentoCliente, ErrorMessage = "El tipo de documento debe ser DNI, RUC, CE o Pasaporte.")]
         public String tipoDocumento { get; set; } = String.Empty;
 
-        [Required, StringLength(20)]
+        [CampoObligatorio, StringLength(20)]
         public String numeroDocumento { get; set; } = String.Empty;
 
-        [Required, StringLength(100)]
-        [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\.]+$", ErrorMessage = "Solo se permiten letras y espacios")]
+        [CampoObligatorio, StringLength(100), SoloLetras(permitirPunto: true)]
         public String nombres { get; set; } = String.Empty;
 
-        [Required, StringLength(150)]
-        [RegularExpression(@"^(?=.*[a-zA-ZáéíóúÁÉÍÓÚñÑ])[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\.\-&]+$", ErrorMessage = "La razón social debe contener letras")] public String razonSocial { get; set; } = String.Empty;
+        [CampoObligatorio, StringLength(150), RazonSocial]
+        public String razonSocial { get; set; } = String.Empty;
 
-        [Required, StringLength(20)]
-        [Phone(ErrorMessage = "El formato del teléfono no es válido")]
-        [RegularExpression(@"^\+?(?=(?:.*\d){7,15}$)[0-9\-\s]+$", ErrorMessage = "Ingrese un teléfono válido (7 a 15 dígitos, ej. +51 956521578)")]
+        [CampoObligatorio, StringLength(20), TelefonoPeruano]
         public string telefono { get; set; } = String.Empty;
 
-        [Required, StringLength(255)]
+        [CampoObligatorio, StringLength(255)]
         public String direccion { get; set; } = String.Empty;
 
-        [Required, StringLength(100)]
-        [EmailAddress(ErrorMessage = "El correo electrónico no es válido")]
+        [CampoObligatorio, StringLength(100), CorreoElectronico]
         public String email { get; set; } = String.Empty;
 
         [Required]
@@ -50,19 +47,19 @@ namespace AppWeb.Models
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             var doc = numeroDocumento?.Trim() ?? string.Empty;
-            if (tipoDocumento == "DNI" && !Regex.IsMatch(doc, @"^\d{8}$"))
+            if (tipoDocumento == "DNI" && !Regex.IsMatch(doc, ValidationPatterns.Dni))
             {
                 yield return new ValidationResult(
                     "El DNI debe contener exactamente 8 dígitos numéricos.",
                     new[] { nameof(numeroDocumento) });
             }
-            else if (tipoDocumento == "RUC" && !Regex.IsMatch(doc, @"^\d{11}$"))
+            else if (tipoDocumento == "RUC" && !Regex.IsMatch(doc, ValidationPatterns.Ruc))
             {
                 yield return new ValidationResult(
                     "El RUC debe contener exactamente 11 dígitos numéricos.",
                     new[] { nameof(numeroDocumento) });
             }
-            else if ((tipoDocumento == "CE" || tipoDocumento == "Pasaporte") && !Regex.IsMatch(doc, @"^[A-Za-z0-9]{6,20}$"))
+            else if ((tipoDocumento == "CE" || tipoDocumento == "Pasaporte") && !Regex.IsMatch(doc, ValidationPatterns.CeOPasaporte))
             {
                 yield return new ValidationResult(
                     $"El {tipoDocumento} debe tener entre 6 y 20 caracteres alfanuméricos.",
