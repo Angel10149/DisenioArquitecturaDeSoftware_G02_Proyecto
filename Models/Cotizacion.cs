@@ -17,7 +17,8 @@ namespace AppWeb.Models
         [StringLength(255)]
         public string observaciones { get; set; } = "Sin observaciones";
 
-        [Required, Column(TypeName = "decimal(18, 2)]")]
+        [Required, Column(TypeName = "decimal(18, 2)")]
+        [Range(0, (double)decimal.MaxValue, ErrorMessage = "El total debe ser mayor a 0")]
         public decimal total { get; set; }
 
         //Relacion de M : 1 con Cliente

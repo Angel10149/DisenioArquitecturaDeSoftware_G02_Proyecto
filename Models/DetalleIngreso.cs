@@ -7,13 +7,21 @@ namespace AppWeb.Models
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int idDetalleIngreso { get; set; }
+
         [Required]
+        [Range(0, int.MaxValue, ErrorMessage = "La cantidad recibida debe ser mayor a 0")]
         public int cantidadRecibida { get; set; }
+
         [Required]
+        [Range(0, int.MaxValue, ErrorMessage = "La cantidad rechazada no puede ser negativa")]
         public int cantidadRechazada { get; set; }
-        [Required, Column(TypeName = "decimal(18, 2)]")]
+
+        [Required, Column(TypeName = "decimal(18, 2)")]
+        [Range(0,(double)decimal.MaxValue, ErrorMessage = "El costo unitario debe ser mayor a 0")]
         public decimal costoUnitario { get; set; }
-        [Required, Column(TypeName = "decimal(18, 2)]")]
+
+        [Required, Column(TypeName = "decimal(18, 2)")]
+        [Range(0, (double)decimal.MaxValue, ErrorMessage = "El subtotal debe ser mayor a 0")]
         public decimal subtotal { get; set; }
 
 

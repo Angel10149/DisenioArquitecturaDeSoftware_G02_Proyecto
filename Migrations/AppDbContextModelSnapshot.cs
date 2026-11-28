@@ -232,7 +232,7 @@ namespace AppWeb.Migrations
                         .HasColumnType("nvarchar(255)");
 
                     b.Property<decimal>("total")
-                        .HasColumnType("decimal(18, 2)]");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("idCotizacion");
 
@@ -255,7 +255,7 @@ namespace AppWeb.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("descuento")
-                        .HasColumnType("decimal(18, 2)]");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<int>("idCotizacion")
                         .HasColumnType("int");
@@ -264,10 +264,10 @@ namespace AppWeb.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("precioUnitario")
-                        .HasColumnType("decimal(18, 2)]");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<decimal>("subtotal")
-                        .HasColumnType("decimal(18, 2)]");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("idDetalleCotizacion");
 
@@ -293,7 +293,7 @@ namespace AppWeb.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("costoUnitario")
-                        .HasColumnType("decimal(18, 2)]");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<int>("idIngresoMercaderia")
                         .HasColumnType("int");
@@ -302,7 +302,7 @@ namespace AppWeb.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("subtotal")
-                        .HasColumnType("decimal(18, 2)]");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("idDetalleIngreso");
 
@@ -331,10 +331,10 @@ namespace AppWeb.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("precioUnitario")
-                        .HasColumnType("decimal(18, 2)]");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<decimal>("subtotal")
-                        .HasColumnType("decimal(18, 2)]");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("idDetalleOrden");
 
@@ -357,7 +357,7 @@ namespace AppWeb.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("descuento")
-                        .HasColumnType("decimal(18, 2)]");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<int>("idproducto")
                         .HasColumnType("int");
@@ -366,10 +366,10 @@ namespace AppWeb.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("precioUnitario")
-                        .HasColumnType("decimal(18, 2)]");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<decimal>("subtotal")
-                        .HasColumnType("decimal(18, 2)]");
+                        .HasColumnType("decimal(18, 2)");
 
                     b.HasKey("idDetalleVenta");
 

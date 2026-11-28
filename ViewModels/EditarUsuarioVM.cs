@@ -17,6 +17,7 @@ namespace AppWeb.ViewModels
         public string correo { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El teléfono es obligatorio")]
+        [Phone(ErrorMessage = "Ingrese un teléfono válido")]
         [StringLength(15, ErrorMessage = "El teléfono no puede exceder los 15 caracteres")]
         [RegularExpression(@"^\+?(?=(?:.*\d){7,15}$)[0-9\-\s]+$", ErrorMessage = "Ingrese un teléfono válido entre 7 y 15 dígitos")]
         public string telefono { get; set; } = string.Empty;
